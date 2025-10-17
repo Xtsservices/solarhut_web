@@ -253,10 +253,10 @@ export function Awards() {
                       </Badge>
                     </div>
                     <p className="text-gray-700 mb-4">{event.description}</p>
-                    <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-orange-50">
+                    {/* <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-orange-50">
                       Learn More
                       <ArrowRight className="w-3 h-3 ml-2" />
-                    </Button>
+                    </Button> */}
                   </CardContent>
                 </Card>
               ))}
@@ -298,9 +298,9 @@ export function Awards() {
                   <p className="text-sm text-gray-600 mb-4">
                     Get notified about upcoming events, workshops, and community initiatives.
                   </p>
-                  <Button size="sm" className="bg-gradient-to-r from-primary to-secondary hover:from-orange-600 hover:to-orange-700 text-white">
+                  {/* <Button size="sm" className="bg-gradient-to-r from-primary to-secondary hover:from-orange-600 hover:to-orange-700 text-white">
                     Subscribe to Updates
-                  </Button>
+                  </Button> */}
                 </CardContent>
               </Card>
             </div>

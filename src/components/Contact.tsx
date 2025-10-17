@@ -14,8 +14,10 @@ import {
   Home
 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function Contact() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,6 +26,15 @@ export function Contact() {
   });
   
   const [showThankYou, setShowThankYou] = useState(false);
+
+  const handlePhoneClick = (phoneNumber: string) => {
+    window.open(`tel:₹{phoneNumber}`, '_self');
+  };
+
+  const handleCalculatorClick = () => {
+    // For now, scroll to top or can navigate to a calculator page later
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +53,7 @@ export function Contact() {
     {
       icon: Phone,
       title: "Phone",
-      details: ["(555) 123-SOLAR", "(555) 123-7652"]
+      details: ["+91 9878965431", "+91 9876543210"]
     },
     {
       icon: Mail,
@@ -188,7 +199,13 @@ export function Contact() {
                       Get Free Quote
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
-                    <Button type="button" size="lg" variant="outline" className="border-[#FFA500] text-[#FFA500] hover:bg-orange-50">
+                    <Button 
+                      type="button" 
+                      size="lg" 
+                      variant="outline" 
+                      className="border-[#FFA500] text-[#FFA500] hover:bg-orange-50"
+                      onClick={handleCalculatorClick}
+                    >
                       <Calculator className="w-4 h-4 mr-2" />
                       Calculate Savings
                     </Button>
@@ -222,21 +239,7 @@ export function Contact() {
               </CardContent>
             </Card>
 
-            {/* Emergency Contact */}
-            <Card className="bg-red-50 border-red-200">
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <h3 className="font-semibold text-red-800 mb-2">24/7 Emergency Support</h3>
-                  <p className="text-red-600 text-sm mb-3">
-                    System issues or urgent repairs
-                  </p>
-                  <Button variant="outline" className="border-red-600 text-red-600 hover:bg-red-50">
-                    <Phone className="w-4 h-4 mr-2" />
-                    (555) 911-SOLAR
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+           
           </div>
             </div>
       </div>

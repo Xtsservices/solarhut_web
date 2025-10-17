@@ -172,7 +172,7 @@ export function ProjectsPage() {
       </section>
 
       {/* Projects Gallery */}
-      <section className="py-16 bg-gray-50">
+      {/* <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Featured Projects</h2>
@@ -204,7 +204,7 @@ export function ProjectsPage() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute top-4 left-4">
-                          <Badge className={`${getTypeColor(project.type)} border-0`}>
+                          <Badge className={`₹{getTypeColor(project.type)} border-0`}>
                             {project.type}
                           </Badge>
                         </div>
@@ -305,7 +305,7 @@ export function ProjectsPage() {
             ))}
           </Tabs>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section */}
       <section className="py-16 bg-gradient-to-r from-blue-600 to-green-600 text-white">

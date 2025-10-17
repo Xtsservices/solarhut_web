@@ -106,11 +106,11 @@ export function SolarWaterHeatersPage() {
                 Our solar water heating systems provide reliable, eco-friendly hot water for homes and businesses.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-gray-900">
+                <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-white">
                   Get SWH Quote
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+                <Button size="lg" variant="outline" className="border-white text-black hover:bg-white hover:text-[#000000]-600">
                   Size Calculator
                   <Droplets className="ml-2 w-5 h-5" />
                 </Button>
@@ -142,8 +142,8 @@ export function SolarWaterHeatersPage() {
               return (
                 <Card key={index} className="text-center p-6 border-0 shadow-lg hover:shadow-xl transition-shadow">
                   <CardContent className="pt-6">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <IconComponent className="w-8 h-8 text-blue-600" />
+                    <div style={{ backgroundColor: '#FFF7ED' }} className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <IconComponent className="w-8 h-8 text-[#FFA500]" />
                     </div>
                     <h3 className="text-xl font-bold mb-3">{benefit.title}</h3>
                     <p className="text-gray-600">{benefit.description}</p>
@@ -174,7 +174,7 @@ export function SolarWaterHeatersPage() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-4 right-4">
-                    <Badge className="bg-blue-600 text-white">
+                    <Badge className="bg-[#ffa500]-600 text-white">
                       {product.capacity}
                     </Badge>
                   </div>
@@ -190,7 +190,7 @@ export function SolarWaterHeatersPage() {
                     <ul className="space-y-1">
                       {product.features.map((feature, idx) => (
                         <li key={idx} className="flex items-center space-x-2">
-                          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <CheckCircle className="w-4 h-4 text-[#FFA500] flex-shrink-0" />
                           <span className="text-sm text-gray-600">{feature}</span>
                         </li>
                       ))}
@@ -231,7 +231,7 @@ export function SolarWaterHeatersPage() {
                 <CardContent className="pt-0">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-2xl font-bold text-gray-900">{type.name}</h3>
-                    <Badge className="bg-blue-600 text-white">
+                    <Badge className="bg-[#ffa500]-600 text-white">
                       {type.efficiency} Efficiency
                     </Badge>
                   </div>
@@ -250,7 +250,7 @@ export function SolarWaterHeatersPage() {
                     <h4 className="font-semibold mb-2">Best For:</h4>
                     <div className="flex flex-wrap gap-2">
                       {type.applications.map((app, idx) => (
-                        <Badge key={idx} variant="outline" className="border-blue-200 text-blue-700">
+                        <Badge key={idx} variant="outline" className="border-[#ffa500]-200 text-[#ffa500]-700">
                           {app}
                         </Badge>
                       ))}
@@ -273,7 +273,7 @@ export function SolarWaterHeatersPage() {
             {specifications.map((spec, index) => (
               <Card key={index} className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent className="pt-6">
-                  <div className="text-3xl font-bold text-blue-600 mb-2">{spec.value}</div>
+                  <div className="text-3xl font-bold text-[#ffa500]-600 mb-2">{spec.value}</div>
                   <div className="text-lg font-semibold text-gray-900 mb-1">{spec.label}</div>
                   <div className="text-sm text-gray-600">{spec.description}</div>
                 </CardContent>
@@ -300,7 +300,7 @@ export function SolarWaterHeatersPage() {
               { step: "4", title: "Commissioning", description: "Test system and provide user training" }
             ].map((process, index) => (
               <div key={index} className="text-center">
-                <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                <div style={{ backgroundColor: '#FFF7ED', color: '#FFA500' }} className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                   {process.step}
                 </div>
                 <h3 className="text-xl font-bold mb-2">{process.title}</h3>
@@ -320,10 +320,10 @@ export function SolarWaterHeatersPage() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-3 gap-6">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <Home className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <div className="text-center p-4 bg-[#ffa500]-50 rounded-lg">
+                  <Home className="w-8 h-8 text-[#ffa500]-600 mx-auto mb-2" />
                   <h3 className="font-bold mb-2">Small Family (2-3 people)</h3>
-                  <div className="text-2xl font-bold text-blue-600 mb-1">100L</div>
+                  <div className="text-2xl font-bold text-[#ffa500]-600 mb-1">100L</div>
                   <div className="text-sm text-gray-600">Daily hot water requirement</div>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
@@ -345,17 +345,17 @@ export function SolarWaterHeatersPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-green-600 text-white">
+      <section className="py-16 bg-[#FEF7ED] text-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold mb-4">Start Saving on Water Heating Today</h2>
           <p className="text-xl mb-8">
             Get a free assessment and personalized recommendation for your solar water heater
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+            <Button size="lg" className="bg-white text-[#ffa500]-600 hover:bg-gray-100">
               Get Free Assessment
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+            <Button size="lg" variant="outline" className="border-white text-black hover:bg-white hover:text-[#ffa500]-600">
               Calculate Savings
             </Button>
           </div>

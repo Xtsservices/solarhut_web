@@ -14,8 +14,28 @@ import {
   Shield
 } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { useNavigate } from "react-router-dom";
 
 export function Solutions() {
+  const navigate = useNavigate();
+
+  const handleGetQuote = (solutionId: string) => {
+    // Navigate to specific solution page or contact with solution pre-selected
+    if (solutionId === 'residential') {
+      navigate('/solutions/residential');
+    } else if (solutionId === 'commercial') {
+      navigate('/solutions/commercial');
+    } else if (solutionId === 'industrial') {
+      navigate('/solutions/industrial');
+    } else {
+      navigate('/contact');
+    }
+  };
+
+  const handleScheduleConsultation = () => {
+    navigate('/contact');
+  };
+
   const solutions = [
     {
       id: "residential",
@@ -31,7 +51,7 @@ export function Solutions() {
         "Net metering capability",
         "Smart monitoring system"
       ],
-      savings: "Save $1,500-3,000 annually",
+      savings: "Save ₹1,500-3,000 annually",
       payback: "6-8 years"
     },
     {
@@ -99,7 +119,7 @@ export function Solutions() {
         "15-year system warranty",
         "Low maintenance requirements"
       ],
-      savings: "Save $400-800 annually",
+      savings: "Save ₹400-800 annually",
       payback: "3-5 years"
     }
   ];
@@ -183,7 +203,11 @@ export function Solutions() {
                     </div>
                   </div>
 
-                  <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:from-orange-600 hover:to-orange-700 text-white">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-primary to-secondary hover:from-orange-600 hover:to-orange-700 text-white"
+                    onClick={() => handleGetQuote(solution.id)}
+                  >
                     Get Quote for {solution.title}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -193,7 +217,7 @@ export function Solutions() {
                 <div className="relative">
                   <ImageWithFallback
                     src={solution.image}
-                    alt={`${solution.title} installation`}
+                    alt={`₹{solution.title} installation`}
                     className="w-full h-80 lg:h-96 object-cover rounded-2xl shadow-lg"
                   />
                   <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg">
@@ -213,7 +237,11 @@ export function Solutions() {
           <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
             Our solar experts will assess your property and energy needs to recommend the perfect solar solution for your specific requirements.
           </p>
-          <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:from-orange-600 hover:to-orange-700 text-white">
+          <Button 
+            size="lg" 
+            className="bg-gradient-to-r from-primary to-secondary hover:from-orange-600 hover:to-orange-700 text-white"
+            onClick={handleScheduleConsultation}
+          >
             Schedule Free Consultation
           </Button>
         </div>

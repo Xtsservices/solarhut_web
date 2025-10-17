@@ -67,7 +67,7 @@ export function Footer() {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <MapPin className="w-4 h-4 text-[#FFA500]" />
-                <span className="text-sm text-gray-300">Mumbai, Maharashtra & Pan India</span>
+                <span className="text-sm text-gray-300">Hyderabad,Telangana,India.</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-4 h-4 text-[#FFA500]" />
@@ -156,7 +156,10 @@ export function Footer() {
 
             {/* Copyright & Legal */}
             <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 text-sm text-gray-400">
-              <span>© {currentYear} Solar Hut Solutions. All rights reserved.</span>
+              <div className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-6">
+                <span>© {currentYear} Solar Hut Solutions. All rights reserved.</span>
+                <span className="text-xs">Powered by <span className="text-[#FFA500] font-medium">Metadev</span></span>
+              </div>
               <div className="flex space-x-4">
                 <a href="#" className="hover:text-[#FFA500] transition-colors">Privacy Policy</a>
                 <a href="#" className="hover:text-[#FFA500] transition-colors">Terms of Service</a>

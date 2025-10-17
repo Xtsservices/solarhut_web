@@ -134,7 +134,7 @@ export function TestimonialsPage() {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-5 h-5 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+        className={`w-5 h-5 ₹{i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
       />
     ));
   };
@@ -157,7 +157,7 @@ export function TestimonialsPage() {
       </section>
 
       {/* Featured Customer Stories Section */}
-      <FeaturedCustomerStories />
+      {/* <FeaturedCustomerStories /> */}
 
       {/* Stats Section */}
       <section className="py-16 bg-white">
@@ -222,7 +222,7 @@ export function TestimonialsPage() {
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-2">
                               <h3 className="text-xl font-bold text-gray-900">{testimonial.name}</h3>
-                              <Badge className={`${getTypeColor(testimonial.type)} border-0`}>
+                              <Badge className={`₹{getTypeColor(testimonial.type)} border-0`}>
                                 {testimonial.type}
                               </Badge>
                             </div>
@@ -338,7 +338,7 @@ export function TestimonialsPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-[#FFA500] to-[#2D8A47] text-white">
+      <section className="py-16 bg-[#FEF7ED] text-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Share Your Success Story?</h2>
           <p className="text-xl mb-8">
@@ -348,7 +348,7 @@ export function TestimonialsPage() {
             <Button size="lg" className="bg-white text-[#FFA500] hover:bg-gray-100">
               Get Your Quote Today
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#FFA500]">
+            <Button size="lg" variant="outline" className="border-[#FFA500] text-[#FFA500] hover:bg-gray-100 hover:text-white">
               Schedule Free Consultation
             </Button>
           </div>

@@ -365,7 +365,7 @@ export function SubsidyPage() {
             <CardContent className="p-0">
               <Accordion type="single" collapsible className="w-full">
                 {faqs.map((faq, index) => (
-                  <AccordionItem key={index} value={`faq-${index}`} className="border-b border-gray-200 last:border-b-0">
+                  <AccordionItem key={index} value={`faq-₹{index}`} className="border-b border-gray-200 last:border-b-0">
                     <AccordionTrigger className="px-6 py-4 text-left hover:no-underline hover:bg-gray-50">
                       <span className="text-lg font-semibold text-gray-900">{faq.question}</span>
                     </AccordionTrigger>

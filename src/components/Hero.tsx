@@ -67,8 +67,8 @@ export function Hero() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-lg">
-                Get Free Solar Quote
+              {/* <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-lg">
+                Get  Solar Quote
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
               <Button 
@@ -77,7 +77,7 @@ export function Hero() {
                 className="border-2 border-primary text-primary hover:bg-primary/5 hover:border-primary/80"
               >
                 Calculate Your Savings
-              </Button>
+              </Button> */}
             </div>
 
             {/* Stats */}
@@ -87,7 +87,7 @@ export function Hero() {
                 <div className="text-sm text-gray-600">Homes Powered</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">$5M+</div>
+                <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">₹5M+</div>
                 <div className="text-sm text-gray-600">Customer Savings</div>
               </div>
               <div className="text-center">
@@ -98,9 +98,9 @@ export function Hero() {
           </div>
 
           {/* Image */}
-          <div className="relative">
+            <div className="relative">
             <ImageWithFallback
-              src="https://images.unsplash.com/photo-1559079680-d7d0f01f7cfd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb2xhciUyMHBhbmVscyUyMGJsdWUlMjBza3klMjByZXNpZGVudGlhbHxlbnwxfHx8fDE3NTkwMzc4OTB8MA&ixlib=rb-4.1.0&q=80&w=1080"
+              src="/src/assets/SolarHutImages/solar4.jpeg"
               alt="Solar panels installed on modern home roof with blue sky"
               className="w-full h-96 lg:h-[600px] object-cover rounded-2xl shadow-2xl"
             />
@@ -108,7 +108,7 @@ export function Hero() {
             {/* Floating Badge */}
             <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl border-l-4 border-secondary">
               <div className="text-sm text-gray-600 mb-1">Starting from</div>
-              <div className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">$0 Down</div>
+              <div className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">₹0 Down</div>
               <div className="text-sm text-gray-600">Flexible financing available</div>
             </div>
             
@@ -116,7 +116,7 @@ export function Hero() {
             <div className="absolute top-6 right-6 bg-[#FFA500] text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
               #1 Solar Provider
             </div>
-          </div>
+            </div>
         </div>
       </div>
     </section>

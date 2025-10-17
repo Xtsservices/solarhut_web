@@ -15,9 +15,11 @@ import {
 } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
 
 export function Solutions() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<string>('residential');
 
   const handleGetQuote = (solutionId: string) => {
     // Navigate to specific solution page or contact with solution pre-selected
@@ -143,16 +145,21 @@ export function Solutions() {
         </div>
 
         {/* Solutions Tabs */}
-        <Tabs defaultValue="residential" className="w-full">
-          <TabsList className="grid w-full lg:grid-cols-5 mb-12 h-auto p-1 bg-gray-100">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="flex w-full overflow-x-auto space-x-2 mb-6 lg:mb-12 p-1 bg-gray-100">
             {solutions.map((solution) => (
               <TabsTrigger 
                 key={solution.id} 
                 value={solution.id}
-                className="flex items-center space-x-2 py-4 data-[state=active]:bg-white data-[state=active]:text-primary"
+                className="flex flex-none items-center space-x-2 py-3 px-3 sm:py-4 sm:px-4 min-w-[120px] data-[state=active]:bg-white data-[state=active]:text-primary"
               >
                 <solution.icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{solution.title}</span>
+                {/* Desktop/tablet: always show title */}
+                <span className="hidden sm:inline-block whitespace-nowrap">{solution.title}</span>
+                {/* Mobile: show title only for active tab */}
+                {activeTab === solution.id && (
+                  <span className="inline-block sm:hidden whitespace-nowrap">{solution.title}</span>
+                )}
               </TabsTrigger>
             ))}
           </TabsList>

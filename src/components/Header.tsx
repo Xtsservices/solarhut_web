@@ -57,11 +57,11 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+            <Link to="/" className="flex items-center">
             <img 
               src={logoImage} 
               alt="Solar Hut Solutions Logo" 
-              className="h-20 w-auto object-contain"
+              className="h-12 md:h-16 lg:h-20 w-auto object-contain"
             />
           </Link>
 
@@ -163,7 +163,7 @@ export function Header() {
             <div className="flex items-center space-x-3">
                 <button 
                 onClick={handleReferEarn}
-                className="bg-[#FFA500] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[#FFA500]/90 transition-colors"
+                className="bg-[#FFA500] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#FFA500]/90 transition-colors"
                 >
                 Refer & Earn
                 </button>
@@ -188,14 +188,28 @@ export function Header() {
           <button
             className="lg:hidden flex items-center space-x-1 text-black hover:text-[#FFA500] transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-expanded={isMenuOpen}
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - full screen overlay on small devices */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-[#FFA500]/20 py-4 bg-white">
+          <div className="lg:hidden fixed inset-0 z-50 bg-white p-6 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex items-center">
+                <img src={logoImage} alt="Solar Hut" className="h-8 w-auto object-contain" />
+              </Link>
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                aria-label="Close menu"
+                className="text-black hover:text-[#FFA500]"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
             <nav className="flex flex-col space-y-3">
               {/* Action Buttons for Mobile */}
               <div className="flex flex-col space-y-2 pb-3 border-b border-[#FFA500]/20 mb-3">
@@ -223,20 +237,30 @@ export function Header() {
               
               <Link to="/about" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>About Us</Link>
               
-              <div className="space-y-2">
-                <div className="text-black font-medium py-2">Products</div>
-                <div className="pl-4 space-y-2">
-                  {productsItems.map((item) => (
-                    <Link 
-                      key={item.title}
-                      to={item.href} 
-                      className="block text-black/70 hover:text-[#FFA500] transition-colors py-1"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.title}
-                    </Link>
-                  ))}
-                </div>
+              {/* Collapsible Products for Mobile */}
+              <div className="border-b border-[#FFA500]/10">
+                <button
+                  className="w-full flex items-center justify-between py-2 text-left text-black font-medium px-0"
+                  onClick={() => setActiveDropdown(activeDropdown === 'products' ? null : 'products')}
+                  aria-expanded={activeDropdown === 'products'}
+                >
+                  <span>Products</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'products' ? 'rotate-180' : ''}`} />
+                </button>
+                {activeDropdown === 'products' && (
+                  <div className="pl-4 pb-3">
+                    {productsItems.map((item) => (
+                      <Link 
+                        key={item.title}
+                        to={item.href} 
+                        className="block text-black/70 hover:text-[#FFA500] transition-colors py-1"
+                        onClick={() => { setIsMenuOpen(false); setActiveDropdown(null); }}
+                      >
+                        {item.title}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <Link to="/testimonials" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Client Stories</Link>

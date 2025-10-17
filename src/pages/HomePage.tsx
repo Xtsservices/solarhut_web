@@ -12,9 +12,9 @@ import { Contact } from "../components/Contact";
 export function HomePage() {
   return (
     <>
-      <div className="fixed top-1/2 right-4   flex flex-col  gap-4 items-end  ">
+  <div className="fixed top-1/2 right-4 hidden sm:flex flex-col gap-4 items-end z-40">
 
-      <div style={{ height:"300px", display:"flex", flexDirection:"column", justifyContent:"space-evenly", alignItems:"flex-end"}}>
+  <div style={{ height:"300px", display:"flex", flexDirection:"column", justifyContent:"space-evenly", alignItems:"flex-end"}}>
 
        
   <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" className="transform hover:scale-135 will-change-transform transition duration-200">
@@ -70,9 +70,9 @@ export function HomePage() {
         </a>
       </div>
        
-        <div className="h-1" />
-        <br />  <br />   <br />
-        <div className="flex flex-row gap-4 ">
+  <div className="h-1" />
+  <div className="block sm:hidden my-4" />
+  <div className="flex flex-row gap-4 items-center">
             <a
           href="https://wa.me/919812345678"
           target="_blank"

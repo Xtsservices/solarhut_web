@@ -6,7 +6,7 @@ export function Hero() {
   return (
     <section id="home" className="section-hero section-padding-lg">
       <div className="section-container">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Content */}
           <div className="space-y-8">
             <div className="space-y-6">
@@ -15,14 +15,14 @@ export function Hero() {
                 Leading Solar Solutions Provider
               </div>
               
-              <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
                 Power Your Future with
                 <span className="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Solar Hut Solutions
                 </span>
               </h1>
               
-              <p className="text-xl lg:text-2xl text-gray-700 leading-relaxed font-medium">
+              <p className="text-lg sm:text-xl lg:text-2xl text-gray-700 leading-relaxed font-medium">
                 Save up to 90% on your electricity bills with our cyclone-resistant durable systems
               </p>
               
@@ -81,7 +81,7 @@ export function Hero() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 pt-6 sm:pt-8 border-t border-gray-200">
               <div className="text-center">
                 <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">1000+</div>
                 <div className="text-sm text-gray-600">Homes Powered</div>
@@ -102,18 +102,18 @@ export function Hero() {
             <ImageWithFallback
               src="/src/assets/SolarHutImages/solar4.jpeg"
               alt="Solar panels installed on modern home roof with blue sky"
-              className="w-full h-96 lg:h-[600px] object-cover rounded-2xl shadow-2xl"
+              className="w-full h-64 sm:h-80 md:h-96 lg:h-[600px] object-cover rounded-2xl shadow-2xl"
             />
             
             {/* Floating Badge */}
-            <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl border-l-4 border-secondary">
+            <div className="absolute -bottom-6 left-4 sm:left-6 md:-left-6 bg-white p-4 sm:p-6 rounded-2xl shadow-xl border-l-4 border-secondary w-56 sm:w-64">
               <div className="text-sm text-gray-600 mb-1">Starting from</div>
               <div className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">₹0 Down</div>
               <div className="text-sm text-gray-600">Flexible financing available</div>
             </div>
             
             {/* Award Badge */}
-            <div className="absolute top-6 right-6 bg-[#FFA500] text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+            <div className="absolute top-4 right-4 sm:top-6 sm:right-6 bg-[#FFA500] text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
               #1 Solar Provider
             </div>
             </div>

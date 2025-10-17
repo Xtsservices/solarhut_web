@@ -57,7 +57,7 @@ export function MapSection() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
           {/* Contact Information */}
           <div className="space-y-6">
             <h3 className="text-2xl font-bold text-gray-900 mb-6">
@@ -131,7 +131,7 @@ export function MapSection() {
           {/* Embedded Map */}
           <div className="relative">
             <div className="bg-white p-4 rounded-lg shadow-lg">
-              <div className="relative w-full h-80 lg:h-96 bg-gray-100 rounded-lg overflow-hidden">
+              <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-gray-100 rounded-lg overflow-hidden">
                 {/* Embedded Google Map */}
                 <iframe
                   src="https://maps.google.com/maps?q=RAM+SVR,+Plot+No+4/2,+Sector+1,+Madhapur,+HUDA+Techno+Enclave,+HITEC+City,+Hyderabad,+Telangana+500081&t=&z=16&ie=UTF8&iwloc=&output=embed"
@@ -147,7 +147,7 @@ export function MapSection() {
               </div>
               
               {/* Map overlay with company info */}
-              <div className="absolute top-8 left-8 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg max-w-xs">
+              <div className="absolute top-4 left-4 sm:top-8 sm:left-8 bg-white/95 backdrop-blur-sm p-3 sm:p-4 rounded-lg shadow-lg max-w-xs sm:max-w-xs z-20">
                 <div className="flex items-center space-x-3 mb-2">
                   <div className="w-3 h-3 bg-[#FFA500] rounded-full animate-pulse"></div>
                   <h4 className="font-bold text-gray-900">Solar Hut Solutions</h4>

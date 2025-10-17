@@ -18,7 +18,7 @@ import {
 export function ResidentialSolutionsPage() {
   const packages = [
     {
-      name: "Basic Home",
+      name: "Starter Home",
       capacity: "3 kW",
       price: "₹1,80,000",
       originalPrice: "₹2,40,000",
@@ -34,7 +34,7 @@ export function ResidentialSolutionsPage() {
       recommended: false
     },
     {
-      name: "Premium Home",
+      name: "Advanced Home",
       capacity: "5 kW",
       price: "₹2,85,000",
       originalPrice: "₹3,75,000",
@@ -51,7 +51,7 @@ export function ResidentialSolutionsPage() {
       recommended: true
     },
     {
-      name: "Luxury Home",
+      name: "Premium Home",
       capacity: "10 kW",
       price: "₹5,40,000",
       originalPrice: "₹7,20,000",
@@ -74,66 +74,65 @@ export function ResidentialSolutionsPage() {
     {
       icon: Sun,
       title: "High-Efficiency Panels",
-      description: "Tier 1 monocrystalline panels with 22%+ efficiency rating"
+      description: "Tier 1 monocrystalline panels delivering 22%+ efficiency"
     },
     {
       icon: Shield,
       title: "25-Year Warranty",
-      description: "Comprehensive warranty covering panels, inverter, and workmanship"
+      description: "Covers panels, inverter, and professional installation"
     },
     {
       icon: Smartphone,
       title: "Smart Monitoring",
-      description: "Real-time monitoring through mobile app and web dashboard"
+      description: "Track your energy production in real-time via mobile app"
     },
     {
       icon: Zap,
       title: "Net Metering",
-      description: "Sell excess power back to the grid and earn credits"
+      description: "Sell excess energy back to the grid and earn credits"
     },
     {
       icon: Battery,
       title: "Battery Ready",
-      description: "Easily upgradeable to hybrid system with battery storage"
+      description: "Upgrade to hybrid systems with battery storage easily"
     },
     {
       icon: Wifi,
       title: "IoT Enabled",
-      description: "Smart inverters with WiFi connectivity and remote diagnostics"
+      description: "Smart inverters with WiFi and remote diagnostics"
     }
   ];
 
   const benefits = [
-    "Reduce electricity bills by up to 90%",
+    "Slash monthly electricity bills",
     "Increase property value by 15-20%",
-    "Government subsidies up to 40%",
-    "Zero maintenance for 25 years",
+    "Government incentives up to 40%",
+    "Maintenance-free for 25 years",
     "ROI within 3-4 years",
-    "Reduce carbon footprint significantly"
+    "Contribute to a cleaner planet"
   ];
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FEF7ED' }}>
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-[#ffa500] to-[#FFa500] text-gray-900 py-24">
-        
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="text-5xl md:text-6xl font-bold mb-6">
-                Power Your Home with Solar
+                Harness Solar Power for Your Home
               </h1>
               <p className="text-xl md:text-2xl mb-8">
-                Save up to 90% on your electricity bills with our premium residential solar solutions. 
-                Clean energy, guaranteed savings, and complete peace of mind.
+                Cut your electricity bills drastically with our reliable residential solar systems. 
+                Eco-friendly, cost-effective, and fully hassle-free.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-gray-900">
+                <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-white">
                   Get Free Quote
-                  <ArrowRight className="ml-2 w-5 h-5" />
+                  <ArrowRight className="ml-2 w-5 h-5 text-white" />
                 </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-                  Calculate Savings
+                <Button size="lg" variant="outline" className="border-white text-black hover:bg-white hover:text-[#ffa500]-600">
+                  Estimate Your Savings
                   <Calculator className="ml-2 w-5 h-5" />
                 </Button>
               </div>
@@ -153,9 +152,9 @@ export function ResidentialSolutionsPage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose Home Solar?</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Homeowners Choose Solar</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Join thousands of homeowners who are saving money and helping the environment
+              Discover why thousands of homeowners trust solar for energy independence and sustainability.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -173,16 +172,16 @@ export function ResidentialSolutionsPage() {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Choose Your Solar Package</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Solar Packages for Every Home</h2>
             <p className="text-xl text-gray-600">
-              Tailored solutions for different home sizes and energy requirements
+              Customized plans designed for small to large homes to meet your energy needs
             </p>
           </div>
           <div className="grid lg:grid-cols-3 gap-8">
             {packages.map((pkg, index) => (
-              <Card key={index} className={`relative overflow-hidden border-0 shadow-xl ${pkg.recommended ? 'ring-2 ring-blue-500' : ''}`}>
+              <Card key={index} className={`relative overflow-hidden border-0 shadow-xl ₹{pkg.recommended ? 'ring-2 ring-blue-500' : ''}`}>
                 {pkg.recommended && (
-                  <div className="absolute top-0 left-0 right-0 bg-#ffa405-500 text-white text-center py-2">
+                  <div className="absolute top-0 left-0 right-0 text-center py-2">
                     <Badge className="bg-blue-600">Most Popular</Badge>
                   </div>
                 )}
@@ -213,9 +212,9 @@ export function ResidentialSolutionsPage() {
                       </li>
                     ))}
                   </ul>
-                  <Button className={`w-full ${pkg.recommended ? 'bg-[#ffa405] hover:bg-[#ffa405]/90' : ''}`}>
+                  {/* <Button className={`w-full ₹{pkg.recommended ? 'bg-[#ffa405] hover:bg-[#ffa405]/90' : ''}`}>
                     Get This Package
-                  </Button>
+                  </Button> */}
                 </CardContent>
               </Card>
             ))}
@@ -227,9 +226,9 @@ export function ResidentialSolutionsPage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Advanced Features</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Advanced Solar Features</h2>
             <p className="text-xl text-gray-600">
-              Cutting-edge technology for maximum efficiency and performance
+              Innovative technology for maximum energy efficiency
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -255,17 +254,17 @@ export function ResidentialSolutionsPage() {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Simple Installation Process</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Seamless Installation Process</h2>
             <p className="text-xl text-gray-600">
-              From consultation to commissioning, we handle everything
+              We take care of everything, from consultation to commissioning
             </p>
           </div>
           <div className="grid md:grid-cols-4 gap-8">
             {[
-              { step: "1", title: "Site Survey", description: "Free technical assessment of your rooftop" },
-              { step: "2", title: "Design & Quote", description: "Customized system design with detailed pricing" },
-              { step: "3", title: "Installation", description: "Professional installation by certified technicians" },
-              { step: "4", title: "Commissioning", description: "System testing and grid connection" }
+              { step: "1", title: "Rooftop Survey", description: "Free technical inspection of your roof" },
+              { step: "2", title: "Design & Quote", description: "Tailored system and transparent pricing" },
+              { step: "3", title: "Installation", description: "Professional installation by certified experts" },
+              { step: "4", title: "Commissioning", description: "Final testing and grid connection" }
             ].map((process, index) => (
               <div key={index} className="text-center">
                 <div className="w-16 h-16 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4" style={{ backgroundColor: '#ffa405' }}>
@@ -280,17 +279,21 @@ export function ResidentialSolutionsPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-[#ffa500] to-[#FFa500] text-#ffb700">
+      <section className="py-16 bg-gradient-to-r from-[#ffa500] to-[#FFa500]" style={{ color: '#ffb700' }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-4xl font-bold mb-4" style={{ color: '#ffa405' }}>Start Your Solar Journey Today</h2>
-          <p className="text-xl mb-8">
-            Get a free site survey and personalized quote for your home solar system
-          </p>
+          <h2 className="text-4xl font-bold mb-4" style={{ color: '#000000' }}>Begin Your Solar Journey</h2>
+            <p className="text-xl mb-8" style={{ color: '#000000' }}>
+            Book a free site assessment and get a personalized solar solution for your home
+            </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-[#ffa405] hover:bg-gray-100">
+            {/* <Button size="lg" className="bg-white text-black hover:bg-gray-100">
               Schedule Free Survey
-            </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+            </Button> */}
+            <Button
+              size="lg"
+              variant="outline"
+              className="border border-[#ffa405] text-black hover:bg-white hover:text-[#000000]-600"
+            >
               Call: 1800-123-SOLAR
             </Button>
           </div>

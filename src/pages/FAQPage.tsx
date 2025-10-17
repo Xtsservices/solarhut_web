@@ -165,7 +165,7 @@ export function FAQPage() {
                     <CardContent className="p-0">
                       <Accordion type="single" collapsible className="w-full">
                         {category.faqs.map((faq, faqIndex) => (
-                          <AccordionItem key={faqIndex} value={`${categoryIndex}-${faqIndex}`} className="border-b border-gray-200 last:border-b-0">
+                          <AccordionItem key={faqIndex} value={`₹{categoryIndex}-₹{faqIndex}`} className="border-b border-gray-200 last:border-b-0">
                             <AccordionTrigger className="px-6 py-4 text-left hover:no-underline hover:bg-gray-50">
                               <span className="text-lg font-semibold text-gray-900">{faq.question}</span>
                             </AccordionTrigger>
@@ -224,7 +224,7 @@ export function FAQPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="bg-white text-[#FFA500] hover:bg-gray-100">
               <Phone className="mr-2 w-5 h-5" />
-              Call: 1800-123-SOLAR
+              Call: +91 98123 45678
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#FFA500]">
               <MessageSquare className="mr-2 w-5 h-5" />

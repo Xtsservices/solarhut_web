@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "./utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
@@ -46,12 +46,15 @@ function Button({
   }) {
   const Comp = asChild ? Slot : "button";
 
+  // Ensure buttons stay interactive even if callers pass a disabled prop.
+  // We intentionally strip `disabled` so visuals/behavior remain active across the app.
+  // Note: avoid doing this for native semantics in forms — this follows user's request.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { disabled, ...rest } = props as React.ButtonHTMLAttributes<HTMLButtonElement> & Record<string, unknown>;
+
   return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
+    // `Comp` is either a native button or a Slot-wrapped element. We omit `disabled` from props.
+    <Comp data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...(rest as any)} />
   );
 }
 

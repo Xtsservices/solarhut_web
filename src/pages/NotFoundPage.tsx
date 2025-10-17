@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { 
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 export function NotFoundPage() {
+  const navigate = useNavigate();
   const quickLinks = [
     { title: "Home", path: "/", icon: Home },
     { title: "Solar Solutions", path: "/solutions", icon: Sun },
@@ -54,7 +55,7 @@ export function NotFoundPage() {
                 Go Back Home
               </Button>
             </Link>
-            <Button size="lg" variant="outline" onClick={() => window.history.back()}>
+            <Button size="lg" variant="outline" onClick={() => navigate(-1)}>
               <ArrowLeft className="mr-2 w-5 h-5" />
               Go Back
             </Button>

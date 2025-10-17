@@ -13,7 +13,7 @@ export function Testimonials() {
       location: "Austin, TX",
       avatar: "SJ",
       rating: 5,
-      savings: "$2,400/year",
+      savings: "₹2,400/year",
       installDate: "2023",
       quote: "Solar Hut Solutions exceeded our expectations! The installation was seamless, and we're already seeing huge savings on our electricity bills. The team was professional, knowledgeable, and kept us informed throughout the entire process.",
       system: "12kW Residential System",
@@ -26,7 +26,7 @@ export function Testimonials() {
       location: "Dallas, TX",
       avatar: "MC",
       rating: 5,
-      savings: "$15,000/year",
+      savings: "₹15,000/year",
       installDate: "2023",
       quote: "As a business owner, the ROI from our solar installation has been incredible. Solar Hut Solutions delivered exactly what they promised, and our energy costs have dropped by 60%. Highly recommend them for any commercial project.",
       system: "85kW Commercial System",
@@ -39,7 +39,7 @@ export function Testimonials() {
       location: "Houston, TX",
       avatar: "JM",
       rating: 5,
-      savings: "$3,800/year",
+      savings: "₹3,800/year",
       installDate: "2024",
       quote: "Managing multiple properties, I needed a reliable solar partner. Solar Hut Solutions has been amazing - from the initial consultation to ongoing maintenance. Our tenants love the reduced utility costs!",
       system: "18kW Multi-Property System",
@@ -52,7 +52,7 @@ export function Testimonials() {
       location: "San Antonio, TX",
       avatar: "DT",
       rating: 5,
-      savings: "$1,850/year",
+      savings: "₹1,850/year",
       installDate: "2023",
       quote: "The quality of work and customer service from Solar Hut Solutions is outstanding. They handled everything from permits to installation, and our system has been performing flawlessly for over a year.",
       system: "8.5kW Residential System",
@@ -65,7 +65,7 @@ export function Testimonials() {
       location: "Fort Worth, TX",
       avatar: "LR",
       rating: 5,
-      savings: "$45,000/year",
+      savings: "₹45,000/year",
       installDate: "2022",
       quote: "Our industrial solar installation has been a game-changer for our manufacturing operations. The energy savings allow us to reinvest in our business while reducing our environmental impact.",
       system: "200kW Industrial System",
@@ -78,7 +78,7 @@ export function Testimonials() {
       location: "Plano, TX",
       avatar: "RK",
       rating: 5,
-      savings: "$2,100/year",
+      savings: "₹2,100/year",
       installDate: "2024",
       quote: "From start to finish, Solar Hut Solutions made the process easy and stress-free. The installation crew was respectful of our property, and the system looks great on our roof. We're thrilled with the results!",
       system: "10kW Residential System",
@@ -88,7 +88,7 @@ export function Testimonials() {
 
   const stats = [
     { label: "Average Satisfaction", value: "4.9/5", icon: Star },
-    { label: "Average Savings", value: "$8,500", icon: DollarSign },
+    { label: "Average Savings", value: "₹8,500", icon: DollarSign },
     { label: "Happy Customers", value: "1,000+", icon: Quote },
     { label: "Years of Trust", value: "15+", icon: Calendar }
   ];
@@ -97,7 +97,7 @@ export function Testimonials() {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+        className={`w-4 h-4 ₹{i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
       />
     ));
   };
@@ -136,7 +136,7 @@ export function Testimonials() {
         </div>
 
         {/* Featured Testimonials */}
-        <div className="mb-16">
+        {/* <div className="mb-16">
           <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Featured Customer Stories</h3>
           <div className="grid lg:grid-cols-3 gap-8">
             {testimonials.filter(testimonial => testimonial.featured).map((testimonial) => (
@@ -189,7 +189,7 @@ export function Testimonials() {
               </Card>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* Additional Testimonials */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -235,15 +235,18 @@ export function Testimonials() {
               Watch video testimonials and read detailed case studies from our satisfied customers across Texas.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300">
+              {/* <button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300">
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                 </svg>
                 Watch Video Testimonials
-              </button>
-              <button className="inline-flex items-center px-6 py-3 border-2 border-primary text-primary rounded-lg hover:bg-orange-50 transition-all duration-300">
-                Read All Reviews
-              </button>
+              </button> */}
+                <button
+                  className="inline-flex items-center px-6 py-3 border-2 border-primary text-primary rounded-lg hover:bg-orange-50 transition-all duration-300"
+                  onClick={() => window.location.href = "/client-stories"}
+                >
+                  Read All Reviews
+                </button>
             </div>
           </div>
         </div>

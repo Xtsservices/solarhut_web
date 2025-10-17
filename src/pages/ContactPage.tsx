@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -15,8 +16,10 @@ import {
   Home,
   ArrowRight
 } from "lucide-react";
+import { MapSection } from "../components/MapSection";
 
 export function ContactPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -44,7 +47,7 @@ export function ContactPage() {
     {
       icon: Phone,
       title: "Phone Numbers",
-      details: ["Sales: +91 1800-123-SOLAR", "Support: +91 1800-456-7890"]
+  details: ["Sales: +91 98123 45678", "Support: +91 91234 56789"]
     },
     {
       icon: Mail,
@@ -62,25 +65,25 @@ export function ContactPage() {
     {
       city: "Mumbai",
       address: "123 Solar Street, Green City, Mumbai 400001",
-      phone: "+91 22 1234 5678",
+  phone: "+91 98111 22334",
       email: "mumbai@solarhutsolutions.com"
     },
     {
       city: "Delhi",
       address: "456 Energy Avenue, New Delhi 110001",
-      phone: "+91 11 1234 5678",
+  phone: "+91 91234 56780",
       email: "delhi@solarhutsolutions.com"
     },
     {
       city: "Bangalore",
       address: "789 Tech Park Road, Bangalore 560001",
-      phone: "+91 80 1234 5678",
+  phone: "+91 98765 43210",
       email: "bangalore@solarhutsolutions.com"
     },
     {
       city: "Chennai",
       address: "321 Solar Plaza, Chennai 600001",
-      phone: "+91 44 1234 5678",
+  phone: "+91 99887 76655",
       email: "chennai@solarhutsolutions.com"
     }
   ];
@@ -132,7 +135,7 @@ export function ContactPage() {
             Submit Another Quote
           </Button>
           <Button 
-            onClick={() => window.location.href = '/'}
+            onClick={() => navigate('/')}
             size="lg" 
             variant="outline" 
             className="border-[#FFA500] text-[#FFA500] hover:bg-orange-50 w-full"
@@ -373,6 +376,8 @@ export function ContactPage() {
           </div>
         </div>
       </section>
+      
+      <MapSection />
     </div>
   );
 }

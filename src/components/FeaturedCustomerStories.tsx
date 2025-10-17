@@ -190,7 +190,7 @@ export function FeaturedCustomerStories() {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${i < rating ? 'text-[#FFA500] fill-current' : 'text-gray-300'}`}
+        className={`w-4 h-4 ₹{i < rating ? 'text-[#FFA500] fill-current' : 'text-gray-300'}`}
       />
     ));
   };
@@ -243,7 +243,7 @@ export function FeaturedCustomerStories() {
                 onMouseLeave={() => setHoveredCard(null)}
                 className="group"
               >
-                <Card className={`h-full border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 ${story.featured ? 'ring-2 ring-[#FFA500]/20' : ''} ${hoveredCard === story.id ? 'scale-[1.02]' : ''}`}>
+                <Card className={`h-full border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 ₹{story.featured ? 'ring-2 ring-[#FFA500]/20' : ''} ₹{hoveredCard === story.id ? 'scale-[1.02]' : ''}`}>
                   <CardContent className="p-0">
                     {/* Header with image and basic info */}
                     <div className="relative p-6 pb-4">
@@ -321,7 +321,7 @@ export function FeaturedCustomerStories() {
                     {/* Type badge and environmental impact */}
                     <div className="px-6 pb-6">
                       <div className="flex items-center justify-between">
-                        <Badge className={`${typeColors.bg} ${typeColors.text} ${typeColors.border} border`}>
+                        <Badge className={`₹{typeColors.bg} ₹{typeColors.text} ₹{typeColors.border} border`}>
                           <TypeIcon className="w-3 h-3 mr-1" />
                           {story.type}
                         </Badge>

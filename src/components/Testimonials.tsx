@@ -97,7 +97,7 @@ export function Testimonials() {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ₹{i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+        className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
       />
     ));
   };
@@ -241,12 +241,14 @@ export function Testimonials() {
                 </svg>
                 Watch Video Testimonials
               </button> */}
+              <div className="w-full sm:w-auto">
                 <button
-                  className="inline-flex items-center px-6 py-3 border-2 border-primary text-primary rounded-lg hover:bg-orange-50 transition-all duration-300"
+                  className="w-full sm:inline-flex items-center justify-center px-4 py-3 border-2 border-primary text-primary rounded-lg hover:bg-orange-50 transition-all duration-300"
                   onClick={() => window.location.href = "/client-stories"}
                 >
                   Read All Reviews
                 </button>
+              </div>
             </div>
           </div>
         </div>

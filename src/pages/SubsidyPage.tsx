@@ -392,10 +392,10 @@ export function SubsidyPage() {
               <FileText className="mr-2 w-5 h-5" />
               Start Application
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+            {/* <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
               <DollarSign className="mr-2 w-5 h-5" />
               Calculate Savings
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>

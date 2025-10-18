@@ -8,11 +8,23 @@ import {
   Linkedin 
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import logoImage from '../assets/logo.png';
+import { useState } from 'react';
+// Use URL import to avoid TypeScript module resolution issues if filename contains spaces
+const logoImage = new URL('../assets/SolarHut Logo.png', import.meta.url).href;
 
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    services: false,
+    company: false,
+    resources: false,
+  });
+
+  const toggleSection = (key: keyof typeof openSections) => {
+    setOpenSections((s) => ({ ...s, [key]: !s[key] }));
+  };
+  
 
   const footerLinks = {
     services: [
@@ -47,10 +59,10 @@ export function Footer() {
 
   return (
     <footer className="bg-black text-white">
-      <div className="section-container py-16">
-        <div className="grid lg:grid-cols-4 gap-8">
+      <div className="section-container py-6 md:py-12 lg:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {/* Company Info */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <Link to="/" className="flex items-center space-x-3">
               <img 
                 src={logoImage} 
@@ -59,12 +71,12 @@ export function Footer() {
               />
             </Link>
             
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
               Leading solar energy solutions provider in India. 
               Helping families and businesses save money while protecting the environment.
             </p>
             
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               <div className="flex items-center space-x-3">
                 <MapPin className="w-4 h-4 text-[#FFA500]" />
                 <span className="text-sm text-gray-300">Hyderabad,Telangana,India.</span>
@@ -86,8 +98,19 @@ export function Footer() {
 
           {/* Services */}
           <div>
-            <h3 className="font-semibold mb-4 text-[#FFA500]">Services</h3>
-            <ul className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold mb-2 text-[#FFA500]">Services</h3>
+              <button
+                className="sm:hidden text-gray-300 text-xl leading-none"
+                aria-expanded={!!openSections.services}
+                aria-controls="footer-services"
+                onClick={() => toggleSection('services')}
+                type="button"
+              >
+                {openSections.services ? '−' : '+'}
+              </button>
+            </div>
+            <ul id="footer-services" className={`space-y-1 sm:space-y-2 ${openSections.services ? 'block' : 'hidden'} sm:block`}>
               {footerLinks.services.map((link, index) => (
                 <li key={index}>
                   <a 
@@ -103,8 +126,19 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <h3 className="font-semibold mb-4 text-[#FFA500]">Company</h3>
-            <ul className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold mb-2 text-[#FFA500]">Company</h3>
+              <button
+                className="sm:hidden text-gray-300 text-xl leading-none"
+                aria-expanded={!!openSections.company}
+                aria-controls="footer-company"
+                onClick={() => toggleSection('company')}
+                type="button"
+              >
+                {openSections.company ? '−' : '+'}
+              </button>
+            </div>
+            <ul id="footer-company" className={`space-y-1 sm:space-y-2 ${openSections.company ? 'block' : 'hidden'} sm:block`}>
               {footerLinks.company.map((link, index) => (
                 <li key={index}>
                   <a 
@@ -120,8 +154,19 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h3 className="font-semibold mb-4 text-[#FFA500]">Resources</h3>
-            <ul className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold mb-2 text-[#FFA500]">Resources</h3>
+              <button
+                className="sm:hidden text-gray-300 text-xl leading-none"
+                aria-expanded={!!openSections.resources}
+                aria-controls="footer-resources"
+                onClick={() => toggleSection('resources')}
+                type="button"
+              >
+                {openSections.resources ? '−' : '+'}
+              </button>
+            </div>
+            <ul id="footer-resources" className={`space-y-1 sm:space-y-2 ${openSections.resources ? 'block' : 'hidden'} sm:block`}>
               {footerLinks.resources.map((link, index) => (
                 <li key={index}>
                   <a 
@@ -137,8 +182,8 @@ export function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+          <div className="border-t border-gray-800 mt-8 pt-6">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
             {/* Social Links */}
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-400">Follow us:</span>
@@ -172,13 +217,10 @@ export function Footer() {
         <div className="border-t border-gray-800 mt-8 pt-8">
           <div className="text-center">
             <p className="text-sm text-gray-400 mb-4">Licensed • Bonded • Insured</p>
-            <div className="flex justify-center items-center space-x-8 text-xs text-gray-500">
+            <div className="flex flex-wrap justify-center items-center gap-3 text-xs text-gray-500">
               <span>MNRE Certified</span>
-              <span>•</span>
               <span>ISO 9001:2015</span>
-              <span>•</span>
               <span>BIS Approved</span>
-              <span>•</span>
               <span>Authorized Solar Dealer</span>
             </div>
           </div>

@@ -199,7 +199,7 @@ export function Contact() {
                       Get Free Quote
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
-                    <Button 
+                    {/* <Button 
                       type="button" 
                       size="lg" 
                       variant="outline" 
@@ -208,7 +208,7 @@ export function Contact() {
                     >
                       <Calculator className="w-4 h-4 mr-2" />
                       Calculate Savings
-                    </Button>
+                    </Button> */}
                   </div>
                 </form>
               </CardContent>

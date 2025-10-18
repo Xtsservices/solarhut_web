@@ -151,41 +151,40 @@ export function ContactPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FEF7ED' }}>
       {/* Hero Section */}
-  <section className="relative bg-gradient-to-br from-[#ffa500] to-[#FFa500] text-gray-900 py-24">
+  <section className="relative bg-gradient-to-br from-[#ffa500] to-[#FFa500] text-gray-900 py-16 sm:py-20">
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Get in Touch
             </h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-              Ready to start your solar journey? We're here to help you every step of the way. 
-              Get a free consultation and personalized quote today.
+            <p className="text-lg md:text-xl mb-6 max-w-2xl mx-auto">
+              Ready to start your solar journey? We're here to help you every step of the way. Get a free consultation and personalized quote today.
             </p>
           </div>
         </div>
       </section>
 
       {/* Contact Form & Info Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12">
+      <section className="py-12 sm:py-14">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Contact Form */}
             {showThankYou ? (
               <ThankYouCard />
             ) : (
               <Card className="border-0 shadow-xl">
               <CardHeader>
-                <CardTitle className="text-2xl flex items-center">
-                  <MessageSquare className="w-6 h-6 text-[#FFA500] mr-2" />
+                <CardTitle className="text-xl sm:text-2xl flex items-center">
+                  <MessageSquare className="w-5 h-5 text-[#FFA500] mr-2" />
                   Request a Quote
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-4">
+              <CardContent className="p-4 sm:p-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Full Name *
                       </label>
                       <Input
@@ -197,7 +196,7 @@ export function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Phone Number *
                       </label>
                       <Input
@@ -211,7 +210,7 @@ export function ContactPage() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email Address *
                     </label>
                     <Input
@@ -224,7 +223,7 @@ export function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Solution Type
                     </label>
                     <Select onValueChange={(value) => setFormData({ ...formData, solutionType: value })}>
@@ -242,7 +241,7 @@ export function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Message
                     </label>
                     <Textarea

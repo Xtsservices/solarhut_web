@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
-import { BackToTop } from "./components/BackToTop";
 import { ScrollToTop } from "./components/ScrollToTop";
 
 // Direct imports instead of lazy loading to avoid timeout issues
@@ -54,8 +53,7 @@ export default function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
-        <Footer />
-        <BackToTop />
+  <Footer />
       </div>
     </Router>
   );

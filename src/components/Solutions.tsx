@@ -144,7 +144,7 @@ export function Solutions() {
           </p>
         </div>
 
-        {/* Solutions Tabs */}
+       
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex w-full overflow-x-auto space-x-2 mb-6 lg:mb-12 p-1 bg-gray-100">
             {solutions.map((solution) => (

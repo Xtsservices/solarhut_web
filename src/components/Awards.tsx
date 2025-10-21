@@ -206,7 +206,7 @@ export function Awards() {
           </div>
         </div>
 
-        {/* Certifications */}
+      
         <div className="mb-16">
           <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Professional Certifications</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -221,9 +221,9 @@ export function Awards() {
           </div>
         </div>
 
-        {/* Events */}
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Upcoming Events */}
+       
+        {/* <div className="grid lg:grid-cols-2 gap-12">
+        
           <div>
             <h3 className="text-2xl font-bold text-gray-900 mb-8">Upcoming Events</h3>
             <div className="space-y-6">
@@ -253,17 +253,17 @@ export function Awards() {
                       </Badge>
                     </div>
                     <p className="text-gray-700 mb-4">{event.description}</p>
-                    {/* <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-orange-50">
+                    <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-orange-50">
                       Learn More
                       <ArrowRight className="w-3 h-3 ml-2" />
-                    </Button> */}
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
             </div>
           </div>
 
-          {/* Recent Events */}
+        
           <div>
             <h3 className="text-2xl font-bold text-gray-900 mb-8">Recent Events</h3>
             <div className="space-y-6">
@@ -290,7 +290,7 @@ export function Awards() {
                 </Card>
               ))}
               
-              {/* View More Events */}
+              
               <Card className="border-0 shadow-lg bg-gradient-to-r from-orange-50 to-amber-50">
                 <CardContent className="p-6 text-center">
                   <Calendar className="w-8 h-8 text-primary mx-auto mb-3" />
@@ -298,14 +298,14 @@ export function Awards() {
                   <p className="text-sm text-gray-600 mb-4">
                     Get notified about upcoming events, workshops, and community initiatives.
                   </p>
-                  {/* <Button size="sm" className="bg-gradient-to-r from-primary to-secondary hover:from-orange-600 hover:to-orange-700 text-white">
+                  <Button size="sm" className="bg-gradient-to-r from-primary to-secondary hover:from-orange-600 hover:to-orange-700 text-white">
                     Subscribe to Updates
-                  </Button> */}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );

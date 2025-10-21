@@ -6,15 +6,15 @@ const slides = [
         alt: "Featured Slide 1",
     },
     {
-        src: "/src/assets/SolarHutImages/Solar2.jpeg",
+        src: "/src/assets/SolarHutImages/Solar8.jpeg",
         alt: "Featured Slide 2",
     },
      {
-        src: "/src/assets/SolarHutImages/Solar3.jpeg",
+        src: "/src/assets/SolarHutImages/Solar6.jpeg",
         alt: "Featured Slide 3",
     },
      {
-        src: "/src/assets/SolarHutImages/Solar4.jpeg",
+        src: "/src/assets/SolarHutImages/Solar7.jpeg",
         alt: "Featured Slide 4",
     },
 ];

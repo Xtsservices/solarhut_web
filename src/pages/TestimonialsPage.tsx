@@ -345,12 +345,16 @@ export function TestimonialsPage() {
             Join thousands of satisfied customers who have made the smart switch to solar energy
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-[#FFA500] hover:bg-gray-100">
+            <Button
+              size="lg"
+              className="bg-white text-[#FFA500] hover:bg-gray-100"
+              onClick={() => { window.location.href = '/contact'; }}
+            >
               Get Your Quote Today
             </Button>
-            <Button size="lg" variant="outline" className="border-[#FFA500] text-[#FFA500] hover:bg-gray-100 hover:text-white">
+            {/* <Button size="lg" variant="outline" className="border-[#FFA500] text-[#FFA500] hover:bg-gray-100 hover:text-white">
               Schedule Free Consultation
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>

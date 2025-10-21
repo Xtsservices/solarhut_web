@@ -388,7 +388,11 @@ export function IndustrialSolutionsPage() {
                 Top Industrial Solar Power Rooftop Systems Provider in India. Solar Hut Solutions specializes in cutting-edge grid-tied solar PV systems that seamlessly integrate with your existing power grid.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-white">
+                <Button
+                  size="lg"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                  onClick={() => { window.location.href = '/contact'; }}
+                >
                   Request a Quote
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
@@ -533,27 +537,29 @@ export function IndustrialSolutionsPage() {
       {/* Process Section */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Flexible Financing Options</h2>
-            <p className="text-xl text-gray-600">
-              Convert your lifetime electricity bills into short-term EMIs with Solar Hut Solutions. Enjoy clean, renewable energy while saving on monthly expenses.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { step: "1", title: "Consultation", description: "Get expert suggestions and customized plans" },
-              { step: "2", title: "Financing", description: "Tailored EMI options for easy transition" },
-              { step: "3", title: "Installation", description: "Professional setup with minimal disruption" },
-              { step: "4", title: "Support", description: "Ongoing maintenance and performance monitoring" }
-            ].map((process, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 bg-[#ffa500]-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                  {process.step}
+          <div className="bg-[#ffffff] text-black p-8 rounded-xl">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold mb-4">Flexible Financing Options</h2>
+              <p className="text-xl text-black/90 max-w-3xl mx-auto">
+                Convert your lifetime electricity bills into short-term EMIs with Solar Hut Solutions. Enjoy clean, renewable energy while saving on monthly expenses.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                { step: "1", title: "Consultation", description: "Get expert suggestions and customized plans" },
+                { step: "2", title: "Financing", description: "Tailored EMI options for easy transition" },
+                { step: "3", title: "Installation", description: "Professional setup with minimal disruption" },
+                { step: "4", title: "Support", description: "Ongoing maintenance and performance monitoring" }
+              ].map((process, index) => (
+                <div key={index} className="text-center">
+                  <div className="w-16 h-16 bg-[#FFA500] text-[#ffffff] rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                    {process.step}
+                  </div>
+                  <h3 className="text-xl font-bold mb-2 text-white">{process.title}</h3>
+                  <p className="text-white/90">{process.description}</p>
                 </div>
-                <h3 className="text-xl font-bold mb-2">{process.title}</h3>
-                <p className="text-gray-600">{process.description}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>

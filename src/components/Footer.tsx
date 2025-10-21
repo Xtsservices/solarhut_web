@@ -8,9 +8,9 @@ import {
   Linkedin 
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 // Use URL import to avoid TypeScript module resolution issues if filename contains spaces
-const logoImage = new URL('../assets/SolarHut Logo.png', import.meta.url).href;
+const logoImage = new URL('../assets/logo.png', import.meta.url).href;
 
 
 export function Footer() {
@@ -20,6 +20,17 @@ export function Footer() {
     company: false,
     resources: false,
   });
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 639px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener ? mq.addEventListener('change', update) : mq.addListener(update);
+    return () => mq.removeEventListener ? mq.removeEventListener('change', update) : mq.removeListener(update);
+  }, []);
 
   const toggleSection = (key: keyof typeof openSections) => {
     setOpenSections((s) => ({ ...s, [key]: !s[key] }));
@@ -58,8 +69,8 @@ export function Footer() {
   ];
 
   return (
-    <footer className="bg-black text-white">
-      <div className="section-container py-6 md:py-12 lg:py-16">
+  <footer className="bg-black text-white pt-10 md:pt-12 lg:pt-16">
+  <div className="section-container pt-20 pb-6 md:pt-12 md:pb-12 lg:pt-16 lg:pb-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {/* Company Info */}
           <div className="space-y-4 sm:space-y-6">
@@ -67,7 +78,7 @@ export function Footer() {
               <img 
                 src={logoImage} 
                 alt="Solar Hut Solutions Logo" 
-                className="h-12 w-auto"
+                className="h-20 md:h-24 w-auto mt-4 md:mt-6"
               />
             </Link>
             
@@ -99,18 +110,20 @@ export function Footer() {
           {/* Services */}
           <div>
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold mb-2 text-[#FFA500]">Services</h3>
-              <button
-                className="sm:hidden text-gray-300 text-xl leading-none"
-                aria-expanded={!!openSections.services}
-                aria-controls="footer-services"
-                onClick={() => toggleSection('services')}
-                type="button"
-              >
-                {openSections.services ? '−' : '+'}
-              </button>
+              <h3 className="font-semibold mb-2 text-[#FFA500] mt-4 md:mt-6">Services</h3>
+              {isMobile && (
+                <button
+                  className="text-gray-300 text-xl leading-none"
+                  aria-expanded={!!openSections.services}
+                  aria-controls="footer-services"
+                  onClick={() => toggleSection('services')}
+                  type="button"
+                >
+                  {openSections.services ? '−' : '+'}
+                </button>
+              )}
             </div>
-            <ul id="footer-services" className={`space-y-1 sm:space-y-2 ${openSections.services ? 'block' : 'hidden'} sm:block`}>
+            <ul id="footer-services" className={`${isMobile ? (openSections.services ? 'block' : 'hidden') : 'block'} space-y-1 sm:space-y-2`}>
               {footerLinks.services.map((link, index) => (
                 <li key={index}>
                   <a 
@@ -127,18 +140,20 @@ export function Footer() {
           {/* Company */}
           <div>
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold mb-2 text-[#FFA500]">Company</h3>
-              <button
-                className="sm:hidden text-gray-300 text-xl leading-none"
-                aria-expanded={!!openSections.company}
-                aria-controls="footer-company"
-                onClick={() => toggleSection('company')}
-                type="button"
-              >
-                {openSections.company ? '−' : '+'}
-              </button>
+              <h3 className="font-semibold mb-2 text-[#FFA500] mt-4 md:mt-6">Company</h3>
+              {isMobile && (
+                <button
+                  className="text-gray-300 text-xl leading-none"
+                  aria-expanded={!!openSections.company}
+                  aria-controls="footer-company"
+                  onClick={() => toggleSection('company')}
+                  type="button"
+                >
+                  {openSections.company ? '−' : '+'}
+                </button>
+              )}
             </div>
-            <ul id="footer-company" className={`space-y-1 sm:space-y-2 ${openSections.company ? 'block' : 'hidden'} sm:block`}>
+            <ul id="footer-company" className={`${isMobile ? (openSections.company ? 'block' : 'hidden') : 'block'} space-y-1 sm:space-y-2`}>
               {footerLinks.company.map((link, index) => (
                 <li key={index}>
                   <a 
@@ -155,18 +170,20 @@ export function Footer() {
           {/* Resources */}
           <div>
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold mb-2 text-[#FFA500]">Resources</h3>
-              <button
-                className="sm:hidden text-gray-300 text-xl leading-none"
-                aria-expanded={!!openSections.resources}
-                aria-controls="footer-resources"
-                onClick={() => toggleSection('resources')}
-                type="button"
-              >
-                {openSections.resources ? '−' : '+'}
-              </button>
+              <h3 className="font-semibold mb-2 text-[#FFA500] mt-4 md:mt-6">Resources</h3>
+              {isMobile && (
+                <button
+                  className="text-gray-300 text-xl leading-none"
+                  aria-expanded={!!openSections.resources}
+                  aria-controls="footer-resources"
+                  onClick={() => toggleSection('resources')}
+                  type="button"
+                >
+                  {openSections.resources ? '−' : '+'}
+                </button>
+              )}
             </div>
-            <ul id="footer-resources" className={`space-y-1 sm:space-y-2 ${openSections.resources ? 'block' : 'hidden'} sm:block`}>
+            <ul id="footer-resources" className={`${isMobile ? (openSections.resources ? 'block' : 'hidden') : 'block'} space-y-1 sm:space-y-2`}>
               {footerLinks.resources.map((link, index) => (
                 <li key={index}>
                   <a 
@@ -209,6 +226,31 @@ export function Footer() {
                 <a href="#" className="hover:text-[#FFA500] transition-colors">Privacy Policy</a>
                 <a href="#" className="hover:text-[#FFA500] transition-colors">Terms of Service</a>
               </div>
+            </div>
+            
+            {/* Back to top button (moved here from HomePage) */}
+            <div className="mt-4 md:mt-0 md:ml-auto flex justify-end">
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                aria-label="Back to top"
+                title="Back to top"
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-md transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-primary hover:bg-primary/90 focus:ring-primary"
+                type="button"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 19V6" />
+                  <path d="M5 12l7-7 7 7" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>

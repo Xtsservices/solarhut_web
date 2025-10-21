@@ -340,12 +340,12 @@ export function ContactPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-[#FFA500] hover:bg-[#FF8C00]">
                   <Phone className="mr-2 w-5 h-5" />
-                  Call Now: 1800-123-SOLAR
+                  Call Now: +91 9876543210
                 </Button>
-                <Button size="lg" variant="outline" className="border-[#FFA500] text-[#FFA500] hover:bg-orange-50">
+                {/* <Button size="lg" variant="outline" className="border-[#FFA500] text-[#FFA500] hover:bg-orange-50">
                   <MessageSquare className="mr-2 w-5 h-5" />
                   Live Chat Support
-                </Button>
+                </Button> */}
               </div>
             </CardContent>
           </Card>

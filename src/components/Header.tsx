@@ -16,14 +16,14 @@ export function Header() {
     return location.pathname === path;
   };
 
-  // Helper function to check if current path matches any products routes
+
   const isProductsActive = () => {
-    return location.pathname.includes('/solutions/') || 
-           location.pathname.includes('/ground-mounted') ||
-           location.pathname.includes('/residential') ||
-           location.pathname.includes('/commercial') ||
-           location.pathname.includes('/industrial') ||
-           location.pathname.includes('/solar-water');
+    return location.pathname.includes('/solutions/') ||
+      location.pathname.includes('/ground-mounted') ||
+      location.pathname.includes('/residential') ||
+      location.pathname.includes('/commercial') ||
+      location.pathname.includes('/industrial') ||
+      location.pathname.includes('/solar-water');
   };
 
   const handlePhoneClick = () => {
@@ -53,208 +53,67 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
-      {/* Main Header */}
+
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
-          {/* Logo */}
-            <Link to="/" className="flex items-center">
-            <img 
-              src={logoImage} 
-              alt="Solar Hut Solutions Logo" 
-              className="h-12 md:h-16 lg:h-20 w-auto object-contain"
+
+          <Link to="/" className="flex items-center">
+            <img
+              src={logoImage}
+              alt="Solar Hut Solutions Logo"
+              className="h-16 md:h-24 lg:h-28 w-auto object-contain"
             />
           </Link>
 
-          {/* Desktop Navigation and Buttons */}
+
           <div className="hidden lg:flex items-center space-x-8">
-            {/* Navigation Links */}
+
             <nav className="flex items-center space-x-8">
-            <Link 
-              to="/" 
-              className={`transition-colors font-medium ${
-                isActivePath('/') 
-                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1' 
+              <Link
+                to="/"
+                className={`transition-colors font-medium ${isActivePath('/')
+                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1'
                   : 'text-black hover:text-[#FFA500]'
-              }`}
-            >
-              HOME
-            </Link>
-            
-            <Link 
-              to="/about" 
-              className={`transition-colors font-medium ${
-                isActivePath('/about') 
-                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1' 
-                  : 'text-black hover:text-[#FFA500]'
-              }`}
-            >
-              About Us
-            </Link>
-            
-            {/* Products Dropdown */}
-            <div 
-              className="relative group"
-              onMouseEnter={() => setActiveDropdown('products')}
-              onMouseLeave={() => setActiveDropdown(null)}
-            >
-              <button className={`flex items-center space-x-1 transition-colors py-2 font-medium ${
-                isProductsActive() 
-                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1' 
-                  : 'text-black hover:text-[#FFA500]'
-              }`}>
-                <span>Products</span>
-                <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
-              </button>
-              {activeDropdown === 'products' && (
-                <div 
-                  className="absolute top-full left-0 mt-0 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
-                  onMouseEnter={() => setActiveDropdown('products')}
-                  onMouseLeave={() => setActiveDropdown(null)}
-                >
-                  {productsItems.map((item) => (
-                    <Link
-                      key={item.title}
-                      to={item.href}
-                      className="block px-4 py-3 text-black hover:text-[#FFA500] hover:bg-white transition-colors border-b border-black/10 last:border-b-0"
-                      onClick={() => setActiveDropdown(null)}
-                    >
-                      {item.title}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Link 
-              to="/testimonials" 
-              className={`transition-colors font-medium ${
-                isActivePath('/testimonials') 
-                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1' 
-                  : 'text-black hover:text-[#FFA500]'
-              }`}
-            >
-              Client Stories
-            </Link>
-
-            <Link 
-              to="/gallery" 
-              className={`transition-colors font-medium ${
-                isActivePath('/gallery') 
-                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1' 
-                  : 'text-black hover:text-[#FFA500]'
-              }`}
-            >
-              Gallery
-            </Link>
-
-            <Link 
-              to="/contact" 
-              className={`transition-colors font-medium ${
-                isActivePath('/contact') 
-                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1' 
-                  : 'text-black hover:text-[#FFA500]'
-              }`}
-            >
-              Contact Us
-            </Link>
-            </nav>
-
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-3">
-                <button 
-                onClick={handleReferEarn}
-                className="bg-[#FFA500] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#FFA500]/90 transition-colors"
-                >
-                Refer & Earn
-                </button>
-                <button 
-                onClick={handleDownloadBrochure}
-                className="bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-black/90 transition-colors"
-                >
-                Download Brochure
-                </button>
-                
-                <Button 
-                className="group bg-white text-[#FFA500] border-2 border-[#FFA500] hover:bg-[#FFA500] hover:text-white flex items-center space-x-2 transition-colors"
-                onClick={handlePhoneClick}
-                >
-                <Phone className="w-4 h-4 group-hover:text-white text-[#FFA500] transition-colors" />
-                <span className="group-hover:text-white text-[#FFA500] transition-colors">Call Now</span>
-                </Button>
-            </div>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="lg:hidden flex items-center space-x-1 text-black hover:text-[#FFA500] transition-colors"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-expanded={isMenuOpen}
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-
-        {/* Mobile Menu - full screen overlay on small devices */}
-        {isMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 bg-white p-6 overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex items-center">
-                <img src={logoImage} alt="Solar Hut" className="h-8 w-auto object-contain" />
-              </Link>
-              <button
-                onClick={() => setIsMenuOpen(false)}
-                aria-label="Close menu"
-                className="text-black hover:text-[#FFA500]"
+                  }`}
               >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+                HOME
+              </Link>
 
-            <nav className="flex flex-col space-y-3">
-              {/* Action Buttons for Mobile */}
-              <div className="flex flex-col space-y-2 pb-3 border-b border-[#FFA500]/20 mb-3">
-                <button 
-                  onClick={() => {
-                    handleReferEarn();
-                    setIsMenuOpen(false);
-                  }}
-                  className="bg-[#FFA500] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[#FFA500]/90 transition-colors w-full"
-                >
-                  Refer & Earn
-                </button>
-                <button 
-                  onClick={() => {
-                    handleDownloadBrochure();
-                    setIsMenuOpen(false);
-                  }}
-                  className="bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-black/90 transition-colors w-full"
-                >
-                  Download Brochure
-                </button>
-              </div>
+              <Link
+                to="/about"
+                className={`transition-colors font-medium ${isActivePath('/about')
+                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1'
+                  : 'text-black hover:text-[#FFA500]'
+                  }`}
+              >
+                About Us
+              </Link>
 
-              <Link to="/" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>HOME</Link>
-              
-              <Link to="/about" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>About Us</Link>
-              
-              {/* Collapsible Products for Mobile */}
-              <div className="border-b border-[#FFA500]/10">
-                <button
-                  className="w-full flex items-center justify-between py-2 text-left text-black font-medium px-0"
-                  onClick={() => setActiveDropdown(activeDropdown === 'products' ? null : 'products')}
-                  aria-expanded={activeDropdown === 'products'}
-                >
+
+              <div
+                className="relative group"
+                onMouseEnter={() => setActiveDropdown('products')}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <button className={`flex items-center space-x-1 transition-colors py-2 font-medium ${isProductsActive()
+                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1'
+                  : 'text-black hover:text-[#FFA500]'
+                  }`}>
                   <span>Products</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'products' ? 'rotate-180' : ''}`} />
+                  <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
                 </button>
                 {activeDropdown === 'products' && (
-                  <div className="pl-4 pb-3">
+                  <div
+                    className="absolute top-full left-0 mt-0 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
+                    onMouseEnter={() => setActiveDropdown('products')}
+                    onMouseLeave={() => setActiveDropdown(null)}
+                  >
                     {productsItems.map((item) => (
-                      <Link 
+                      <Link
                         key={item.title}
-                        to={item.href} 
-                        className="block text-black/70 hover:text-[#FFA500] transition-colors py-1"
-                        onClick={() => { setIsMenuOpen(false); setActiveDropdown(null); }}
+                        to={item.href}
+                        className="block px-4 py-3 text-black hover:text-[#FFA500] hover:bg-white transition-colors border-b border-black/10 last:border-b-0"
+                        onClick={() => setActiveDropdown(null)}
                       >
                         {item.title}
                       </Link>
@@ -263,25 +122,157 @@ export function Header() {
                 )}
               </div>
 
-              <Link to="/testimonials" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Client Stories</Link>
-              
-              <Link to="/gallery" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Gallery</Link>
-              
-              <Link to="/contact" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Contact Us</Link>
-              
-              <Button 
-                className="bg-[#FFA500] hover:bg-[#FFA500]/90 text-white w-fit" 
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  handlePhoneClick();
-                }}
+              <Link
+                to="/testimonials"
+                className={`transition-colors font-medium ${isActivePath('/testimonials')
+                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1'
+                  : 'text-black hover:text-[#FFA500]'
+                  }`}
               >
-                <Phone className="w-4 h-4 mr-2" />
-                Call Now
-              </Button>
+                Client Stories
+              </Link>
+
+              <Link
+                to="/gallery"
+                className={`transition-colors font-medium ${isActivePath('/gallery')
+                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1'
+                  : 'text-black hover:text-[#FFA500]'
+                  }`}
+              >
+                Gallery
+              </Link>
+
+              <Link
+                to="/contact"
+                className={`transition-colors font-medium ${isActivePath('/contact')
+                  ? 'text-[#FFA500] border-b-2 border-[#FFA500] pb-1'
+                  : 'text-black hover:text-[#FFA500]'
+                  }`}
+              >
+                Contact Us
+              </Link>
             </nav>
+
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleReferEarn}
+                className="bg-[#FFA500] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#FFA500]/90 transition-colors"
+              >
+                Refer & Earn
+              </button>
+              <button
+                onClick={handleDownloadBrochure}
+                className="bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-black/90 transition-colors"
+              >
+                Download Brochure
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePhoneClick}
+                className="group flex items-center justify-center space-x-2 px-4 py-2 rounded-full border-2 border-[#FFA500] bg-white text-[#FFA500] "
+              >
+                <Phone className="w-5 h-5 transition-colors duration-300 group-hover:stroke-white" />
+                <span className="transition-colors duration-300">Call Now</span>
+              </button>
+
+            </div>
+
+            {/* Mobile Menu Button */}
           </div>
-        )}
+
+          {/* Mobile Menu Button (visible on small screens) */}
+          <div className="lg:hidden">
+            <button
+              className="flex items-center space-x-1 text-black hover:text-[#FFA500] transition-colors"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-expanded={isMenuOpen}
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+
+          {/* Mobile Menu - full screen overlay on small devices */}
+          {isMenuOpen && (
+            <div className="lg:hidden fixed inset-0 z-50 bg-white p-6 overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex items-center">
+                  <img src={logoImage} alt="Solar Hut" className="h-8 w-auto object-contain" />
+                </Link>
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  aria-label="Close menu"
+                  className="text-black hover:text-[#FFA500]"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <nav className="flex flex-col space-y-3">
+                {/* Action Buttons for Mobile */}
+                <div className="flex flex-col space-y-2 pb-3 border-b border-[#FFA500]/20 mb-3">
+                  <button
+                    onClick={() => {
+                      handleReferEarn();
+                      setIsMenuOpen(false);
+                    }}
+                    className="bg-[#FFA500] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[#FFA500]/90 transition-colors w-full"
+                  >
+                    Refer & Earn
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleDownloadBrochure();
+                      setIsMenuOpen(false);
+                    }}
+                    className="bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-black/90 transition-colors w-full"
+                  >
+                    Download Brochure
+                  </button>
+                </div>
+
+                <Link to="/" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>HOME</Link>
+
+                <Link to="/about" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>About Us</Link>
+
+                {/* Collapsible Products for Mobile */}
+                <div className="border-b border-[#FFA500]/10">
+                  <button
+                    className="w-full flex items-center justify-between py-2 text-left text-black font-medium px-0"
+                    onClick={() => setActiveDropdown(activeDropdown === 'products' ? null : 'products')}
+                    aria-expanded={activeDropdown === 'products'}
+                  >
+                    <span>Products</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'products' ? 'rotate-180' : ''}`} />
+                  </button>
+                  {activeDropdown === 'products' && (
+                    <div className="pl-4 pb-3">
+                      {productsItems.map((item) => (
+                        <Link
+                          key={item.title}
+                          to={item.href}
+                          className="block text-black/70 hover:text-[#FFA500] transition-colors py-1"
+                          onClick={() => { setIsMenuOpen(false); setActiveDropdown(null); }}
+                        >
+                          {item.title}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Link to="/testimonials" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Client Stories</Link>
+
+                <Link to="/gallery" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Gallery</Link>
+
+                <Link to="/contact" className="text-black hover:text-[#FFA500] transition-colors py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Contact Us</Link>
+
+
+              </nav>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

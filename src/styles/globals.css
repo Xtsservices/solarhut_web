@@ -1,65 +1,44 @@
-/* Removed unsupported @custom-variant at-rule */
+@custom-variant dark (&:is(.dark *));
 
 :root {
   --font-size: 16px;
   --background: #ffffff;
-  --foreground: #2d1810;
+  --foreground: oklch(0.145 0 0);
   --card: #ffffff;
-  --card-foreground: #2d1810;
-  --popover: #ffffff;
-  --popover-foreground: #2d1810;
-  --primary: #FFA500;
-  --primary-foreground: #ffffff;
-  --secondary: #D2691E;
-  --secondary-foreground: #ffffff;
-  --muted: #fef7ed;
-  --muted-foreground: #8b6914;
-  --accent: #FF8C00;
-  --accent-foreground: #ffffff;
-  --solar-orange: #FFA500;
-  --solar-dark-orange: #D2691E;
-  --solar-light-orange: #FFE4B5;
-  --solar-gold: #DAA520;
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #030213;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.0058 264.53);
+  --secondary-foreground: #030213;
+  --muted: #ececf0;
+  --muted-foreground: #717182;
+  --accent: #e9ebef;
+  --accent-foreground: #030213;
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
-  --border: rgba(255, 165, 0, 0.2);
+  --border: rgba(0, 0, 0, 0.1);
   --input: transparent;
-  --input-background: #fef7ed;
-  --switch-background: #deb887;
+  --input-background: #f3f3f5;
+  --switch-background: #cbced4;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #FFA500;
-  --chart-1: #FFA500;
-  --chart-2: #D2691E;
-  --chart-3: #FF8C00;
-  --chart-4: #DAA520;
-  --chart-5: #DEB887;
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;
-  --sidebar: #fef7ed;
-  --sidebar-foreground: #2d1810;
-  --sidebar-primary: #FFA500;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #fff8e1;
-  --sidebar-accent-foreground: #8b6914;
-  --sidebar-border: rgba(255, 165, 0, 0.2);
-  --sidebar-ring: #FFA500;
-
-  /* Section Background Colors */
-  --section-hero: linear-gradient(135deg, #fff8f0 0%, #fef7ed 50%, #fff4e6 100%);
-  --section-hero-alt: linear-gradient(135deg, #FFA500 0%, #D2691E 100%);
-  --section-hero-orange-white: linear-gradient(135deg, #FFA500 0%, #FF8C00 25%, #FFE4B5 75%, #ffffff 100%);
-  --section-about: #fefcf8;
-  --section-services: #ffffff;
-  --section-features: #fff8f0;
-  --section-testimonials: #fef7ed;
-  --section-projects: #ffffff;
-  --section-contact: #fff4e6;
-  --section-cta: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%);
-  --section-footer: #000000;
-  --section-alternate-1: #fefcf8;
-  --section-alternate-2: #fff8f0;
-  --section-accent-light: rgba(255, 165, 0, 0.05);
-  --section-accent-medium: rgba(255, 165, 0, 0.1);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #030213;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
@@ -99,7 +78,7 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
-:root {
+@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -138,230 +117,114 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-
-  /* Section Background Theme Colors */
-  --color-section-hero: var(--section-hero);
-  --color-section-hero-alt: var(--section-hero-alt);
-  --color-section-hero-orange-white: var(--section-hero-orange-white);
-  --color-section-about: var(--section-about);
-  --color-section-services: var(--section-services);
-  --color-section-features: var(--section-features);
-  --color-section-testimonials: var(--section-testimonials);
-  --color-section-projects: var(--section-projects);
-  --color-section-contact: var(--section-contact);
-  --color-section-cta: var(--section-cta);
-  --color-section-footer: var(--section-footer);
-  --color-section-alternate-1: var(--section-alternate-1);
-  --color-section-alternate-2: var(--section-alternate-2);
-  --color-section-accent-light: var(--section-accent-light);
-  --color-section-accent-medium: var(--section-accent-medium);
 }
 
 @layer base {
   * {
-    border-color: var(--color-border);
-    outline-color: var(--color-ring);
-    outline-width: 2px;
-    outline-style: solid;
-    border-width: 1px;
-    border-style: solid;
+    @apply border-border outline-ring/50;
   }
 
   body {
-    background: var(--color-background);
-    color: var(--color-foreground);
+    @apply bg-background text-foreground;
   }
 }
 
 /**
- * Base typography
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
  */
 @layer base {
-  h1 {
-    font-size: 2rem;
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
 
-  h2 {
-    font-size: 1.5rem;
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
 
-  h3 {
-    font-size: 1.25rem;
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
 
-  h4 {
-    font-size: 1rem;
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
 
-  p {
-    font-size: 1rem;
-    font-weight: var(--font-weight-normal);
-    line-height: 1.5;
-  }
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
 
-  label {
-    font-size: 1rem;
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
 
-  button {
-    font-size: 1rem;
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
 
-  input {
-    font-size: 1rem;
-    font-weight: var(--font-weight-normal);
-    line-height: 1.5;
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
   }
 }
 
 html {
   font-size: var(--font-size);
+}
+
+/* Section Utilities for consistent spacing across landing page */
+.section-padding {
+  @apply py-16 md:py-20 lg:py-24;
+}
+
+.section-container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Animation for slide content */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Smooth scrolling for horizontal containers */
+.overflow-x-auto {
   scroll-behavior: smooth;
-}
-
-/* Sticky header support */
-body {
-  scroll-padding-top: 80px; /* Adjust based on header height */
-}
-
-/**
- * Section Background Utilities
- */
-@layer utilities {
-  .section-hero {
-    background: var(--section-hero);
-  }
-  
-  .section-hero-alt {
-    background: var(--section-hero-alt);
-  }
-  
-  .section-hero-orange-white {
-    background: var(--section-hero-orange-white);
-  }
-  
-  .section-about {
-    background-color: var(--section-about);
-  }
-  
-  .section-services {
-    background-color: var(--section-services);
-  }
-  
-  .section-features {
-    background-color: var(--section-features);
-  }
-  
-  .section-testimonials {
-    background-color: var(--section-testimonials);
-  }
-  
-  .section-projects {
-    background-color: var(--section-projects);
-  }
-  
-  .section-contact {
-    background-color: var(--section-contact);
-  }
-  
-  .section-cta {
-    background: var(--section-cta);
-  }
-  
-  .section-footer {
-    background-color: var(--section-footer);
-  }
-  
-  .section-alternate-1 {
-    background-color: var(--section-alternate-1);
-  }
-  
-  .section-alternate-2 {
-    background-color: var(--section-alternate-2);
-  }
-  
-  .section-accent-light {
-    background-color: var(--section-accent-light);
-  }
-  
-  .section-accent-medium {
-    background-color: var(--section-accent-medium);
-  }
-
-  /* Section spacing utilities */
-  .section-padding {
-    padding-top: 4rem;
-    padding-bottom: 4rem;
-  }
-
-  @media (min-width: 1024px) {
-    .section-padding {
-      padding-top: 6rem;
-      padding-bottom: 6rem;
-    }
-  }
-  
-  .section-padding-sm {
-    padding-top: 3rem;
-    padding-bottom: 3rem;
-  }
-
-  @media (min-width: 1024px) {
-    .section-padding-sm {
-      padding-top: 4rem;
-      padding-bottom: 4rem;
-    }
-  }
-  
-  .section-padding-lg {
-    padding-top: 5rem;
-    padding-bottom: 5rem;
-  }
-
-  @media (min-width: 1024px) {
-    .section-padding-lg {
-      padding-top: 8rem;
-      padding-bottom: 8rem;
-    }
-  }
-
-  /* Section container utilities */
-  .section-container {
-    max-width: 80rem; /* max-w-7xl */
-    margin-left: auto; /* mx-auto */
-    margin-right: auto;
-    padding-left: 1rem; /* px-4 */
-    padding-right: 1rem;
-  }
-
-  @media (min-width: 640px) {
-    .section-container {
-      padding-left: 1.5rem; /* sm:px-6 */
-      padding-right: 1.5rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .section-container {
-      padding-left: 2rem; /* lg:px-8 */
-      padding-right: 2rem;
-    }
-  }
-
-  /* Sticky header utilities */
-  .sticky-header-offset {
-    scroll-margin-top: 5rem; /* 80px offset for sticky header */
-  }
+  -webkit-overflow-scrolling: touch;
 }

@@ -2,9 +2,8 @@ import { Menu, X, ChevronDown, Phone, Download, Gift } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useState, useRef } from 'react';
 
-// Import the logo
-import logoImage from 'figma:asset/635b8d0ac7c7e91f30e8873933c7278d37649bac.png';
-
+// @ts-ignore: accept importing image asset without a dedicated type declaration
+import logoImage from '../../assets/image.png';
 interface NavbarProps {
   onNavigate: (page: string) => void;
   currentPage?: string;
@@ -59,8 +58,8 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
 
   return (
     <nav className="bg-white border-b sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-2 sm:py-3 gap-3 sm:gap-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 lg:px-6">
+        <div className="flex justify-between items-center py-2 sm:py-3 gap-2 sm:gap-4">
           {/* Logo - Left aligned with flex-start */}
           <div
             className="flex items-center cursor-pointer flex-shrink-0"
@@ -69,12 +68,12 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
             <img
               src={logoImage}
               alt="Solar Hut Solutions Logo"
-              className="h-16 sm:h-14 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
+              className="h-20 sm:h-20 md:h-24 lg:h-28 xl:h-32 w-auto object-contain"
             />
           </div>
 
           {/* Desktop Menu - Center */}
-          <div className="hidden lg:flex items-center gap-3 xl:gap-4 2xl:gap-6 flex-1 justify-center text-sm xl:text-base">
+          <div className="hidden lg:flex items-center gap-8 xl:gap-14 2xl:gap-20 flex-1 justify-center text-xs xl:text-sm">
             <button
               onClick={() => onNavigate('home')}
               className={`transition-colors ${

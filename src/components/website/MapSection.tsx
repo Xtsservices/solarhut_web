@@ -110,28 +110,27 @@ export function MapSection({ onNavigate }: MapSectionProps) {
               <CardContent className="p-6">
                 <h4 className="text-gray-900 mb-3 flex items-center">
                   <MapPin className="w-5 h-5 text-[#FFA500] mr-2" />
-                  Our Service Areas
+                    Our Service Areas
                 </h4>
-                <div className="grid sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                  <div>
-                    <p className="text-gray-900 mb-1">Primary Areas:</p>
-                    <ul className="space-y-1">
-                      <li>• Hyderabad</li>
-                      <li>• Secunderabad</li>
-                      <li>• Cyberabad</li>
-                      <li>• HITEC City</li>
-                    </ul>
+                  <div className="grid sm:grid-cols-2 gap-4 text-sm text-gray-600">
+                    <div>
+                      <p className="text-gray-900 mb-1">Andhra Pradesh:</p>
+                      <ul className="space-y-1">
+                        <li>• Rajahmundry</li>
+                        <li>• Eluru</li>
+                        <li>• Vijayawada</li>
+                        <li>• Guntur</li>
+                        <li>• Kakinada</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-gray-900 mb-1">Telangana:</p>
+                      <ul className="space-y-1">
+                        <li>• Hyderabad</li>
+                        <li>• Khammam</li>
+                      </ul>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-900 mb-1">Extended Areas:</p>
-                    <ul className="space-y-1">
-                      <li>• Gachibowli</li>
-                      <li>• Kondapur</li>
-                      <li>• Kukatpally</li>
-                      <li>• Kompally</li>
-                    </ul>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>

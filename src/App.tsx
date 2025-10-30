@@ -48,10 +48,11 @@ import { Button } from './components/ui/button';
 import { Card, CardContent } from './components/ui/card';
 import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
+import logoImage from '../src/assets/image.png';
 
 // Import logo
 // Use a public/static asset path to avoid relying on the 'figma:asset' virtual module in TypeScript.
-const logoImage = '/logo.png';
+// If the image is in src/assets/image.png
 
 type UserRole = 'guest' | 'admin' | 'sales' | 'field';
 
@@ -115,7 +116,7 @@ export default function App() {
                 <img
                   src={logoImage}
                   alt="Solar Hut Solutions Logo"
-                  className="h-20 sm:h-24 w-auto object-contain"
+                  className="h-24 sm:h-24 w-auto object-contain"
                 />
               </div>
               <h1 className="text-gray-900 mb-2">Portal Login</h1>

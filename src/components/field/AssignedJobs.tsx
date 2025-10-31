@@ -12,7 +12,7 @@ import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { mockEnquiries } from '../../lib/mockData';
 import { Eye, Play, CheckCircle2, Search, Calendar as CalendarIcon } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '../ui/utils';
 

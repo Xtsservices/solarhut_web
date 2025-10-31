@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { mockEnquiries, mockFieldExecutives } from '../../lib/mockData';
 import { Eye, Search, ChevronDown, ChevronUp, Calendar as CalendarIcon } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '../ui/utils';
 

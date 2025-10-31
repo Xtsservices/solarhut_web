@@ -234,10 +234,12 @@ export function Footer({ onNavigate }: FooterProps) {
             <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 text-sm text-gray-400 text-center">
               <div className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-6">
                 <span>© {currentYear} Solar Hut Solutions. All rights reserved.</span>
-                <span className="flex items-center gap-2 text-xs">
-                  <span>Powered by <span className="text-[#FFA500]">Metadev</span></span>
-                  <img src={logoImage1} alt="Metadev logo" className="h-20 w-auto" />
-                </span>
+                 <span className="flex items-center gap-2 text-xs">
+                   <span>Powered by <span className="text-[#FFA500]">Metadev</span></span>
+                   <a href="https://metadev.in/" target="_blank" rel="noopener noreferrer">
+                     <img src={logoImage1} alt="Metadev logo" className="h-20 w-auto" />
+                   </a>
+                 </span>
               </div>
               <div className="flex space-x-4">
                 <button onClick={() => onNavigate?.('home')} className="hover:text-[#FFA500] transition-colors">Privacy Policy</button>

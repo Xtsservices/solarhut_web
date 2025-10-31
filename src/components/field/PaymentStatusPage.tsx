@@ -5,7 +5,6 @@ import { mockEnquiries } from '../../lib/mockData';
 import { IndianRupee, CheckCircle2, Clock } from 'lucide-react';
 
 export function PaymentStatusPage() {
-  // Filter jobs assigned to field executive FE001
   const jobs = mockEnquiries.filter(
     (e) => e.fieldExecutiveId === 'FE001' && e.quotationAmount && e.type === 'enquiry'
   );
@@ -32,7 +31,6 @@ export function PaymentStatusPage() {
         <p className="text-gray-600">Track payment status for your completed jobs</p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid md:grid-cols-3 gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
@@ -77,7 +75,6 @@ export function PaymentStatusPage() {
         </Card>
       </div>
 
-      {/* Table */}
       <Card>
         <CardHeader>
           <CardTitle>Payment Records ({jobs.length})</CardTitle>
@@ -128,7 +125,6 @@ export function PaymentStatusPage() {
         </CardContent>
       </Card>
 
-      {/* Payment Note */}
       <Card className="mt-6">
         <CardContent className="p-6">
           <div className="flex items-start gap-4">

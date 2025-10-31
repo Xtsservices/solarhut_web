@@ -9,7 +9,7 @@ import { Textarea } from '../ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Switch } from '../ui/switch';
 import { Package, Plus, Edit, Trash2, RefreshCw, IndianRupee } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { getPackages, addPackage, updatePackage, deletePackage, resetToDefaults, type SolarPackage } from '../../lib/packagesData';
 
 export function PackagesPage() {
@@ -28,9 +28,9 @@ export function PackagesPage() {
     recommended: false,
   });
 
-  // Load packages on mount
   useEffect(() => {
-    loadPackages();
+    const loadedPackages = getPackages();
+    setPackages(loadedPackages);
   }, []);
 
   const loadPackages = () => {
@@ -56,7 +56,6 @@ export function PackagesPage() {
 
     try {
       if (editMode && editingId) {
-        // Update existing package
         updatePackage(editingId, {
           name: formData.name,
           capacity: formData.capacity,
@@ -69,7 +68,6 @@ export function PackagesPage() {
         });
         toast.success('Package updated successfully');
       } else {
-        // Add new package
         addPackage({
           name: formData.name,
           capacity: formData.capacity,
@@ -249,7 +247,7 @@ export function PackagesPage() {
                   <Switch
                     id="recommended"
                     checked={formData.recommended}
-                    onCheckedChange={(checked) => setFormData({ ...formData, recommended: checked })}
+                    onCheckedChange={(checked: boolean) => setFormData({ ...formData, recommended: checked })}
                   />
                   <Label htmlFor="recommended" className="text-xs sm:text-sm cursor-pointer">
                     Mark as "Most Popular" / Recommended
@@ -277,8 +275,8 @@ export function PackagesPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+    
+  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
@@ -305,7 +303,6 @@ export function PackagesPage() {
         </Card>
       </div>
 
-      {/* Desktop Table */}
       <Card className="hidden md:block">
         <CardHeader className="p-3 sm:p-4 md:p-5">
           <CardTitle className="text-sm sm:text-base md:text-lg">All Packages</CardTitle>
@@ -368,7 +365,6 @@ export function PackagesPage() {
         </CardContent>
       </Card>
 
-      {/* Mobile Card View */}
       <div className="md:hidden space-y-2">
         {packages.map((pkg) => (
           <Card key={pkg.id} className="overflow-hidden">

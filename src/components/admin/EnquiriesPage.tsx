@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { mockEnquiries, mockSalesPersons, mockFieldExecutives } from '../../lib/mockData';
 import { Eye, UserPlus, Search, ChevronDown, ChevronUp, Calendar as CalendarIcon } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '../ui/utils';
 
@@ -65,10 +65,8 @@ export function EnquiriesPage() {
         <p className="text-gray-600 text-sm sm:text-base">Manage all customer enquiries</p>
       </div>
 
-      {/* Filters - Responsive */}
       <div className="space-y-3 sm:space-y-0">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 sm:gap-4 sm:justify-end">
-          {/* Search - Full width on mobile */}
           <div className="flex-1 sm:flex-none sm:w-64">
             <Label className="text-sm">Search</Label>
             <div className="relative mt-1">
@@ -82,7 +80,6 @@ export function EnquiriesPage() {
             </div>
           </div>
           
-          {/* Status - Full width on mobile */}
           <div className="flex-1 sm:flex-none sm:w-48">
             <Label className="text-sm">Status</Label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -99,7 +96,6 @@ export function EnquiriesPage() {
             </Select>
           </div>
 
-          {/* Date Filter - Full width on mobile */}
           <div className="flex-1 sm:flex-none sm:w-56">
             <Label className="text-sm">Date</Label>
             <Popover>
@@ -128,7 +124,6 @@ export function EnquiriesPage() {
         </div>
       </div>
 
-      {/* Table - Desktop View */}
       <Card className="hidden md:block">
         <CardHeader className="p-4 sm:p-5 md:p-6">
           <CardTitle className="text-base sm:text-lg">All Enquiries ({filteredEnquiries.length})</CardTitle>
@@ -180,7 +175,6 @@ export function EnquiriesPage() {
         </CardContent>
       </Card>
 
-      {/* Card View - Mobile */}
       <div className="md:hidden space-y-2">
         <div className="bg-white rounded-lg border p-2 mb-2">
           <p className="text-xs text-gray-600">Total: <span className="font-medium text-gray-900">{filteredEnquiries.length}</span> enquiries</p>
@@ -229,7 +223,6 @@ export function EnquiriesPage() {
         ))}
       </div>
 
-      {/* View Dialog with Assign and Delete Actions */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader className="space-y-1 sm:space-y-2">

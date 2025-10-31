@@ -8,7 +8,7 @@ import { Label } from '../ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { mockSalesPersons } from '../../lib/mockData';
 import { UserPlus, Edit, Trash2, Eye, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { AssignedEnquiries } from '../sales/AssignedEnquiries';
 
 export function SalesPersonsPage() {
@@ -31,7 +31,6 @@ export function SalesPersonsPage() {
     }
     
     if (editMode && editingId) {
-      // Update existing sales person
       setSalesPersons(salesPersons.map((sp) =>
         sp.id === editingId
           ? { ...sp, ...formData }
@@ -39,7 +38,6 @@ export function SalesPersonsPage() {
       ));
       toast.success('Sales person updated successfully');
     } else {
-      // Add new sales person
       const newSalesPerson = {
         id: `SP${String(salesPersons.length + 1).padStart(3, '0')}`,
         ...formData,
@@ -76,7 +74,6 @@ export function SalesPersonsPage() {
   const handleDialogChange = (open: boolean) => {
     setDialogOpen(open);
     if (!open) {
-      // Reset form when closing
       setFormData({ name: '', email: '', mobile: '' });
       setEditMode(false);
       setEditingId(null);
@@ -168,7 +165,7 @@ export function SalesPersonsPage() {
         </Dialog>
       </div>
 
-      {/* Stats Cards */}
+      
       <div className="grid md:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
@@ -202,7 +199,7 @@ export function SalesPersonsPage() {
         </Card>
       </div>
 
-      {/* Table */}
+      
       <Card>
         <CardHeader>
           <CardTitle>Sales Team ({salesPersons.length})</CardTitle>

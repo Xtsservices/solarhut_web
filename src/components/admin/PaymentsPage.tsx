@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '../ui/label';
 import { mockEnquiries } from '../../lib/mockData';
 import { CheckCircle2, Clock, Eye, Search, IndianRupee } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function PaymentsPage() {
   const [payments, setPayments] = useState(
@@ -95,7 +95,7 @@ export function PaymentsPage() {
         <p className="text-gray-600">Track and manage payment status</p>
       </div>
 
-      {/* Stats Cards */}
+      
       <div className="grid md:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
@@ -144,10 +144,10 @@ export function PaymentsPage() {
         </Card>
       </div>
 
-      {/* Filters and Search */}
+      
       <div className="mb-6">
         <div className="flex items-end gap-4 justify-end">
-          {/* Search */}
+          
           <div className="flex-none w-64">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -160,7 +160,7 @@ export function PaymentsPage() {
             </div>
           </div>
 
-          {/* Status Filter */}
+          
           <div className="flex-none w-48">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
@@ -176,7 +176,7 @@ export function PaymentsPage() {
         </div>
       </div>
 
-      {/* Table */}
+      
       <Card>
         <CardHeader>
           <CardTitle>Payment Records ({filteredPayments.length})</CardTitle>
@@ -225,7 +225,7 @@ export function PaymentsPage() {
         </CardContent>
       </Card>
 
-      {/* View Payment Dialog */}
+      
       <Dialog open={viewDialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -235,7 +235,7 @@ export function PaymentsPage() {
 
           {selectedPayment && (
             <div className="space-y-6">
-              {/* Payment Status Section */}
+              
               <div className="p-4 bg-gray-50 rounded-lg space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -244,7 +244,7 @@ export function PaymentsPage() {
                   </div>
                 </div>
 
-                {/* Amount Input for Pending Payments */}
+                
                 {selectedPayment.paymentStatus === 'pending' && (
                   <div className="space-y-3">
                     <div>
@@ -273,7 +273,7 @@ export function PaymentsPage() {
                   </div>
                 )}
 
-                {/* Display Paid Amount for Paid Payments */}
+                
                 {selectedPayment.paymentStatus === 'paid' && (
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between">
@@ -299,7 +299,7 @@ export function PaymentsPage() {
                 )}
               </div>
 
-              {/* Customer Information */}
+              
               <div>
                 <h3 className="text-gray-900 mb-4">Customer Information</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -326,7 +326,7 @@ export function PaymentsPage() {
                 </div>
               </div>
 
-              {/* Payment Information */}
+              
               <div>
                 <h3 className="text-gray-900 mb-4">Payment Information</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -348,7 +348,7 @@ export function PaymentsPage() {
                 </div>
               </div>
 
-              {/* Work Information */}
+              
               <div>
                 <h3 className="text-gray-900 mb-4">Work Information</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -387,7 +387,7 @@ export function PaymentsPage() {
                 </div>
               </div>
 
-              {/* Assignment Information */}
+              
               {(selectedPayment.salesPersonId || selectedPayment.fieldExecutiveId) && (
                 <div>
                   <h3 className="text-gray-900 mb-4">Assignment Information</h3>

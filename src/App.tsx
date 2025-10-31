@@ -3,7 +3,6 @@ import { Toaster } from './components/ui/sonner';
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
-// Website Components
 import { Navbar } from './components/shared/Navbar';
 import { Footer } from './components/shared/Footer';
 import { LandingPage } from './components/website/LandingPage';
@@ -19,11 +18,9 @@ import { TestimonialsPage } from './components/website/TestimonialsPage';
 import { ProjectsPage } from './components/website/ProjectsPage';
 import { GalleryPage } from './components/website/GalleryPage';
 
-// Shared Portal Components
 import { PortalSidebar } from './components/shared/PortalSidebar';
 import { PortalHeader } from './components/shared/PortalHeader';
 
-// Admin Components
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { EnquiriesPage } from './components/admin/EnquiriesPage';
 import { EmployeesPage } from './components/admin/EmployeesPage';
@@ -35,11 +32,9 @@ import { NotificationsPage } from './components/shared/NotificationsPage';
 import { SettingsPage } from './components/shared/SettingsPage';
 import { ProfilePage } from './components/shared/ProfilePage';
 
-// Sales Components
 import { SalesDashboard } from './components/sales/SalesDashboard';
 import { AssignedEnquiries } from './components/sales/AssignedEnquiries';
 
-// Field Components
 import { FieldDashboard } from './components/field/FieldDashboard';
 import { AssignedJobs } from './components/field/AssignedJobs';
 import { PaymentStatusPage } from './components/field/PaymentStatusPage';
@@ -50,9 +45,6 @@ import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
 const logoImage = '/assets/image.png';
 
-// Import logo
-// Use a public/static asset path to avoid relying on the 'figma:asset' virtual module in TypeScript.
-// If the image is in src/assets/image.png
 
 type UserRole = 'guest' | 'admin' | 'sales' | 'field';
 

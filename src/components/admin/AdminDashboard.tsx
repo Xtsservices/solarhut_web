@@ -3,7 +3,7 @@ import { FileText, CheckCircle2, Clock, IndianRupee, Users, Wrench } from 'lucid
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export function AdminDashboard() {
-  // Metrics Data
+
   const metrics = [
     {
       title: 'Total Enquiries',
@@ -49,7 +49,7 @@ export function AdminDashboard() {
     },
   ];
 
-  // Enquiry Overview Data (Bar Chart)
+
   const enquiryOverviewData = [
     { month: 'Jun', new: 15, assigned: 12, completed: 10 },
     { month: 'Jul', new: 20, assigned: 18, completed: 15 },
@@ -58,13 +58,13 @@ export function AdminDashboard() {
     { month: 'Oct', new: 22, assigned: 20, completed: 18 },
   ];
 
-  // Payment Status Data (Pie Chart)
+
   const paymentData = [
     { name: 'Paid', value: 28, color: '#10b981' },
     { name: 'Pending', value: 7, color: '#f59e0b' },
   ];
 
-  // Sales Performance Data (Bar Chart)
+
   const salesPerformanceData = [
     { name: 'Rahul V.', closed: 12, pending: 3 },
     { name: 'Neha K.', closed: 15, pending: 2 },
@@ -88,7 +88,6 @@ export function AdminDashboard() {
         <p className="text-gray-600 text-sm sm:text-base">Overview of your solar business operations</p>
       </div>
 
-      {/* Metrics Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
@@ -112,9 +111,7 @@ export function AdminDashboard() {
         })}
       </div>
 
-      {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-        {/* Enquiry Overview */}
         <Card>
           <CardHeader className="p-3 sm:p-4 md:p-5">
             <CardTitle className="text-sm sm:text-base md:text-lg">Enquiry Overview</CardTitle>
@@ -135,7 +132,6 @@ export function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Payment Distribution */}
         <Card>
           <CardHeader className="p-3 sm:p-4 md:p-5">
             <CardTitle className="text-sm sm:text-base md:text-lg">Payment Distribution</CardTitle>
@@ -164,7 +160,6 @@ export function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Sales Person Performance */}
         <Card>
           <CardHeader className="p-3 sm:p-4 md:p-5">
             <CardTitle className="text-sm sm:text-base md:text-lg">Sales Person Performance</CardTitle>
@@ -184,37 +179,7 @@ export function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Field Executive Work Status */}
-        <Card>
-          <CardHeader className="p-3 sm:p-4 md:p-5">
-            <CardTitle className="text-sm sm:text-base md:text-lg">Field Executive Work Status</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={fieldWorkData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" stroke="#666" style={{ fontSize: '10px' }} />
-                <YAxis stroke="#666" style={{ fontSize: '10px' }} />
-                <Tooltip contentStyle={{ fontSize: '12px' }} />
-                <Legend wrapperStyle={{ fontSize: '10px' }} iconSize={10} />
-                <Line 
-                  type="monotone" 
-                  dataKey="completed" 
-                  stroke="#10b981" 
-                  strokeWidth={2}
-                  name="Completed"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="inProgress" 
-                  stroke="#f59e0b" 
-                  strokeWidth={2}
-                  name="In Progress"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+       
       </div>
     </div>
   );

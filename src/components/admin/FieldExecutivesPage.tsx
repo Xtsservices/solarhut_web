@@ -7,18 +7,29 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { mockFieldExecutives } from '../../lib/mockData';
-import { UserPlus, Edit, Trash2, Eye, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+
+type FieldExecutive = {
+  id: string;
+  name: string;
+  email: string;
+  mobile: string;
+  totalWorks: number;
+  pendingWorks: number;
+  completedWorks: number;
+  status: 'available' | 'on-job' | 'busy';
+};
+import { UserPlus, Edit, Trash2, Eye } from 'lucide-react';
+import { toast } from 'sonner';
 import { AssignedJobs } from '../field/AssignedJobs';
 
 export function FieldExecutivesPage() {
-  const [executives, setExecutives] = useState(mockFieldExecutives);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedExecutive, setSelectedExecutive] = useState<any>(null);
-  const [viewingJobs, setViewingJobs] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [executives, setExecutives] = useState<FieldExecutive[]>(mockFieldExecutives);
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [selectedExecutive, setSelectedExecutive] = useState<FieldExecutive | null>(null);
+  const [viewingJobs, setViewingJobs] = useState<boolean>(false);
+  const [editMode, setEditMode] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{ name: string; email: string; mobile: string }>({
     name: '',
     email: '',
     mobile: '',
@@ -29,36 +40,32 @@ export function FieldExecutivesPage() {
       toast.error('Please fill all fields');
       return;
     }
-    
     if (editMode && editingId) {
-      // Update existing executive
       setExecutives(executives.map((exec) =>
         exec.id === editingId
-          ? { ...exec, ...formData }
+          ? { ...exec, ...formData } as FieldExecutive
           : exec
       ));
       toast.success('Field executive updated successfully');
     } else {
-      // Add new executive
-      const newExecutive = {
+      const newExecutive: FieldExecutive = {
         id: `FE${String(executives.length + 1).padStart(3, '0')}`,
         ...formData,
         totalWorks: 0,
         pendingWorks: 0,
         completedWorks: 0,
-        status: 'available' as const,
+        status: 'available',
       };
       setExecutives([...executives, newExecutive]);
       toast.success('Field executive added successfully');
     }
-    
     setDialogOpen(false);
     setFormData({ name: '', email: '', mobile: '' });
     setEditMode(false);
     setEditingId(null);
   };
 
-  const handleEdit = (executive: any) => {
+  const handleEdit = (executive: FieldExecutive) => {
     setFormData({
       name: executive.name,
       email: executive.email,
@@ -77,14 +84,13 @@ export function FieldExecutivesPage() {
   const handleDialogChange = (open: boolean) => {
     setDialogOpen(open);
     if (!open) {
-      // Reset form when closing
       setFormData({ name: '', email: '', mobile: '' });
       setEditMode(false);
       setEditingId(null);
     }
   };
 
-  const handleView = (executive: any) => {
+  const handleView = (executive: FieldExecutive) => {
     setSelectedExecutive(executive);
     setViewingJobs(true);
   };
@@ -94,17 +100,16 @@ export function FieldExecutivesPage() {
     setSelectedExecutive(null);
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, any> = {
-      available: { variant: 'default', label: 'Available', color: 'bg-green-100 text-green-700' },
-      'on-job': { variant: 'secondary', label: 'On Job', color: 'bg-blue-100 text-blue-700' },
-      busy: { variant: 'outline', label: 'Busy', color: 'bg-orange-100 text-orange-700' },
+  const getStatusBadge = (status: FieldExecutive['status']) => {
+    const variants: Record<FieldExecutive['status'], { label: string; color: string }> = {
+      available: { label: 'Available', color: 'bg-green-100 text-green-700' },
+      'on-job': { label: 'On Job', color: 'bg-blue-100 text-blue-700' },
+      busy: { label: 'Busy', color: 'bg-orange-100 text-orange-700' },
     };
     const config = variants[status] || variants.available;
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
-  // If viewing jobs, show the full screen
   if (viewingJobs && selectedExecutive) {
     return (
       <div className="p-8">
@@ -114,8 +119,8 @@ export function FieldExecutivesPage() {
             <p className="text-gray-600">Manage your assigned field jobs</p>
           </div>
           <div className="text-right">
-            <p className="text-gray-900">{selectedExecutive.name}</p>
-            <p className="text-sm text-gray-600">{selectedExecutive.email}</p>
+            <p className="text-gray-900">{selectedExecutive?.name}</p>
+            <p className="text-sm text-gray-600">{selectedExecutive?.email}</p>
           </div>
         </div>
         <AssignedJobs />
@@ -179,7 +184,6 @@ export function FieldExecutivesPage() {
         </Dialog>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid md:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
@@ -213,7 +217,6 @@ export function FieldExecutivesPage() {
         </Card>
       </div>
 
-      {/* Table */}
       <Card>
         <CardHeader>
           <CardTitle>Field Team ({executives.length})</CardTitle>

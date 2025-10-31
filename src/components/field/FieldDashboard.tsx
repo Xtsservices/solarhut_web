@@ -54,7 +54,6 @@ export function FieldDashboard() {
         <p className="text-gray-600 text-sm sm:text-base">Welcome back, Manoj Kumar</p>
       </div>
 
-      {/* Metrics Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
@@ -78,9 +77,7 @@ export function FieldDashboard() {
         })}
       </div>
 
-      {/* Charts Grid */}
       <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
-        {/* Work Completion Status */}
         <Card>
           <CardHeader className="p-3 sm:p-4 md:p-5">
             <CardTitle className="text-sm sm:text-base md:text-lg">Work Completion Status</CardTitle>
@@ -105,7 +102,6 @@ export function FieldDashboard() {
           </CardContent>
         </Card>
 
-        {/* Payment Status */}
         <Card>
           <CardHeader className="p-3 sm:p-4 md:p-5">
             <CardTitle className="text-sm sm:text-base md:text-lg">Paid vs Pending Tasks</CardTitle>

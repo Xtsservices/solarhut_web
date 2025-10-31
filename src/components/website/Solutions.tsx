@@ -25,7 +25,6 @@ export function Solutions({ onNavigate }: SolutionsProps) {
   const [activeTab, setActiveTab] = useState<string>('residential');
 
   const handleGetQuote = (solutionId: string) => {
-    // Navigate to enquiry page with solution context
     if (onNavigate) {
       onNavigate('enquiry');
     }
@@ -129,7 +128,6 @@ export function Solutions({ onNavigate }: SolutionsProps) {
   return (
     <section id="solutions" className="section-services section-padding">
       <div className="section-container px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="text-center mb-8 sm:mb-12 lg:mb-16">
           <div className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 bg-orange-100 text-orange-800 rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6">
             <Zap className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
@@ -269,7 +267,6 @@ export function Solutions({ onNavigate }: SolutionsProps) {
           ))}
         </Tabs>
 
-        {/* Bottom CTA */}
         <div className="text-center mt-8 sm:mt-12 lg:mt-16 p-4 sm:p-6 lg:p-8 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg sm:rounded-xl lg:rounded-2xl">
           <h3 className="text-lg sm:text-xl lg:text-2xl text-gray-900 mb-3 sm:mb-4 px-2">
             Not sure which solution is right for you?

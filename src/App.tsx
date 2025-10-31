@@ -48,7 +48,7 @@ import { Button } from './components/ui/button';
 import { Card, CardContent } from './components/ui/card';
 import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
-import logoImage from '../src/assets/image.png';
+const logoImage = '/assets/image.png';
 
 // Import logo
 // Use a public/static asset path to avoid relying on the 'figma:asset' virtual module in TypeScript.

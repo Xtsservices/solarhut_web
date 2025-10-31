@@ -43,7 +43,7 @@ export function Solutions({ onNavigate }: SolutionsProps) {
       title: "Residential Solar",
       icon: Home,
       description: "Perfect solar solutions for homeowners looking to reduce energy bills and increase property value.",
-  image: "/src/assets/Residential solar.jpeg",
+  image: "/src/assets/Residentialsolar.jpeg",
       features: [
         "Custom-designed for your roof",
         "Up to 90% reduction in electricity bills",
@@ -60,7 +60,7 @@ export function Solutions({ onNavigate }: SolutionsProps) {
       title: "Commercial Solar",
       icon: Building2,
       description: "Scalable solar solutions for businesses to reduce operational costs and demonstrate environmental responsibility.",
-  image: "/src/assets/Commercial Solar.png",
+  image: "/src/assets/Commercial-Solar.png",
       features: [
         "Large-scale installations",
         "Federal tax incentives",
@@ -77,7 +77,7 @@ export function Solutions({ onNavigate }: SolutionsProps) {
       title: "Industrial Solar",
       icon: Factory,
       description: "Heavy-duty solar systems designed for manufacturing facilities and large industrial complexes.",
-  image: "/src/assets/Industrial Solar.png",
+  image: "/src/assets/IndustrialSolar.png",
       features: [
         "Megawatt-scale capacity",
         "Robust mounting systems",
@@ -94,7 +94,7 @@ export function Solutions({ onNavigate }: SolutionsProps) {
       title: "Ground Mounted Systems",
       icon: MapPin,
       description: "Flexible ground-mounted solar arrays for properties with ample land space.",
-  image: "/src/assets/Ground Mounted Systems.png",
+  image: "/src/assets/GroundMountedSystems.png",
       features: [
         "Optimal panel positioning",
         "Easy maintenance access",
@@ -112,7 +112,7 @@ export function Solutions({ onNavigate }: SolutionsProps) {
       icon: Droplets,
       description: "Efficient solar thermal systems for hot water heating, reducing energy consumption by up to 80%.",
       // Use a full URL to avoid build/runtime issues with relative asset paths
-  image: "/src/assets/Solar Water Heaters.png",
+  image: "/src/assets/SolarWaterHeaters.png",
       features: [
         "80% reduction in water heating costs",
         "Evacuated tube collectors",

@@ -19,7 +19,7 @@ import {
   Package
 } from "lucide-react";
 import { MapSection } from "./MapSection";
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface ContactPageProps {
   onNavigate?: (page: string) => void;
@@ -386,7 +386,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                     {selectedType === 'general' && (
                       <div>
                         <Label htmlFor="solutionType">Solution Type</Label>
-                        <Select onValueChange={(value) => setFormData({ ...formData, solutionType: value })}>
+                        <Select onValueChange={(value: string) => setFormData({ ...formData, solutionType: value })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select solution type" />
                           </SelectTrigger>
@@ -406,7 +406,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                       <>
                         <div>
                           <Label htmlFor="position">Position Applying For *</Label>
-                          <Select onValueChange={(value) => setFormData({ ...formData, position: value })}>
+                          <Select onValueChange={(value: string) => setFormData({ ...formData, position: value })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select position" />
                             </SelectTrigger>
@@ -422,7 +422,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                         </div>
                         <div>
                           <Label htmlFor="experience">Years of Experience *</Label>
-                          <Select onValueChange={(value) => setFormData({ ...formData, experience: value })}>
+                          <Select onValueChange={(value: string) => setFormData({ ...formData, experience: value })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select experience" />
                             </SelectTrigger>
@@ -465,7 +465,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                         </div>
                         <div>
                           <Label htmlFor="yearsInBusiness">Years in Business *</Label>
-                          <Select onValueChange={(value) => setFormData({ ...formData, yearsInBusiness: value })}>
+                          <Select onValueChange={(value: string) => setFormData({ ...formData, yearsInBusiness: value })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select years" />
                             </SelectTrigger>

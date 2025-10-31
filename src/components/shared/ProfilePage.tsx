@@ -4,7 +4,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface ProfilePageProps {
   role: 'admin' | 'sales' | 'field';
@@ -75,7 +75,6 @@ export function ProfilePage({ role }: ProfilePageProps) {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Profile Information */}
         <Card>
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
@@ -128,7 +127,6 @@ export function ProfilePage({ role }: ProfilePageProps) {
           </CardContent>
         </Card>
 
-        {/* Change Password */}
         <Card>
           <CardHeader>
             <CardTitle>Change Password</CardTitle>

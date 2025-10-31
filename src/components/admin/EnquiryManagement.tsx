@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-// Local mock data and types (fallback for missing ../../lib/mockData)
+import { useState } from "react";
+
 type Enquiry = {
   id: string;
   userName: string;
@@ -153,7 +153,7 @@ export function EnquiryManagement() {
         </Table>
       </div>
 
-      {/* View & Assign Dialog */}
+    
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>

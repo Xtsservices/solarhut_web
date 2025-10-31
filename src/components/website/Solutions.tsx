@@ -16,6 +16,7 @@ import {
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { useState } from 'react';
 
+
 interface SolutionsProps {
   onNavigate?: (page: string) => void;
 }
@@ -24,7 +25,6 @@ export function Solutions({ onNavigate }: SolutionsProps) {
   const [activeTab, setActiveTab] = useState<string>('residential');
 
   const handleGetQuote = (solutionId: string) => {
-    // Navigate to enquiry page with solution context
     if (onNavigate) {
       onNavigate('enquiry');
     }
@@ -42,7 +42,7 @@ export function Solutions({ onNavigate }: SolutionsProps) {
       title: "Residential Solar",
       icon: Home,
       description: "Perfect solar solutions for homeowners looking to reduce energy bills and increase property value.",
-      image: "https://images.unsplash.com/photo-1741233928760-4d3ca277f210?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMHJlc2lkZW50aWFsJTIwc29sYXIlMjBwYW5lbHMlMjByb29mdG9wfGVufDF8fHx8MTc2MTU2MDU1MXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+  image: "/src/assets/Residentialsolar.jpeg",
       features: [
         "Custom-designed for your roof",
         "Up to 90% reduction in electricity bills",
@@ -59,7 +59,7 @@ export function Solutions({ onNavigate }: SolutionsProps) {
       title: "Commercial Solar",
       icon: Building2,
       description: "Scalable solar solutions for businesses to reduce operational costs and demonstrate environmental responsibility.",
-      image: "https://images.unsplash.com/photo-1540698868789-1d58f90db386?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMGNvbW1lcmNpYWwlMjBzb2xhciUyMHBhbmVscyUyMGJ1aWxkaW5nfGVufDF8fHx8MTc2MTU2MDU1MXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+  image: "/src/assets/Commercial-Solar.png",
       features: [
         "Large-scale installations",
         "Federal tax incentives",
@@ -76,7 +76,7 @@ export function Solutions({ onNavigate }: SolutionsProps) {
       title: "Industrial Solar",
       icon: Factory,
       description: "Heavy-duty solar systems designed for manufacturing facilities and large industrial complexes.",
-      image: "https://images.unsplash.com/photo-1711884272371-cd61f372e2cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMHNvbGFyJTIwcG93ZXIlMjBwbGFudHxlbnwxfHx8fDE3NjE1NjA1NTN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+  image: "/src/assets/IndustrialSolar.png",
       features: [
         "Megawatt-scale capacity",
         "Robust mounting systems",
@@ -93,7 +93,7 @@ export function Solutions({ onNavigate }: SolutionsProps) {
       title: "Ground Mounted Systems",
       icon: MapPin,
       description: "Flexible ground-mounted solar arrays for properties with ample land space.",
-      image: "https://images.unsplash.com/photo-1719256383688-305c0c00d179?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMHNvbGFyJTIwZmFybSUyMGVuZXJneXxlbnwxfHx8fDE3NjE1NjA1NTF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+  image: "/src/assets/GroundMountedSystems.png",
       features: [
         "Optimal panel positioning",
         "Easy maintenance access",
@@ -110,7 +110,8 @@ export function Solutions({ onNavigate }: SolutionsProps) {
       title: "Solar Water Heaters",
       icon: Droplets,
       description: "Efficient solar thermal systems for hot water heating, reducing energy consumption by up to 80%.",
-      image: "https://images.unsplash.com/photo-1674606071893-2a9023075f70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb2xhciUyMHBhbmVscyUyMGJsdWUlMjBza3l8ZW58MXx8fHwxNzYxNDg1NDg0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+      // Use a full URL to avoid build/runtime issues with relative asset paths
+  image: "/src/assets/SolarWaterHeaters.png",
       features: [
         "80% reduction in water heating costs",
         "Evacuated tube collectors",
@@ -127,7 +128,6 @@ export function Solutions({ onNavigate }: SolutionsProps) {
   return (
     <section id="solutions" className="section-services section-padding">
       <div className="section-container px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="text-center mb-8 sm:mb-12 lg:mb-16">
           <div className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 bg-orange-100 text-orange-800 rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6">
             <Zap className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
@@ -267,7 +267,6 @@ export function Solutions({ onNavigate }: SolutionsProps) {
           ))}
         </Tabs>
 
-        {/* Bottom CTA */}
         <div className="text-center mt-8 sm:mt-12 lg:mt-16 p-4 sm:p-6 lg:p-8 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg sm:rounded-xl lg:rounded-2xl">
           <h3 className="text-lg sm:text-xl lg:text-2xl text-gray-900 mb-3 sm:mb-4 px-2">
             Not sure which solution is right for you?

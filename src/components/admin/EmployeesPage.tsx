@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { mockSalesPersons, mockFieldExecutives } from '../../lib/mockData';
 import { UserPlus, Edit, Trash2, Eye } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { AssignedEnquiries } from '../sales/AssignedEnquiries';
 import { AssignedJobs } from '../field/AssignedJobs';
 
@@ -256,7 +256,6 @@ export function EmployeesPage() {
         </Dialog>
       </div>
 
-      {/* Stats Overview */}
       <div className="grid md:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
@@ -286,14 +285,12 @@ export function EmployeesPage() {
         </Card>
       </div>
 
-      {/* Tabs for different employee types */}
       <Tabs defaultValue="sales" className="space-y-6">
         <TabsList>
           <TabsTrigger value="sales">Sales Persons ({salesPersons.length})</TabsTrigger>
           <TabsTrigger value="field">Field Executives ({executives.length})</TabsTrigger>
         </TabsList>
 
-        {/* Sales Persons Tab */}
         <TabsContent value="sales" className="space-y-4">
           <Card>
             <CardHeader>
@@ -362,7 +359,6 @@ export function EmployeesPage() {
           </Card>
         </TabsContent>
 
-        {/* Field Executives Tab */}
         <TabsContent value="field" className="space-y-4">
           <Card>
             <CardHeader>

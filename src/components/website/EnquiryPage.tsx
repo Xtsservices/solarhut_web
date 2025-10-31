@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { useState } from 'react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { 
   Sun, 
   Zap, 
@@ -369,7 +369,7 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                               <Label htmlFor="propertyType">Property Type *</Label>
                               <Select
                                 value={enquiryData.propertyType}
-                                onValueChange={(value) => setEnquiryData({ ...enquiryData, propertyType: value })}
+                                onValueChange={(value: string) => setEnquiryData({ ...enquiryData, propertyType: value })}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select property type" />
@@ -408,7 +408,7 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                               <Label htmlFor="kv">System Size (KW) *</Label>
                               <Select
                                 value={enquiryData.kv}
-                                onValueChange={(value) => setEnquiryData({ ...enquiryData, kv: value })}
+                                onValueChange={(value: string) => setEnquiryData({ ...enquiryData, kv: value })}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select capacity" />
@@ -447,7 +447,7 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                               <Label htmlFor="electricityBill">Monthly Electricity Bill *</Label>
                               <Select
                                 value={enquiryData.electricityBill}
-                                onValueChange={(value) => setEnquiryData({ ...enquiryData, electricityBill: value })}
+                                onValueChange={(value: string) => setEnquiryData({ ...enquiryData, electricityBill: value })}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select range" />
@@ -513,7 +513,7 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                             <Label htmlFor="state">State *</Label>
                             <Select
                               value={enquiryData.state}
-                              onValueChange={(value) => setEnquiryData({ ...enquiryData, state: value })}
+                              onValueChange={(value: string) => setEnquiryData({ ...enquiryData, state: value })}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select state" />

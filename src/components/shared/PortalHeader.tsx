@@ -2,8 +2,8 @@ import { Bell, User, Menu } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 
-// Import the logo
-import logoImage from 'figma:asset/635b8d0ac7c7e91f30e8873933c7278d37649bac.png';
+// Use static path for the logo image to avoid type/import issues
+const logoImagePath = '/assets/image.png';
 
 interface PortalHeaderProps {
   role: 'admin' | 'sales' | 'field';
@@ -28,9 +28,9 @@ export function PortalHeader({
     'Field Executive Portal';
 
   return (
-    <header className="bg-white border-b h-14 sm:h-16 flex items-center justify-between px-3 sm:px-4 md:px-6 sticky top-0 z-50">
+  <header className="bg-white border-b min-h-[64px] sm:min-h-[80px] flex items-center justify-between px-3 sm:px-4 md:px-6 sticky top-0 z-50">
       {/* Left: Menu Toggle (Mobile) + Logo */}
-      <div className="flex items-center gap-2 sm:gap-3">
+  <div className="flex items-center gap-2 sm:gap-3">
         {/* Mobile Menu Toggle */}
         {onMenuToggle && (
           <Button
@@ -43,11 +43,14 @@ export function PortalHeader({
           </Button>
         )}
         
-        <img 
-          src={logoImage} 
-          alt="Solar Hut Solutions Logo" 
-          className="h-12 sm:h-12 md:h-14 w-auto object-contain"
-        />
+        <div className="flex items-center h-full">
+          <img
+            src="/src/assets/image.png"
+            alt="Solar Hut Solutions Logo"
+            className="h-16 sm:h-20 md:h-24 w-auto object-contain"
+            style={{ display: 'block', marginTop: 'auto', marginBottom: 'auto' }}
+          />
+        </div>
       </div>
 
       {/* Right: Actions */}

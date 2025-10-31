@@ -10,7 +10,12 @@ import {
 import { useEffect, useState } from 'react';
 
 // Import the logo
-import logoImage from 'figma:asset/635b8d0ac7c7e91f30e8873933c7278d37649bac.png';
+// @ts-ignore: Vite/Figma virtual asset provided at build time
+import logoImage from '../../assets/image.png';
+// @ts-ignore: Vite/Figma virtual asset provided at build time
+import logoImage1 from '../../assets/MetadevLogo.png';
+
+
 
 interface FooterProps {
   onNavigate?: (page: string) => void;
@@ -229,7 +234,12 @@ export function Footer({ onNavigate }: FooterProps) {
             <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 text-sm text-gray-400 text-center">
               <div className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-6">
                 <span>© {currentYear} Solar Hut Solutions. All rights reserved.</span>
-                <span className="text-xs">Powered by <span className="text-[#FFA500]">Metadev</span></span>
+                 <span className="flex items-center gap-2 text-xs">
+                   <span>Powered by <span className="text-[#FFA500]">Metadev</span></span>
+                   <a href="https://metadev.in/" target="_blank" rel="noopener noreferrer">
+                     <img src={logoImage1} alt="Metadev logo" className="h-20 w-auto" />
+                   </a>
+                 </span>
               </div>
               <div className="flex space-x-4">
                 <button onClick={() => onNavigate?.('home')} className="hover:text-[#FFA500] transition-colors">Privacy Policy</button>

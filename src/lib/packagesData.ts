@@ -1,4 +1,3 @@
-// Solar Packages Data Management
 
 export interface SolarPackage {
   id: string;
@@ -13,7 +12,6 @@ export interface SolarPackage {
   createdAt: string;
 }
 
-// Default packages
 const defaultPackages: SolarPackage[] = [
   {
     id: 'pkg-001',
@@ -74,10 +72,8 @@ const defaultPackages: SolarPackage[] = [
   }
 ];
 
-// LocalStorage key
 const STORAGE_KEY = 'solarhut_packages';
 
-// Get packages from localStorage or return defaults
 export function getPackages(): SolarPackage[] {
   if (typeof window === 'undefined') return defaultPackages;
   
@@ -94,20 +90,17 @@ export function getPackages(): SolarPackage[] {
   return defaultPackages;
 }
 
-// Save packages to localStorage
 export function savePackages(packages: SolarPackage[]): void {
   if (typeof window === 'undefined') return;
   
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(packages));
-    // Dispatch custom event to notify other components
     window.dispatchEvent(new Event('packagesUpdated'));
   } catch (error) {
     console.error('Error saving packages:', error);
   }
 }
 
-// Add a new package
 export function addPackage(packageData: Omit<SolarPackage, 'id' | 'createdAt'>): SolarPackage {
   const packages = getPackages();
   const newPackage: SolarPackage = {
@@ -122,7 +115,6 @@ export function addPackage(packageData: Omit<SolarPackage, 'id' | 'createdAt'>):
   return newPackage;
 }
 
-// Update a package
 export function updatePackage(id: string, packageData: Partial<SolarPackage>): SolarPackage | null {
   const packages = getPackages();
   const index = packages.findIndex(pkg => pkg.id === id);
@@ -135,7 +127,6 @@ export function updatePackage(id: string, packageData: Partial<SolarPackage>): S
   return packages[index];
 }
 
-// Delete a package
 export function deletePackage(id: string): boolean {
   const packages = getPackages();
   const filtered = packages.filter(pkg => pkg.id !== id);
@@ -146,7 +137,6 @@ export function deletePackage(id: string): boolean {
   return true;
 }
 
-// Reset to default packages
 export function resetToDefaults(): void {
   savePackages(defaultPackages);
 }

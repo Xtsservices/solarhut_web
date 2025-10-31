@@ -8,19 +8,19 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '../ui/label';
 import { mockEnquiries } from '../../lib/mockData';
 import { Eye, Trash2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function JobRequestsPage() {
   const [jobRequests, setJobRequests] = useState(
-    mockEnquiries.filter((e) => e.type === 'job')
+    mockEnquiries.filter((e: any) => e.type === 'job')
   );
   const [supplierRequests, setSupplierRequests] = useState(
-    mockEnquiries.filter((e) => e.type === 'supplier')
+    mockEnquiries.filter((e: any) => e.type === 'supplier')
   );
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, any> = {
+    const variants: Record<string, { variant: string; label: string }> = {
       new: { variant: 'secondary', label: 'New' },
       assigned: { variant: 'default', label: 'Under Review' },
       completed: { variant: 'default', label: 'Approved' },
@@ -30,12 +30,12 @@ export function JobRequestsPage() {
   };
 
   const handleDeleteJob = (id: string) => {
-    setJobRequests(jobRequests.filter((r) => r.id !== id));
+    setJobRequests(jobRequests.filter((r: any) => r.id !== id));
     toast.success('Job request deleted');
   };
 
   const handleDeleteSupplier = (id: string) => {
-    setSupplierRequests(supplierRequests.filter((r) => r.id !== id));
+    setSupplierRequests(supplierRequests.filter((r: any) => r.id !== id));
     toast.success('Supplier request deleted');
   };
 

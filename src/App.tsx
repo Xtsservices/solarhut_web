@@ -227,14 +227,42 @@ function AppContent() {
   }
 
   // Public Website
+  // Sync currentPage with the current route
+  const { pathname } = window.location;
+  let currentPage = 'home';
+  if (pathname === '/' || pathname === '/home') currentPage = 'home';
+  else if (pathname === '/about') currentPage = 'about';
+  else if (pathname === '/contact') currentPage = 'contact';
+  else if (pathname === '/enquiry') currentPage = 'enquiry';
+  else if (pathname === '/ground-mounted') currentPage = 'ground-mounted';
+  else if (pathname === '/residential') currentPage = 'residential';
+  else if (pathname === '/commercial') currentPage = 'commercial';
+  else if (pathname === '/industrial') currentPage = 'industrial';
+  else if (pathname === '/solar-water-heaters') currentPage = 'solar-water-heaters';
+  else if (pathname === '/testimonials') currentPage = 'testimonials';
+  else if (pathname === '/projects') currentPage = 'projects';
+  else if (pathname === '/gallery') currentPage = 'gallery';
+
   return (
     <div className="min-h-screen bg-white">
-      <Navbar onNavigate={handleNavigate} currentPage={"home"} />
-      
-      <LandingPage onNavigate={handleNavigate} />
-      
+      <Navbar onNavigate={handleNavigate} currentPage={currentPage} />
+      <Routes>
+        <Route path="/" element={<LandingPage onNavigate={handleNavigate} />} />
+        <Route path="/home" element={<LandingPage onNavigate={handleNavigate} />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/enquiry" element={<EnquiryPage />} />
+        <Route path="/ground-mounted" element={<GroundMountedPage />} />
+        <Route path="/residential" element={<ResidentialSolutionsPage />} />
+        <Route path="/commercial" element={<CommercialSolutionsPage />} />
+        <Route path="/industrial" element={<IndustrialSolutionsPage />} />
+        <Route path="/solar-water-heaters" element={<SolarWaterHeatersPage />} />
+        <Route path="/testimonials" element={<TestimonialsPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/gallery" element={<GalleryPage />} />
+        <Route path="*" element={<LandingPage onNavigate={handleNavigate} />} />
+      </Routes>
       <Footer onNavigate={handleNavigate} />
-
       <Toaster />
     </div>
   );

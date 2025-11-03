@@ -74,106 +74,60 @@ export function ProfilePage({ role }: ProfilePageProps) {
         <p className="text-gray-600">Manage your account information</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-            <CardDescription>Update your personal details</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex justify-center">
-              <Avatar className="h-24 w-24">
-                <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-              </Avatar>
-            </div>
+      <div className="flex justify-center">
+        <div className="w-full max-w-md">
+          <Card>
+            <CardHeader>
+              <CardTitle>Personal Information</CardTitle>
+              <CardDescription>Update your personal details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex justify-center">
+                <Avatar className="h-24 w-24">
+                  <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
+                </Avatar>
+              </div>
 
-            <div>
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={profile.name}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-              />
-            </div>
+              <div>
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={profile.name}
+                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profile.email}
-                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-              />
-            </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={profile.email}
+                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="mobile">Mobile Number</Label>
-              <Input
-                id="mobile"
-                type="tel"
-                value={profile.mobile}
-                onChange={(e) => setProfile({ ...profile, mobile: e.target.value })}
-              />
-            </div>
+              <div>
+                <Label htmlFor="mobile">Mobile Number</Label>
+                <Input
+                  id="mobile"
+                  type="tel"
+                  value={profile.mobile}
+                  onChange={(e) => setProfile({ ...profile, mobile: e.target.value })}
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="role">Role</Label>
-              <Input id="role" value={profile.role} disabled />
-            </div>
+              <div>
+                <Label htmlFor="role">Role</Label>
+                <Input id="role" value={profile.role} disabled />
+              </div>
 
-            <Button onClick={handleSaveProfile} className="w-full">
-              Save Changes
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Change Password</CardTitle>
-            <CardDescription>Update your password to keep your account secure</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={passwordData.currentPassword}
-                onChange={(e) =>
-                  setPasswordData({ ...passwordData, currentPassword: e.target.value })
-                }
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={passwordData.newPassword}
-                onChange={(e) =>
-                  setPasswordData({ ...passwordData, newPassword: e.target.value })
-                }
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={passwordData.confirmPassword}
-                onChange={(e) =>
-                  setPasswordData({ ...passwordData, confirmPassword: e.target.value })
-                }
-              />
-            </div>
-
-            <Button onClick={handleChangePassword} className="w-full">
-              Change Password
-            </Button>
-          </CardContent>
-        </Card>
+              <Button onClick={handleSaveProfile} className="w-full">
+                Save Changes
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

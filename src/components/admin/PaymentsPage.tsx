@@ -227,7 +227,10 @@ export function PaymentsPage() {
 
       
       <Dialog open={viewDialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-2xl">
+  <DialogContent
+    className="w-full max-w-[95vw] sm:max-w-lg md:max-w-xl lg:max-w-2xl h-[90vh] max-h-[90vh] overflow-y-auto p-2 sm:p-4 rounded-xl"
+    style={{ boxSizing: 'border-box' }}
+  >
           <DialogHeader>
             <DialogTitle>Payment Details</DialogTitle>
             <DialogDescription>Complete information about the payment</DialogDescription>

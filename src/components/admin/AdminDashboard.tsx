@@ -1,8 +1,22 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { FileText, CheckCircle2, Clock, IndianRupee, Users, Wrench } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export function AdminDashboard() {
+  // ...existing code...
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const monthOrder = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+
+  // ...existing code...
+
+
+  // ...existing code...
+
+  // ...existing code...
+
+  // Place this after enquiryOverviewData declaration
 
   const metrics = [
     {
@@ -81,6 +95,23 @@ export function AdminDashboard() {
     { month: 'Oct', completed: 18, inProgress: 3 },
   ];
 
+  // Filter Enquiry Overview Data for chart
+  let filteredEnquiryOverviewData = enquiryOverviewData;
+  if (startDate || endDate) {
+    // Filter by start and end date (month/year)
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+    filteredEnquiryOverviewData = enquiryOverviewData.filter((item) => {
+      // Assume all data is for 2025, and item.month is short month name
+      const itemMonthIndex = monthOrder.indexOf(item.month);
+      let startIndex = 0;
+      let endIndex = monthOrder.length - 1;
+      if (start) startIndex = start.getMonth() - 5; // Jun=5, Jul=6, ...
+      if (end) endIndex = end.getMonth() - 5;
+      return itemMonthIndex >= startIndex && itemMonthIndex <= endIndex;
+    });
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
@@ -114,11 +145,33 @@ export function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="p-3 sm:p-4 md:p-5">
-            <CardTitle className="text-sm sm:text-base md:text-lg">Enquiry Overview</CardTitle>
+            <div className="flex flex-col gap-2 mt-2">
+              <CardTitle className="text-sm sm:text-base md:text-lg">Enquiry Overview</CardTitle>
+              <div className="grid grid-cols-2 gap-3 w-full">
+                <div className="flex flex-col w-full">
+                  <span className="text-xs text-gray-600 mb-1">Start Date</span>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
+                    className="border rounded px-2 py-1 text-xs min-w-[120px] w-full"
+                  />
+                </div>
+                <div className="flex flex-col w-full">
+                  <span className="text-xs text-gray-600 mb-1">End Date</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={e => setEndDate(e.target.value)}
+                    className="border rounded px-2 py-1 text-xs min-w-[120px] w-full"
+                  />
+                </div>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={enquiryOverviewData}>
+              <BarChart data={filteredEnquiryOverviewData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#666" style={{ fontSize: '10px' }} />
                 <YAxis stroke="#666" style={{ fontSize: '10px' }} />

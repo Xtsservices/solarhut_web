@@ -14,6 +14,7 @@ import {
   X,
   Package
 } from 'lucide-react';
+  import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '../ui/sheet';
 
@@ -26,7 +27,6 @@ interface MenuItem {
 interface PortalSidebarProps {
   role: 'admin' | 'sales' | 'field';
   currentPage: string;
-  onNavigate: (page: string) => void;
   onLogout: () => void;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
@@ -62,7 +62,6 @@ const fieldMenuItems: MenuItem[] = [
 export function PortalSidebar({ 
   role, 
   currentPage, 
-  onNavigate, 
   onLogout,
   isMobileOpen = false,
   onMobileClose
@@ -72,11 +71,12 @@ export function PortalSidebar({
     role === 'sales' ? salesMenuItems : 
     fieldMenuItems;
 
-  const handleNavigate = (page: string) => {
-    onNavigate(page);
-    if (onMobileClose) {
-      onMobileClose();
-    }
+    const navigate = useNavigate();
+    const handleNavigate = (page: string) => {
+      navigate('/' + page);
+      if (onMobileClose) {
+        onMobileClose();
+      }
   };
 
   const handleLogout = () => {
@@ -98,7 +98,7 @@ export function PortalSidebar({
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => handleNavigate(item.id)}
+                    onClick={() => handleNavigate(item.id)}
                   className={cn(
                     'w-full flex items-center gap-2 sm:gap-3 px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-colors',
                     isActive

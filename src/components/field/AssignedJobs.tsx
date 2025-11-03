@@ -22,6 +22,7 @@ export function AssignedJobs() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('assigned');
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const [paymentMode, setPaymentMode] = useState<string>('');
 
   // Filter jobs assigned to field executive FE001 (Manoj Kumar)
   let assignedJobs = mockEnquiries.filter(
@@ -90,7 +91,7 @@ export function AssignedJobs() {
   };
 
   return (
-    <div>
+  <div>
       {/* Stats */}
       <div className="grid md:grid-cols-4 gap-6 mb-6">
         <Card>
@@ -234,6 +235,7 @@ export function AssignedJobs() {
                           onClick={() => {
                             setSelectedJob(job);
                             setCompletionNotes('');
+                            setPaymentMode('');
                           }}
                         >
                           <Eye className="h-4 w-4" />
@@ -247,7 +249,7 @@ export function AssignedJobs() {
                         {selectedJob && (
                           <div className="space-y-6">
                             {/* Job Details */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4 items-end">
                               <div>
                                 <Label>Job ID</Label>
                                 <p className="text-gray-900">{selectedJob.id}</p>
@@ -288,11 +290,53 @@ export function AssignedJobs() {
                                   </p>
                                 </div>
                               )}
-                              <div className="col-span-2">
+                              <div>
                                 <Label>Payment Status</Label>
                                 <div>{getPaymentBadge(selectedJob.paymentStatus)}</div>
                               </div>
+                              <div>
+                                <Label>Payment Mode</Label>
+                                <Select
+                                  value={paymentMode}
+                                  onValueChange={setPaymentMode}
+                                  disabled={selectedJob.paymentStatus === 'paid'}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select mode" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="cash">Cash</SelectItem>
+                                    <SelectItem value="upi">UPI</SelectItem>
+                                    <SelectItem value="card">Card</SelectItem>
+                                    <SelectItem value="bank">Bank Transfer</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
+
+                            {/* Payment Action Section */}
+                            {selectedJob.paymentStatus === 'pending' && (
+                              <div className="border-t pt-6 space-y-4">
+                                <h3 className="text-gray-900">Mark Payment as Received</h3>
+                                <p className="text-gray-600 text-sm">Confirm payment collection for this job.</p>
+                                <Button
+                                  onClick={() => {
+                                    if (!paymentMode) {
+                                      toast.error('Please select payment mode');
+                                      return;
+                                    }
+                                    toast.success('Payment marked as received!');
+                                    setSelectedJob({ ...selectedJob, paymentStatus: 'paid' });
+                                    setPaymentMode('');
+                                  }}
+                                  className="w-full"
+                                  disabled={!paymentMode}
+                                >
+                                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                                  Mark as Paid
+                                </Button>
+                              </div>
+                            )}
 
                             {/* Action Section */}
                             {selectedJob.status !== 'completed' && (
@@ -337,7 +381,7 @@ export function AssignedJobs() {
                                     <Button
                                       onClick={handleCompleteWork}
                                       className="w-full"
-                                      disabled={selectedJob.paymentStatus !== 'paid'}
+                                      disabled={selectedJob.paymentStatus !== 'paid' || !paymentMode}
                                     >
                                       <CheckCircle2 className="h-4 w-4 mr-2" />
                                       Submit Completion

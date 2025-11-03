@@ -62,49 +62,53 @@ export function SettingsPage() {
                 Update your company details that will be displayed to customers
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="companyName">Company Name</Label>
-                <Input
-                  id="companyName"
-                  value={companyInfo.name}
-                  onChange={(e) =>
-                    setCompanyInfo({ ...companyInfo, name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="companyEmail">Email</Label>
-                <Input
-                  id="companyEmail"
-                  type="email"
-                  value={companyInfo.email}
-                  onChange={(e) =>
-                    setCompanyInfo({ ...companyInfo, email: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="companyPhone">Phone</Label>
-                <Input
-                  id="companyPhone"
-                  value={companyInfo.phone}
-                  onChange={(e) =>
-                    setCompanyInfo({ ...companyInfo, phone: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="companyAddress">Address</Label>
-                <Input
-                  id="companyAddress"
-                  value={companyInfo.address}
-                  onChange={(e) =>
-                    setCompanyInfo({ ...companyInfo, address: e.target.value })
-                  }
-                />
-              </div>
-              <Button onClick={handleSaveCompany}>Save Changes</Button>
+            <CardContent>
+              <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <Label htmlFor="companyName" className="mb-1">Company Name</Label>
+                  <Input
+                    id="companyName"
+                    value={companyInfo.name}
+                    onChange={(e) =>
+                      setCompanyInfo({ ...companyInfo, name: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <Label htmlFor="companyEmail" className="mb-1">Email</Label>
+                  <Input
+                    id="companyEmail"
+                    type="email"
+                    value={companyInfo.email}
+                    onChange={(e) =>
+                      setCompanyInfo({ ...companyInfo, email: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <Label htmlFor="companyPhone" className="mb-1">Phone</Label>
+                  <Input
+                    id="companyPhone"
+                    value={companyInfo.phone}
+                    onChange={(e) =>
+                      setCompanyInfo({ ...companyInfo, phone: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col md:col-span-2">
+                  <Label htmlFor="companyAddress" className="mb-1">Address</Label>
+                  <Input
+                    id="companyAddress"
+                    value={companyInfo.address}
+                    onChange={(e) =>
+                      setCompanyInfo({ ...companyInfo, address: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="md:col-span-2 flex justify-end mt-2">
+                  <Button type="button" onClick={handleSaveCompany}>Save Changes</Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>
@@ -127,7 +131,7 @@ export function SettingsPage() {
                 </div>
                 <Switch
                   checked={notifications.emailNotifications}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked: boolean) =>
                     setNotifications({ ...notifications, emailNotifications: checked })
                   }
                 />
@@ -142,7 +146,7 @@ export function SettingsPage() {
                 </div>
                 <Switch
                   checked={notifications.smsNotifications}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked: boolean) =>
                     setNotifications({ ...notifications, smsNotifications: checked })
                   }
                 />
@@ -161,7 +165,7 @@ export function SettingsPage() {
                     </div>
                     <Switch
                       checked={notifications.newEnquiryAlert}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={(checked: boolean) =>
                         setNotifications({ ...notifications, newEnquiryAlert: checked })
                       }
                     />
@@ -176,7 +180,7 @@ export function SettingsPage() {
                     </div>
                     <Switch
                       checked={notifications.paymentAlert}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={(checked: boolean) =>
                         setNotifications({ ...notifications, paymentAlert: checked })
                       }
                     />
@@ -191,7 +195,7 @@ export function SettingsPage() {
                     </div>
                     <Switch
                       checked={notifications.jobCompletionAlert}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={(checked: boolean) =>
                         setNotifications({ ...notifications, jobCompletionAlert: checked })
                       }
                     />

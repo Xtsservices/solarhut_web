@@ -110,13 +110,18 @@ export function SolarWaterHeatersPage({ onNavigate }: SolarWaterHeatersPageProps
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FEF7ED' }}>
       {/* Hero Section */}
-      <section className="relative bg-[#FEF7ED] py-16 border-b border-gray-200">
+      <section className="relative bg-[#FEF7ED] py-16 border-b border-gray-200" 
+       style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(/src/assets/SolarWaterHeaters1.png)`
+        }}>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl text-gray-900 mb-4">
+            <div className="bg-white p-1 rounded-lg shadow-lg inline-block">
+              <h3 className="text-4xl md:text-5xl mb-2 px-4" style={{ color: 'rgb(255, 167, 3)' }}>
               Solar Water Heaters
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+            </h3>
+            </div>
+         <p className="text-lg md:text-xl text-white text-white-200 mt-4 max-w-3xl mx-auto">
               Enjoy unlimited hot water with zero electricity bills. Our solar water heating systems provide reliable, eco-friendly hot water for homes and businesses.
             </p>
           </div>

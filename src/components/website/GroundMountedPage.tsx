@@ -77,13 +77,20 @@ export function GroundMountedPage({ onNavigate }: GroundMountedPageProps) {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FEF7ED' }}>
       {/* Hero Section */}
-      <section className="relative bg-[#FEF7ED] py-16 border-b border-gray-200">
+      <section 
+        className="relative py-16 border-b border-gray-200 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(/src/assets/GroundMountedSystems.png)`
+        }}
+      >
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl text-gray-900 mb-4">
+            {/* <div className="bg-white p-1 rounded-lg shadow-lg inline-block"> */}
+              <h3 className="text-4xl md:text-5xl mb-2 px-4" style={{ color: 'rgb(255, 167, 3)' }}>
               Ground Mounted Solar Systems
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+              </h3>
+            {/* </div> */}
+            <p className="text-lg md:text-xl text-white text-white-200 mt-4 max-w-3xl mx-auto">
               Utilize your land efficiently with high-performing solar power systems — designed for scalability, durability, and maximum energy yield.
             </p>
           </div>

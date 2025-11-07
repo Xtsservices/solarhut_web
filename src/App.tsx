@@ -18,6 +18,7 @@ import { SolarWaterHeatersPage } from './components/website/SolarWaterHeatersPag
 import { TestimonialsPage } from './components/website/TestimonialsPage';
 import { ProjectsPage } from './components/website/ProjectsPage';
 import { GalleryPage } from './components/website/GalleryPage';
+import TeamsPage from './components/website/TeamsPage';
 
 import { PortalSidebar } from './components/shared/PortalSidebar';
 import { PortalHeader } from './components/shared/PortalHeader';
@@ -239,6 +240,7 @@ function AppContent() {
   else if (pathname === '/commercial') currentPage = 'commercial';
   else if (pathname === '/industrial') currentPage = 'industrial';
   else if (pathname === '/solar-water-heaters') currentPage = 'solar-water-heaters';
+  else if (pathname === '/teams') currentPage = 'teams';
   else if (pathname === '/testimonials') currentPage = 'testimonials';
   else if (pathname === '/projects') currentPage = 'projects';
   else if (pathname === '/gallery') currentPage = 'gallery';
@@ -257,6 +259,7 @@ function AppContent() {
         <Route path="/commercial" element={<CommercialSolutionsPage />} />
         <Route path="/industrial" element={<IndustrialSolutionsPage />} />
         <Route path="/solar-water-heaters" element={<SolarWaterHeatersPage />} />
+        <Route path="/teams" element={<TeamsPage />} />
         <Route path="/testimonials" element={<TestimonialsPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/gallery" element={<GalleryPage />} />

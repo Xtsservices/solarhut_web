@@ -22,7 +22,15 @@ const slides: Slide[] = [
     cta: "Get Free Quote"
   },
   {
-    src: "https://images.unsplash.com/photo-1583829315216-06c78572eace?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb21tZXJjaWFsJTIwYnVpbGRpbmclMjBzb2xhciUyMHBhbmVsc3xlbnwxfHx8fDE3NjE1NDcxOTJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    src: "/src/assets/Commercial-Solar.png",
+    alt: "Professional Rooftop Solar Panel Installation",
+    title: "Rooftop Solar Solutions",
+    subtitle: "Harness the Power of the Sun",
+    description: "Expert rooftop solar panel installations for homes and businesses. Save on energy bills and contribute to a sustainable future.",
+    cta: "Get Free Quote"
+  },
+  {
+    src: "/src/assets/commercialSolar.jpeg",
     alt: "Commercial Building with Large-Scale Solar Panel System",
     title: "Commercial Solar Systems",
     subtitle: "Reduce Operating Costs for Your Business",
@@ -30,7 +38,7 @@ const slides: Slide[] = [
     cta: "Schedule Consultation"
   },
   {
-    src: "https://images.unsplash.com/photo-1626251376234-8bc112f0bcd5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb2xhciUyMHBhbmVsJTIwYXJyYXklMjBmaWVsZHxlbnwxfHx8fDE3NjE1NjE4OTh8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    src: "/src/assets/GroundMountedSystems.png",
     alt: "Expansive Solar Panel Array Field Installation",
     title: "Industrial & Ground-Mounted",
     subtitle: "Large-Scale Solar Solutions",
@@ -38,13 +46,14 @@ const slides: Slide[] = [
     cta: "Explore Solutions"
   },
   {
-    src: "https://images.unsplash.com/photo-1709195325979-efb62c1f01a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBzb2xhciUyMGVuZXJneSUyMHN5c3RlbXxlbnwxfHx8fDE3NjE1NjE4OTh8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    src: "/src/assets/AdvancedSolarTechnology.jpeg",
     alt: "Modern Solar Energy System Technology",
     title: "Advanced Solar Technology",
     subtitle: "Next-Generation Energy Solutions",
     description: "Cutting-edge solar systems with smart monitoring, energy storage, and maximum efficiency. The future of energy is here.",
     cta: "Learn More"
   },
+  
 ];
 
 interface FeaturedSlidesProps {
@@ -103,16 +112,18 @@ const FeaturedSlides: React.FC<FeaturedSlidesProps> = ({ onNavigate }) => {
         <div className="max-w-4xl w-full text-center space-y-6 animate-fade-in">
           {/* Video slide - only show CTA button */}
           {current === 0 ? (
-            <div className="pt-4 mt-80">
-              <Button
+            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute bottom-16 left-0 right-0 flex justify-center animate-fade-up">
+              {/* <Button
                 size="lg"
                 onClick={handleCTAClick}
                 className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-6 transition-all duration-300 transform hover:scale-105"
               >
                 {slides[current].cta}
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              </Button> */}
             </div>
+          </div>
           ) : (
             <>
               {/* Icon */}

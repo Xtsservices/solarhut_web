@@ -48,21 +48,12 @@ export function Footer({ onNavigate }: FooterProps) {
     services: [
       { title: "Residential Solar", action: () => onNavigate?.('residential') },
       { title: "Commercial Solar", action: () => onNavigate?.('commercial') },
-      { title: "Solar Installation", action: () => onNavigate?.('home') },
-      { title: "System Maintenance", action: () => onNavigate?.('home') },
-      { title: "Energy Storage", action: () => onNavigate?.('home') }
     ],
     company: [
       { title: "About Us", action: () => onNavigate?.('about') },
       { title: "Our Team", action: () => onNavigate?.('about') },
-      { title: "Careers", action: () => onNavigate?.('home') },
-      { title: "Testimonials", action: () => onNavigate?.('testimonials') },
-      { title: "Gallery", action: () => onNavigate?.('gallery') }
     ],
     resources: [
-      { title: "Solar Calculator", action: () => onNavigate?.('home') },
-      { title: "Financing Options", action: () => onNavigate?.('home') },
-      { title: "Warranties", action: () => onNavigate?.('home') },
       { title: "FAQs", action: () => onNavigate?.('home') },
       { title: "Contact Support", action: () => onNavigate?.('contact') }
     ]

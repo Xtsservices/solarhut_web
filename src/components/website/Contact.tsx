@@ -275,7 +275,7 @@ export function Contact({ onNavigate }: ContactProps) {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Service Locations</span>
-                    <span className="text-[#FFA500]">Pan India</span>
+                    <span className="text-[#FFA500] text-right" >Andhra Pradesh and Telangana</span>
                   </div>
                 </div>
               </CardContent>

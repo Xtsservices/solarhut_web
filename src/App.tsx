@@ -19,6 +19,7 @@ import { TestimonialsPage } from './components/website/TestimonialsPage';
 import { ProjectsPage } from './components/website/ProjectsPage';
 import { GalleryPage } from './components/website/GalleryPage';
 import TeamsPage from './components/website/TeamsPage';
+import ContactModal from './components/website/ContactModal';
 
 import { PortalSidebar } from './components/shared/PortalSidebar';
 import { PortalHeader } from './components/shared/PortalHeader';
@@ -252,7 +253,7 @@ function AppContent() {
         <Route path="/" element={<LandingPage onNavigate={handleNavigate} />} />
         <Route path="/home" element={<LandingPage onNavigate={handleNavigate} />} />
         <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/contact" element={<ContactModal open={true} onClose={() => navigate("/")} />} />
         <Route path="/enquiry" element={<EnquiryPage />} />
         <Route path="/ground-mounted" element={<GroundMountedPage />} />
         <Route path="/residential" element={<ResidentialSolutionsPage />} />

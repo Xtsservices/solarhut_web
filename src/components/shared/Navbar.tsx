@@ -73,13 +73,13 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
           </div>
 
           {/* Desktop Menu - Center */}
-          <div className="hidden lg:flex items-center gap-8 xl:gap-14 2xl:gap-20 flex-1 justify-center text-xs xl:text-sm">
+            <div className="hidden lg:flex items-center gap-8 xl:gap-14 2xl:gap-20 flex-1 justify-center text-xs xl:text-sm">
             <button
               onClick={() => onNavigate('home')}
               className={`transition-colors ${
-                currentPage === 'home'
-                  ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
-                  : 'text-gray-700 hover:text-[#FFA500]'
+              currentPage === 'home'
+                ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
+                : 'text-gray-700 hover:text-[#FFA500]'
               }`}
             >
               HOME
@@ -88,9 +88,9 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
             <button
               onClick={() => onNavigate('about')}
               className={`transition-colors ${
-                currentPage === 'about'
-                  ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
-                  : 'text-gray-700 hover:text-[#FFA500]'
+              currentPage === 'about'
+                ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
+                : 'text-gray-700 hover:text-[#FFA500]'
               }`}
             >
               About Us
@@ -103,73 +103,56 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <button className={`flex items-center gap-1 transition-colors py-2 ${
-                ['ground-mounted', 'residential', 'commercial', 'industrial', 'solar-water-heaters'].includes(currentPage)
-                  ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
-                  : 'text-gray-700 hover:text-[#FFA500]'
+              ['ground-mounted', 'residential', 'commercial', 'industrial', 'solar-water-heaters'].includes(currentPage)
+                ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
+                : 'text-gray-700 hover:text-[#FFA500]'
               }`}>
-                <span>Products</span>
-                <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
+              <span>Products</span>
+              <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
               </button>
               {activeDropdown === 'products' && (
-                <div className="absolute top-full left-0 mt-0 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
-                  {productsItems.map((item) => (
-                    <button
-                      key={item.title}
-                      onClick={() => {
-                        item.action();
-                        setActiveDropdown(null);
-                      }}
-                      className="block w-full text-left px-4 py-3 text-gray-700 hover:text-[#FFA500] hover:bg-orange-50 transition-colors border-b border-gray-100 last:border-b-0"
-                    >
-                      {item.title}
-                    </button>
-                  ))}
-                </div>
+              <div className="absolute top-full left-0 mt-0 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
+                {productsItems.map((item) => (
+                <button
+                  key={item.title}
+                  onClick={() => {
+                  item.action();
+                  setActiveDropdown(null);
+                  }}
+                  className="block w-full text-left px-4 py-3 text-gray-700 hover:text-[#FFA500] hover:bg-orange-50 transition-colors border-b border-gray-100 last:border-b-0"
+                >
+                  {item.title}
+                </button>
+                ))}
+              </div>
               )}
             </div>
-
+            
             <button
-              onClick={() => onNavigate('testimonials')}
+              onClick={() => onNavigate('teams')}
               className={`transition-colors ${
-                currentPage === 'testimonials'
-                  ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
-                  : 'text-gray-700 hover:text-[#FFA500]'
+              currentPage === 'teams'
+              ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
+              : 'text-gray-700 hover:text-[#FFA500]'
               }`}
             >
-              Client Stories
-            </button>
-
-            <button
-              onClick={() => onNavigate('gallery')}
-              className={`transition-colors ${
-                currentPage === 'gallery'
-                  ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
-                  : 'text-gray-700 hover:text-[#FFA500]'
-              }`}
-            >
-              Gallery
+              Team
             </button>
 
             <button
               onClick={() => onNavigate('contact')}
               className={`transition-colors ${
-                currentPage === 'contact'
-                  ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
-                  : 'text-gray-700 hover:text-[#FFA500]'
+              currentPage === 'contact'
+                ? 'text-[#FFA500] font-semibold border-b-2 border-[#FFA500] pb-1'
+                : 'text-gray-700 hover:text-[#FFA500]'
               }`}
             >
               Contact Us
             </button>
+            </div>
 
-            {/* Refer & Earn and Brochure in Header */}
-            <button
-              onClick={handleReferEarn}
-              className="flex items-center gap-1 xl:gap-2 bg-[#FFA500] text-white px-2 xl:px-4 py-1.5 xl:py-2 rounded text-xs xl:text-sm hover:bg-[#FFA500]/90 transition-colors"
-            >
-              <Gift className="w-3 h-3 xl:w-4 xl:h-4" />
-              <span className="hidden xl:inline">Refer & Earn</span>
-              <span className="xl:hidden">Refer</span>
-            </button>
+            {/* Get Quote Button - Right */}
+            <div className="hidden lg:flex items-center gap-2 flex-shrink-0 justify-end">
             <button
               onClick={handleDownloadBrochure}
               className="flex items-center gap-1 xl:gap-2 bg-black text-white px-2 xl:px-4 py-1.5 xl:py-2 rounded text-xs xl:text-sm hover:bg-black/90 transition-colors"
@@ -177,10 +160,6 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
               <Download className="w-3 h-3 xl:w-4 xl:h-4" />
               Brochure
             </button>
-          </div>
-
-          {/* Get Quote Button - Right */}
-          <div className="hidden lg:flex items-center flex-shrink-0">
             <button
               type="button"
               onClick={handleGetQuote}
@@ -189,7 +168,7 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
               <Phone className="w-3 h-3 xl:w-4 xl:h-4" />
               <span>Get Quote</span>
             </button>
-          </div>
+            </div>
 
           {/* Mobile Menu Button */}
           <button

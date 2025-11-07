@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 
 // Import the logo
 // @ts-ignore: Vite/Figma virtual asset provided at build time
-import logoImage from '../../assets/image.png';
+import logoImage from '../../assets/SolarHutLOGO1.png';
 // @ts-ignore: Vite/Figma virtual asset provided at build time
 import logoImage1 from '../../assets/MetadevLogo.png';
 

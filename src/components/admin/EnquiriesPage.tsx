@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Button } from '../ui/button';
@@ -10,21 +10,222 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
-import { mockEnquiries, mockSalesPersons, mockFieldExecutives } from '../../lib/mockData';
-import { Eye, UserPlus, Search, ChevronDown, ChevronUp, Calendar as CalendarIcon } from 'lucide-react';
+import { mockFieldExecutives } from '../../lib/mockData';
+import { Eye, UserPlus, Search, ChevronDown, ChevronUp, Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '../ui/utils';
+import { API_BASE_URL } from '../website/ip';
 
 export function EnquiriesPage() {
-  const [enquiries, setEnquiries] = useState(mockEnquiries.filter(e => e.type === 'enquiry'));
+  const [enquiries, setEnquiries] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('new');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [selectedEnquiry, setSelectedEnquiry] = useState<any>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [selectedSalesPerson, setSelectedSalesPerson] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [salesPersons, setSalesPersons] = useState<any[]>([]);
+  const [createEmployeeDialogOpen, setCreateEmployeeDialogOpen] = useState(false);
+  const [newEmployeeName, setNewEmployeeName] = useState('');
+  const [newEmployeeEmail, setNewEmployeeEmail] = useState('');
+  const [newEmployeeMobile, setNewEmployeeMobile] = useState('');
+  const [newEmployeeRole, setNewEmployeeRole] = useState('Sales Person');
+  const [isCreatingEmployee, setIsCreatingEmployee] = useState(false);
+  const itemsPerPage = 10;
+
+  // Fetch leads from API
+  const fetchLeads = async () => {
+    try {
+      setIsLoading(true);
+      console.log('🔍 Fetching leads from:', `${API_BASE_URL}/api/leads/`);
+      const response = await fetch(`${API_BASE_URL}/api/leads/`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      console.log('📡 Fetch leads response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Response error:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('📊 Raw API result:', result);
+      console.log('📊 Result type:', typeof result);
+      console.log('📊 Result.success:', result.success);
+      console.log('📊 Result.data:', result.data);
+      console.log('📊 Result.data type:', Array.isArray(result.data));
+      
+      if (result.success && Array.isArray(result.data)) {
+        console.log('✅ Data is valid array, length:', result.data.length);
+        console.log('📋 Sample data structure:', result.data[0]);
+        
+        // Don't filter by type - load all leads as enquiries for now
+        const enquiryData = result.data;
+        setEnquiries(enquiryData);
+        console.log('🎯 Enquiries set in state:', enquiryData.length);
+      } else if (result.success && result.data) {
+        console.log('⚠️ Data exists but not array format:', result.data);
+        // Try to handle if data is not an array
+        const dataArray = Array.isArray(result.data) ? result.data : [result.data];
+        setEnquiries(dataArray);
+        console.log('🔄 Converted to array and set:', dataArray.length);
+      } else {
+        console.log('❌ No valid data found:', { success: result.success, data: result.data });
+        setEnquiries([]);
+      }
+    } catch (error) {
+      console.error('💥 Error fetching enquiries:', error);
+      toast.error('Failed to fetch enquiries. Please check console for details.');
+      setEnquiries([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch sales persons from API
+  const fetchSalesPersons = async () => {
+    try {
+      console.log('🔍 Fetching sales persons from API...');
+      const response = await fetch(`${API_BASE_URL}/api/employees/`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        console.log('⚠️ Sales persons API not available, using empty array');
+        setSalesPersons([]);
+        return;
+      }
+
+      const result = await response.json();
+      console.log('📊 Sales persons result:', result);
+      
+      if (result.success && Array.isArray(result.data)) {
+        // Filter only sales persons/employees with sales role
+        const salesPersonsData = result.data.filter((emp: any) => 
+          emp.role === 'sales' || emp.role === 'salesperson' || emp.role === 'Sales Person'
+        );
+        setSalesPersons(salesPersonsData);
+        console.log('✅ Sales persons loaded:', salesPersonsData.length);
+      } else {
+        setSalesPersons([]);
+      }
+    } catch (error) {
+      console.log('⚠️ Error fetching sales persons, using empty array:', error);
+      setSalesPersons([]);
+    }
+  };
+
+
+
+  // Refresh sales persons list
+  const refreshSalesPersons = async () => {
+    console.log('🔄 Refreshing sales persons list...');
+    await fetchSalesPersons();
+    toast.success('Sales persons list refreshed');
+  };
+
+  // Create new employee function
+  const handleCreateEmployee = async () => {
+    if (!newEmployeeName.trim() || !newEmployeeEmail.trim() || !newEmployeeMobile.trim()) {
+      toast.error('Please fill all employee details');
+      return;
+    }
+
+    try {
+      setIsCreatingEmployee(true);
+      console.log('🆕 Creating new employee:', {
+        name: newEmployeeName,
+        email: newEmployeeEmail,
+        mobile: newEmployeeMobile,
+        role: newEmployeeRole
+      });
+
+      const response = await fetch(`${API_BASE_URL}/api/employees/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newEmployeeName.trim(),
+          email: newEmployeeEmail.trim(),
+          mobile: newEmployeeMobile.trim(),
+          role: newEmployeeRole
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Employee created successfully');
+        
+        // Add new employee to local state if it's a sales person
+        if (newEmployeeRole === 'Sales Person') {
+          const newEmployee = {
+            id: result.data?.id || Date.now().toString(),
+            name: newEmployeeName.trim(),
+            email: newEmployeeEmail.trim(),
+            mobile: newEmployeeMobile.trim(),
+            role: newEmployeeRole
+          };
+          
+          setSalesPersons(prev => [...prev, newEmployee]);
+          
+          // Auto-select the newly created employee
+          setSelectedSalesPerson(newEmployee.id);
+          toast.info('Employee created and selected for assignment');
+        } else {
+          // Refresh the sales persons list to get updated data
+          await fetchSalesPersons();
+          toast.info('Employee created successfully');
+        }
+        
+        // Clear form and close dialog
+        setNewEmployeeName('');
+        setNewEmployeeEmail('');
+        setNewEmployeeMobile('');
+        setNewEmployeeRole('Sales Person');
+        setCreateEmployeeDialogOpen(false);
+      } else {
+        toast.error(result.message || 'Failed to create employee');
+      }
+    } catch (error) {
+      console.error('Error creating employee:', error);
+      toast.error('Failed to create employee. Please try again.');
+    } finally {
+      setIsCreatingEmployee(false);
+    }
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchLeads();
+    fetchSalesPersons();
+  }, []);
+
+  // Add visibility change listener to refresh sales persons when user returns to the page
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('🔄 Page became visible, refreshing sales persons...');
+        fetchSalesPersons();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, any> = {
@@ -37,32 +238,167 @@ export function EnquiriesPage() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const filteredEnquiries = enquiries.filter((enquiry) => {
-    const matchesSearch =
-      enquiry.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enquiry.mobile.includes(searchTerm) ||
-      enquiry.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || enquiry.status === statusFilter;
-    const matchesDate = !dateFilter || 
-      new Date(enquiry.createdAt).toDateString() === dateFilter.toDateString();
-    return matchesSearch && matchesStatus && matchesDate;
+  // Helper function to get full name from various name fields
+  const getFullName = (enquiry: any) => {
+    console.log('👤 Getting name for enquiry:', {
+      id: enquiry.id || enquiry.lead_id,
+      fullName: enquiry.fullName,
+      full_name: enquiry.full_name,
+      name: enquiry.name,
+      customer_name: enquiry.customer_name,
+      firstName: enquiry.firstName,
+      first_name: enquiry.first_name,
+      lastName: enquiry.lastName,
+      last_name: enquiry.last_name,
+      fname: enquiry.fname,
+      lname: enquiry.lname
+    });
+    
+    // Try direct full name fields first
+    if (enquiry.fullName) return enquiry.fullName;
+    if (enquiry.full_name) return enquiry.full_name;
+    if (enquiry.name) return enquiry.name;
+    if (enquiry.customer_name) return enquiry.customer_name;
+    
+    // Try to combine first and last name
+    const firstName = enquiry.firstName || enquiry.first_name || '';
+    const lastName = enquiry.lastName || enquiry.last_name || '';
+    
+    if (firstName && lastName) {
+      const combinedName = `${firstName} ${lastName}`.trim();
+      console.log('✅ Combined name:', combinedName);
+      return combinedName;
+    }
+    
+    if (firstName) return firstName;
+    if (lastName) return lastName;
+    
+    // Try other possible name combinations
+    if (enquiry.fname && enquiry.lname) {
+      const combinedName = `${enquiry.fname} ${enquiry.lname}`.trim();
+      console.log('✅ Combined fname/lname:', combinedName);
+      return combinedName;
+    }
+    
+    if (enquiry.fname) return enquiry.fname;
+    if (enquiry.lname) return enquiry.lname;
+    
+    console.log('⚠️ No name found, returning Unknown');
+    return 'Unknown';
+  };
+
+  const filteredEnquiries = enquiries.filter((enquiry: any) => {
+    console.log('🔍 Filtering enquiry:', enquiry);
+    
+    const name = getFullName(enquiry);
+    const phone = enquiry.mobile || enquiry.phone || enquiry.contact || '';
+    const id = (enquiry.id || enquiry.lead_id || '').toString();
+    
+    const matchesSearch = searchTerm === '' || 
+      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      phone.includes(searchTerm) ||
+      id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const status = enquiry.status || 'new';
+    const matchesStatus = statusFilter === 'all' || status === statusFilter;
+    
+    const createdDate = enquiry.createdAt || enquiry.created_at || enquiry.date_created;
+    const matchesDate = !dateFilter || !createdDate ||
+      new Date(createdDate).toDateString() === dateFilter.toDateString();
+    
+    const result = matchesSearch && matchesStatus && matchesDate;
+    console.log('🔍 Filter result:', { matchesSearch, matchesStatus, matchesDate, result });
+    
+    return result;
   });
 
-  const handleAssign = () => {
+  // Pagination logic
+  const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedEnquiries = filteredEnquiries.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchTerm, dateFilter]);
+
+  const handleAssign = async () => {
     if (!selectedSalesPerson) {
       toast.error('Please select a sales person');
       return;
     }
-    toast.success('Enquiry assigned successfully');
-    setShowAssignForm(false);
-    setSelectedSalesPerson('');
+
+    if (!selectedEnquiry) {
+      toast.error('No enquiry selected');
+      return;
+    }
+
+    try {
+      const enquiryId = selectedEnquiry.id || selectedEnquiry.lead_id;
+      console.log('Assigning enquiry:', enquiryId, 'to sales person:', selectedSalesPerson);
+      
+      // Update the enquiry status to 'assigned'
+      const response = await fetch(`${API_BASE_URL}/api/leads/${enquiryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'assigned',
+          salesPersonId: selectedSalesPerson,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Enquiry assigned successfully');
+        
+        // Update local state
+        setEnquiries(prev => prev.map(enquiry => 
+          (enquiry.id || enquiry.lead_id) === enquiryId 
+            ? { ...enquiry, status: 'assigned', salesPersonId: selectedSalesPerson }
+            : enquiry
+        ));
+        
+        // Update selected enquiry
+        setSelectedEnquiry((prev: any) => ({ 
+          ...prev, 
+          status: 'assigned', 
+          salesPersonId: selectedSalesPerson 
+        }));
+        
+        setShowAssignForm(false);
+        setSelectedSalesPerson('');
+      } else {
+        toast.error(result.message || 'Failed to assign enquiry');
+      }
+    } catch (error) {
+      console.error('Error assigning enquiry:', error);
+      toast.error('Failed to assign enquiry. Please try again.');
+    }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64 text-gray-500">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-3"></div>
+        Loading enquiries...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-gray-900 mb-1 sm:mb-2">Enquiries</h1>
-        <p className="text-gray-600 text-sm sm:text-base">Manage all customer enquiries</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-gray-900 mb-1 sm:mb-2">Enquiries</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Manage all customer enquiries</p>
+        </div>
       </div>
 
       <div className="space-y-3 sm:space-y-0">
@@ -133,31 +469,45 @@ export function EnquiriesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs sm:text-sm">ID</TableHead>
-                  <TableHead className="text-xs sm:text-sm">Name</TableHead>
-                  <TableHead className="text-xs sm:text-sm">Mobile</TableHead>
-                  <TableHead className="text-xs sm:text-sm">KV</TableHead>
-                  <TableHead className="text-xs sm:text-sm">Status</TableHead>
-                  <TableHead className="text-xs sm:text-sm">Date</TableHead>
-                  <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-center">ID</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-center">Name</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-center">Mobile</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-center">KV</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-center">Status</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-center">Date</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEnquiries.map((enquiry) => (
-                  <TableRow key={enquiry.id}>
-                    <TableCell className="text-xs sm:text-sm">{enquiry.id}</TableCell>
-                    <TableCell className="text-xs sm:text-sm">{enquiry.fullName}</TableCell>
-                    <TableCell className="text-xs sm:text-sm">{enquiry.mobile}</TableCell>
-                    <TableCell className="text-xs sm:text-sm">{enquiry.kv}</TableCell>
-                    <TableCell className="text-xs sm:text-sm">{getStatusBadge(enquiry.status)}</TableCell>
-                    <TableCell className="text-xs sm:text-sm">
-                      {new Date(enquiry.createdAt).toLocaleDateString()}
+                {paginatedEnquiries.map((enquiry: any, index: number) => (
+                  <TableRow key={enquiry.id || enquiry.lead_id || (startIndex + index)}>
+                    <TableCell className="text-xs sm:text-sm text-center">
+                      {enquiry.id || enquiry.lead_id || `#${startIndex + index + 1}`}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-xs sm:text-sm text-center">
+                      {getFullName(enquiry)}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm text-center">
+                      {enquiry.mobile || enquiry.phone || enquiry.contact || 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm text-center">
+                      {enquiry.kv || enquiry.system_size || enquiry.capacity || 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm text-center">
+                      {getStatusBadge(enquiry.status || 'new')}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm text-center">
+                      {enquiry.createdAt || enquiry.created_at || enquiry.date_created 
+                        ? new Date(enquiry.createdAt || enquiry.created_at || enquiry.date_created).toLocaleDateString()
+                        : 'N/A'
+                      }
+                    </TableCell>
+                    <TableCell className="text-center">
                       <Button 
                         size="sm" 
                         variant="ghost" 
                         onClick={() => {
+                          console.log('👁️ Viewing enquiry:', enquiry);
                           setSelectedEnquiry(enquiry);
                           setViewDialogOpen(true);
                           setShowAssignForm(false);
@@ -169,45 +519,136 @@ export function EnquiriesPage() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {paginatedEnquiries.length === 0 && filteredEnquiries.length === 0 && enquiries.length > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      No enquiries match your current filters. ({enquiries.length} total enquiries loaded)
+                    </TableCell>
+                  </TableRow>
+                )}
+                {enquiries.length === 0 && !isLoading && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      No enquiries found in database. Check your API connection.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
+          
+          {/* Pagination Controls */}
+          {filteredEnquiries.length > itemsPerPage && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+              <div className="text-sm text-gray-700">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredEnquiries.length)} of {filteredEnquiries.length} enquiries
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // Show first page, last page, current page, and pages around current page
+                    const showPage = page === 1 || page === totalPages || 
+                                   (page >= currentPage - 1 && page <= currentPage + 1);
+                    
+                    if (!showPage) {
+                      // Show ellipsis
+                      if (page === currentPage - 2 || page === currentPage + 2) {
+                        return <span key={page} className="px-2 text-gray-500">...</span>;
+                      }
+                      return null;
+                    }
+                    
+                    return (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="min-w-[32px]"
+                      >
+                        {page}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <div className="md:hidden space-y-2">
         <div className="bg-white rounded-lg border p-2 mb-2">
-          <p className="text-xs text-gray-600">Total: <span className="font-medium text-gray-900">{filteredEnquiries.length}</span> enquiries</p>
+          <p className="text-xs text-gray-600">
+            Total: <span className="font-medium text-gray-900">{filteredEnquiries.length}</span> enquiries
+            {filteredEnquiries.length > itemsPerPage && (
+              <span className="ml-2 text-gray-500">
+                (Page {currentPage} of {totalPages})
+              </span>
+            )}
+          </p>
         </div>
-        {filteredEnquiries.map((enquiry) => (
-          <Card key={enquiry.id} className="overflow-hidden">
+        {paginatedEnquiries.map((enquiry: any, index: number) => (
+          <Card key={enquiry.id || enquiry.lead_id || (startIndex + index)} className="overflow-hidden">
             <CardContent className="p-3">
               <div className="space-y-2">
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500 truncate">{enquiry.id}</p>
-                    <p className="font-medium text-sm mt-0.5 truncate">{enquiry.fullName}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {enquiry.id || enquiry.lead_id || `#${startIndex + index + 1}`}
+                    </p>
+                    <p className="font-medium text-sm mt-0.5 truncate">
+                      {getFullName(enquiry)}
+                    </p>
                   </div>
-                  {getStatusBadge(enquiry.status)}
+                  {getStatusBadge(enquiry.status || 'new')}
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t">
                   <div>
                     <p className="text-gray-500 mb-0.5">Mobile</p>
-                    <p className="text-gray-900 font-medium">{enquiry.mobile}</p>
+                    <p className="text-gray-900 font-medium">
+                      {enquiry.mobile || enquiry.phone || enquiry.contact || 'N/A'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500 mb-0.5">Capacity</p>
-                    <p className="text-gray-900 font-medium">{enquiry.kv}</p>
+                    <p className="text-gray-900 font-medium">
+                      {enquiry.kv || enquiry.system_size || enquiry.capacity || 'N/A'}
+                    </p>
                   </div>
                 </div>
                 <div className="text-xs text-gray-500 pt-1">
-                  {new Date(enquiry.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {enquiry.createdAt || enquiry.created_at || enquiry.date_created
+                    ? new Date(enquiry.createdAt || enquiry.created_at || enquiry.date_created).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : 'Date N/A'
+                  }
                 </div>
                 <Button 
                   size="sm" 
                   variant="outline"
                   className="w-full mt-1 h-8 text-xs"
                   onClick={() => {
+                    console.log('👁️ Viewing enquiry (mobile):', enquiry);
                     setSelectedEnquiry(enquiry);
                     setViewDialogOpen(true);
                     setShowAssignForm(false);
@@ -221,175 +662,502 @@ export function EnquiriesPage() {
             </CardContent>
           </Card>
         ))}
+        {paginatedEnquiries.length === 0 && filteredEnquiries.length === 0 && (
+          <Card>
+            <CardContent className="p-6 text-center text-gray-500">
+              No enquiries found. Try adjusting your filters.
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Mobile Pagination Controls */}
+        {filteredEnquiries.length > itemsPerPage && (
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex flex-col items-center space-y-3">
+                <div className="text-xs text-gray-600 text-center">
+                  Showing {startIndex + 1} to {Math.min(endIndex, filteredEnquiries.length)} of {filteredEnquiries.length} enquiries
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Prev
+                  </Button>
+                  
+                  <span className="text-sm font-medium px-3">
+                    {currentPage} / {totalPages}
+                  </span>
+                  
+                  <Button
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+      <Dialog open={viewDialogOpen} onOpenChange={(open) => {
+        setViewDialogOpen(open);
+        if (!open) {
+          setSelectedSalesPerson('');
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader className="space-y-1 sm:space-y-2">
             <DialogTitle className="text-base sm:text-lg">Enquiry Details</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">View and manage enquiry information</DialogDescription>
           </DialogHeader>
           {selectedEnquiry && (() => {
-            const salesPerson = mockSalesPersons.find(sp => sp.id === selectedEnquiry.salesPersonId);
+            const salesPerson = salesPersons.find((sp: any) => sp.id === selectedEnquiry.salesPersonId);
             const fieldExecutive = mockFieldExecutives.find(fe => fe.id === selectedEnquiry.fieldExecutiveId);
+            
+            // Function to format field names for display
+            const formatFieldName = (key: string) => {
+              return key
+                .replace(/_/g, ' ')
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .trim();
+            };
+
+            // Function to format field values
+            const formatFieldValue = (key: string, value: any) => {
+              if (value === null || value === undefined || value === '') return 'N/A';
+              
+              // Handle dates
+              if ((key.includes('date') || key.includes('Date') || key.includes('created') || key.includes('updated')) && 
+                  typeof value === 'string' && !isNaN(Date.parse(value))) {
+                return new Date(value).toLocaleString();
+              }
+              
+              // Handle booleans
+              if (typeof value === 'boolean') {
+                return value ? 'Yes' : 'No';
+              }
+              
+              // Handle numbers
+              if (typeof value === 'number') {
+                return value.toLocaleString();
+              }
+              
+              // Handle arrays
+              if (Array.isArray(value)) {
+                return value.join(', ') || 'Empty';
+              }
+              
+              // Handle objects
+              if (typeof value === 'object') {
+                return JSON.stringify(value, null, 2);
+              }
+              
+              return String(value);
+            };
+
+            // Get all fields from the enquiry object
+            const excludeFields = [
+              'salesPersonId', 
+              'fieldExecutiveId',
+              // Exclude fields already shown in primary section
+              'id',
+              'lead_id', 
+              'status',
+              'mobile',
+              'phone',
+              'contact',
+              // Exclude name fields as they're handled by getFullName
+              'fullName',
+              'full_name',
+              'name',
+              'customer_name',
+              'firstName',
+              'first_name',
+              'lastName',
+              'last_name',
+              'fname',
+              'lname',
+              // Exclude channel field
+              'channel'
+            ];
+            
+            // Define custom field order
+            const fieldOrder = [
+              'email',
+              'kv', 'system_size', 'capacity',
+              'home_type', 'homeType', 'property_type',
+              'service_type', 'serviceType', 'services_type',
+              'createdAt', 'created_at', 'date_created',
+              'updatedAt', 'updated_at', 'date_updated',
+              'location', 'address', 'city', 'state', 'pincode',
+              'message', 'description', 'notes', 'comments'
+            ];
+            
+            const availableFields = Object.keys(selectedEnquiry)
+              .filter(key => !excludeFields.includes(key));
+            
+            // Sort fields according to custom order, then alphabetically for remaining fields
+            const allFields = availableFields.sort((a, b) => {
+              const aIndex = fieldOrder.indexOf(a);
+              const bIndex = fieldOrder.indexOf(b);
+              
+              if (aIndex !== -1 && bIndex !== -1) {
+                return aIndex - bIndex;
+              } else if (aIndex !== -1) {
+                return -1;
+              } else if (bIndex !== -1) {
+                return 1;
+              } else {
+                return a.localeCompare(b);
+              }
+            });
+
+            console.log('🎯 All available fields in selectedEnquiry:', allFields);
+            console.log('📋 Complete enquiry object:', selectedEnquiry);
             
             return (
               <div className="space-y-3 sm:space-y-4">
+                {/* Primary Information Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Essential Fields First */}
                   <div>
-                    <Label className="text-xs sm:text-sm">Enquiry ID</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedEnquiry.id}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs sm:text-sm">Status</Label>
-                    <div className="mt-1">{getStatusBadge(selectedEnquiry.status)}</div>
-                  </div>
-                  <div>
-                    <Label className="text-xs sm:text-sm">Full Name</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedEnquiry.fullName}</p>
+                    <Label className="text-xs sm:text-sm font-semibold text-blue-700">Enquiry ID</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1 font-medium">
+                      {selectedEnquiry.id || selectedEnquiry.lead_id || 'N/A'}
+                    </p>
                   </div>
                   <div>
-                    <Label className="text-xs sm:text-sm">Mobile</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedEnquiry.mobile}</p>
+                    <Label className="text-xs sm:text-sm font-semibold text-blue-700">Status</Label>
+                    <div className="mt-1">{getStatusBadge(selectedEnquiry.status || 'new')}</div>
                   </div>
                   <div>
-                    <Label className="text-xs sm:text-sm">Email</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1 break-all">{selectedEnquiry.email}</p>
+                    <Label className="text-xs sm:text-sm font-semibold text-blue-700">Full Name</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1 font-medium">{getFullName(selectedEnquiry)}</p>
                   </div>
                   <div>
-                    <Label className="text-xs sm:text-sm">System Size</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedEnquiry.kv}</p>
+                    <Label className="text-xs sm:text-sm font-semibold text-blue-700">Contact Number</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">
+                      {selectedEnquiry.mobile || selectedEnquiry.phone || selectedEnquiry.contact || 'N/A'}
+                    </p>
                   </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-xs sm:text-sm">Address</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedEnquiry.address}</p>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-xs sm:text-sm">Message</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedEnquiry.message}</p>
-                  </div>
-                  
-                  {/* Show Sales Person for assigned, scheduled, and completed */}
-                  {(selectedEnquiry.status === 'assigned' || 
-                    selectedEnquiry.status === 'scheduled' || 
-                    selectedEnquiry.status === 'completed') && salesPerson && (
-                    <div className="col-span-2">
-                      <Label>Assigned Sales Person</Label>
-                      <p className="text-gray-900">{salesPerson.name}</p>
+                </div>
+
+                {/* Additional Dynamic Fields */}
+                <div className="space-y-4">
+                  <div className="border-t pt-3">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-3">Additional Information</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {allFields.map((key) => {
+                        const value = selectedEnquiry[key];
+                        const displayValue = formatFieldValue(key, value);
+                        
+                        // Skip empty or null values for cleaner display
+                        if (displayValue === 'N/A' && !['status', 'id', 'lead_id'].includes(key)) {
+                          return null;
+                        }
+                        
+                        return (
+                          <div key={key} className={`${
+                            key === 'message' || key === 'description' || key === 'address' || 
+                            key === 'notes' || key === 'comments' || key === 'requirements' ||
+                            (typeof value === 'object' && value !== null) || 
+                            (typeof value === 'string' && value.length > 50)
+                              ? 'sm:col-span-2' : ''
+                          }`}>
+                            <Label className="text-xs sm:text-sm text-gray-600">
+                              {formatFieldName(key)}
+                            </Label>
+                            <div className="text-sm sm:text-base text-gray-900 mt-1">
+                              {typeof value === 'object' && value !== null ? (
+                                <pre className="text-xs bg-gray-50 p-2 rounded border overflow-auto max-h-24">
+                                  {displayValue}
+                                </pre>
+                              ) : (
+                                <p className={`${
+                                  (typeof value === 'string' && value.length > 100) ? 'text-xs' : ''
+                                } break-words`}>
+                                  {displayValue}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Assign to Sales Person - Show for unassigned enquiries */}
+                      {(() => {
+                        const currentStatus = selectedEnquiry.status || 'new';
+                        const canAssign = currentStatus === 'new' || currentStatus === 'pending' || !currentStatus || currentStatus === '';
+                        console.log('🎯 Assignment dropdown check:', {
+                          currentStatus,
+                          canAssign,
+                          salesPersonsCount: salesPersons.length,
+                          enquiryId: selectedEnquiry.id || selectedEnquiry.lead_id
+                        });
+                        
+                        return canAssign && (
+                          <div className="sm:col-span-2 mt-4 pt-4 border-t">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs sm:text-sm text-gray-600">Assign to Sales Person</Label>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={refreshSalesPersons}
+                                  className="text-xs px-2 py-1 h-auto"
+                                  title="Refresh sales persons list"
+                                >
+                                  <RefreshCw className="h-3 w-3 mr-1" />
+                                  Refresh
+                                </Button>
+                              </div>
+                              <div className="text-xs text-blue-600 mb-2">
+                                Current Status: <span className="font-medium">{currentStatus}</span>
+                              </div>
+                              
+                              {/* Single Dropdown with conditional options */}
+                              <Select 
+                                value={selectedSalesPerson} 
+                                onValueChange={(value) => {
+                                  if (value === 'create_new') {
+                                    setCreateEmployeeDialogOpen(true);
+                                    // Reset selected value so dropdown doesn't show "Create New Employee"
+                                    setSelectedSalesPerson('');
+                                  } else {
+                                    setSelectedSalesPerson(value);
+                                  }
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder={
+                                    salesPersons.length > 0 
+                                      ? "Choose sales person..." 
+                                      : "No sales persons available - Click to create"
+                                  } />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {salesPersons.length > 0 ? (
+                                    // Show sales persons if available
+                                    <>
+                                      {salesPersons.map((sp: any) => (
+                                        <SelectItem key={sp.id} value={sp.id}>
+                                          <div className="flex items-center">
+                                            <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                            {sp.name}
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                      <hr className="my-1" />
+                                      <SelectItem value="create_new">
+                                        <div className="flex items-center text-blue-600">
+                                          <UserPlus className="h-4 w-4 mr-2" />
+                                          Create New Employee
+                                        </div>
+                                      </SelectItem>
+                                    </>
+                                  ) : (
+                                    // Show create new employee option if no sales persons available
+                                    <SelectItem value="create_new">
+                                      <div className="flex items-center text-blue-600">
+                                        <UserPlus className="h-4 w-4 mr-2" />
+                                        Create New Employee
+                                      </div>
+                                    </SelectItem>
+                                  )}
+                                </SelectContent>
+                              </Select>
+
+                              {/* Show assign button only if a sales person is selected */}
+                              {selectedSalesPerson && selectedSalesPerson !== 'create_new' && (
+                                <Button 
+                                  onClick={handleAssign} 
+                                  className="w-full"
+                                >
+                                  <UserPlus className="h-4 w-4 mr-2" />
+                                  Assign Enquiry
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
-                  )}
-                  
-                  {/* Show quotation amount for assigned, scheduled, and completed */}
-                  {selectedEnquiry.quotationAmount && (
-                    <div>
-                      <Label>Quotation Amount</Label>
-                      <p className="text-gray-900">
-                        ₹{selectedEnquiry.quotationAmount.toLocaleString()}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {/* Show Field Executive and Work Details for scheduled and completed */}
-                  {(selectedEnquiry.status === 'scheduled' || selectedEnquiry.status === 'completed') && (
-                    <>
-                      {fieldExecutive && (
-                        <div>
-                          <Label>Field Executive</Label>
-                          <p className="text-gray-900">{fieldExecutive.name}</p>
+                  </div>
+                </div>
+
+                {/* Additional Status-Based Information */}
+                {(selectedEnquiry.status === 'assigned' || 
+                  selectedEnquiry.status === 'scheduled' || 
+                  selectedEnquiry.status === 'completed') && (
+                  <div className="border-t pt-3">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-3">Assignment & Work Details</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {salesPerson && (
+                        <div className="sm:col-span-2">
+                          <Label className="text-xs sm:text-sm text-gray-600">Assigned Sales Person</Label>
+                          <p className="text-sm sm:text-base text-gray-900 mt-1">{salesPerson.name}</p>
                         </div>
                       )}
+                      
+                      {selectedEnquiry.quotationAmount && (
+                        <div>
+                          <Label className="text-xs sm:text-sm text-gray-600">Quotation Amount</Label>
+                          <p className="text-sm sm:text-base text-gray-900 mt-1">
+                            ₹{selectedEnquiry.quotationAmount.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {fieldExecutive && (
+                        <div>
+                          <Label className="text-xs sm:text-sm text-gray-600">Field Executive</Label>
+                          <p className="text-sm sm:text-base text-gray-900 mt-1">{fieldExecutive.name}</p>
+                        </div>
+                      )}
+                      
                       {selectedEnquiry.workDate && (
                         <div>
-                          <Label>Work Date</Label>
-                          <p className="text-gray-900">
+                          <Label className="text-xs sm:text-sm text-gray-600">Work Date</Label>
+                          <p className="text-sm sm:text-base text-gray-900 mt-1">
                             {new Date(selectedEnquiry.workDate).toLocaleDateString()}
                           </p>
                         </div>
                       )}
+                      
                       {selectedEnquiry.workTime && (
                         <div>
-                          <Label>Work Time</Label>
-                          <p className="text-gray-900">{selectedEnquiry.workTime}</p>
+                          <Label className="text-xs sm:text-sm text-gray-600">Work Time</Label>
+                          <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedEnquiry.workTime}</p>
                         </div>
                       )}
-                    </>
-                  )}
-                  
-                  {/* Show Payment Status for scheduled and completed */}
-                  {(selectedEnquiry.status === 'scheduled' || selectedEnquiry.status === 'completed') && (
-                    <div>
-                      <Label>Payment Status</Label>
-                      <div>
-                        {selectedEnquiry.paymentStatus === 'paid' ? (
-                          <Badge className="bg-green-100 text-green-700">Paid</Badge>
-                        ) : (
-                          <Badge className="bg-orange-100 text-orange-700">Pending</Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                {selectedEnquiry.status === 'new' && (
-                <div className="pt-4 border-t">
-                  {/* Assign to Sales Person - Only show for 'new' enquiries */}
-                  <div className="space-y-3">
-                    <Button 
-                      variant="outline"
-                      onClick={() => {
-                        setShowAssignForm(!showAssignForm);
-                      }}
-                      className="w-full flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <UserPlus className="h-4 w-4" />
-                        Assign to Sales Person
-                      </div>
-                      {showAssignForm ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
-                    
-                    {showAssignForm && (
-                      <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+                      
+                      {(selectedEnquiry.status === 'scheduled' || selectedEnquiry.status === 'completed') && (
                         <div>
-                          <Label>Select Sales Person</Label>
-                          <Select value={selectedSalesPerson} onValueChange={setSelectedSalesPerson}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Choose sales person..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {mockSalesPersons.map((sp) => (
-                                <SelectItem key={sp.id} value={sp.id}>
-                                  {sp.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Label className="text-xs sm:text-sm text-gray-600">Payment Status</Label>
+                          <div className="mt-1">
+                            {selectedEnquiry.paymentStatus === 'paid' ? (
+                              <Badge className="bg-green-100 text-green-700">Paid</Badge>
+                            ) : (
+                              <Badge className="bg-orange-100 text-orange-700">Pending</Badge>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button onClick={handleAssign} className="flex-1">
-                            Assign Enquiry
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => {
-                              setShowAssignForm(false);
-                              setSelectedSalesPerson('');
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+
               </div>
             );
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Create Employee Dialog - Same as in Employees screen */}
+      <Dialog open={createEmployeeDialogOpen} onOpenChange={setCreateEmployeeDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Employee</DialogTitle>
+            <DialogDescription>Add a new employee to the system</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="employee-name">Full Name</Label>
+              <Input
+                id="employee-name"
+                placeholder="Enter employee full name"
+                value={newEmployeeName}
+                onChange={(e) => setNewEmployeeName(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="employee-email">Email Address</Label>
+              <Input
+                id="employee-email"
+                type="email"
+                placeholder="Enter email address"
+                value={newEmployeeEmail}
+                onChange={(e) => setNewEmployeeEmail(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="employee-mobile">Mobile Number</Label>
+              <Input
+                id="employee-mobile"
+                placeholder="Enter mobile number"
+                value={newEmployeeMobile}
+                onChange={(e) => setNewEmployeeMobile(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="employee-role">Role</Label>
+              <Select value={newEmployeeRole} onValueChange={setNewEmployeeRole}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sales Person">Sales Person</SelectItem>
+                  <SelectItem value="Field Executive">Field Executive</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Manager">Manager</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCreateEmployeeDialogOpen(false);
+                  setNewEmployeeName('');
+                  setNewEmployeeEmail('');
+                  setNewEmployeeMobile('');
+                  setNewEmployeeRole('Sales Person');
+                }}
+                className="flex-1"
+                disabled={isCreatingEmployee}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateEmployee}
+                className="flex-1"
+                disabled={isCreatingEmployee || !newEmployeeName.trim() || !newEmployeeEmail.trim() || !newEmployeeMobile.trim()}
+              >
+                {isCreatingEmployee ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Create Employee
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="text-xs text-gray-500 text-center">
+              Employee will be created and available for assignment immediately.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

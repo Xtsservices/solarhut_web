@@ -5,6 +5,7 @@ import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
+import { API_BASE_URL } from './ip';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { 
@@ -38,41 +39,77 @@ type EnquiryType = 'residential' | 'commercial' | 'industrial' | 'job' | 'suppli
 export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
   const [selectedType, setSelectedType] = useState<EnquiryType | null>(null);
   const [enquiryData, setEnquiryData] = useState({
-    fullName: '',
+    first_name: '',
+    last_name: '',
     mobile: '',
     email: '',
-    kv: '',
-    propertyType: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
-    electricityBill: '',
-    roofArea: '',
+    service_type: '',
+    capacity: '',
     message: '',
+    location: '',
+    home_type: '',
   });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Your request has been submitted successfully! Our team will contact you within 24 hours.');
-    setEnquiryData({
-      fullName: '',
-      mobile: '',
-      email: '',
-      kv: '',
-      propertyType: '',
-      address: '',
-      city: '',
-      state: '',
-      pincode: '',
-      electricityBill: '',
-      roofArea: '',
-      message: '',
-    });
-    // Optionally scroll back to type selection
-    setTimeout(() => {
-      setSelectedType(null);
-    }, 2000);
+    // Frontend validation for service_type
+    if (!enquiryData.service_type || enquiryData.service_type.trim() === '') {
+      toast.error('Please select a service_type.');
+      return;
+    }
+    setLoading(true);
+    // Capitalize first letter for service_type, message, format kW for capacity, lowercase for home_type, first_name, location
+    const capitalizeFirst = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+    const lowercaseFirst = (str: string) => str ? str.charAt(0).toLowerCase() + str.slice(1) : '';
+    const formatCapacity = (str: string) => {
+      if (!str) return '';
+      // Replace any variant of KW/kW/Kw/kw with kW
+      return str.replace(/([0-9]+)\s*(KW|kw|Kw|kW)/, (match, p1) => `${p1}kW`).replace(/KW\+/i, 'kW+');
+    };
+    const payload = {
+      ...enquiryData,
+      first_name: lowercaseFirst(enquiryData.first_name),
+      location: lowercaseFirst(enquiryData.location),
+      message: capitalizeFirst(enquiryData.message),
+      service_type: capitalizeFirst(enquiryData.service_type),
+      home_type: lowercaseFirst(enquiryData.home_type),
+      capacity: formatCapacity(enquiryData.capacity),
+    };
+    fetch(`${API_BASE_URL}/api/leads`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(async (res) => {
+        setLoading(false);
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast.success(data.message || 'Lead created successfully');
+          setEnquiryData({
+            first_name: '',
+            last_name: '',
+            mobile: '',
+            email: '',
+            service_type: '',
+            capacity: '',
+            message: '',
+            location: '',
+            home_type: '',
+          });
+          setTimeout(() => {
+            setSelectedType(null);
+          }, 2000);
+        } else {
+          toast.error(data.message || 'Failed to submit your request. Please try again.');
+        }
+      })
+      .catch(() => {
+        setLoading(false);
+        toast.error('Network error. Please try again later.');
+      });
   };
 
   const enquiryTypes = [
@@ -319,39 +356,49 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                       <div className="space-y-4">
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="fullName">
-                              {selectedType === 'supplier' ? 'Company Name *' : 'Full Name *'}
-                            </Label>
+                            <Label htmlFor="first_name">First Name *</Label>
                             <Input
-                              id="fullName"
-                              placeholder={selectedType === 'supplier' ? 'Your company name' : 'Enter your full name'}
-                              value={enquiryData.fullName}
-                              onChange={(e) => setEnquiryData({ ...enquiryData, fullName: e.target.value })}
+                              id="first_name"
+                              placeholder="Enter your first name"
+                              value={enquiryData.first_name}
+                              onChange={(e) => setEnquiryData({ ...enquiryData, first_name: e.target.value })}
                               required
                             />
                           </div>
+                          <div>
+                            <Label htmlFor="last_name">Last Name *</Label>
+                            <Input
+                              id="last_name"
+                              placeholder="Enter your last name"
+                              value={enquiryData.last_name}
+                              onChange={(e) => setEnquiryData({ ...enquiryData, last_name: e.target.value })}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="mobile">Mobile Number *</Label>
                             <Input
                               id="mobile"
                               type="tel"
-                              placeholder="+91 XXXXX XXXXX"
+                              placeholder="Enter your mobile number"
                               value={enquiryData.mobile}
                               onChange={(e) => setEnquiryData({ ...enquiryData, mobile: e.target.value })}
                               required
                             />
                           </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="email">Email Address *</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="your.email@example.com"
-                            value={enquiryData.email}
-                            onChange={(e) => setEnquiryData({ ...enquiryData, email: e.target.value })}
-                            required
-                          />
+                          <div>
+                            <Label htmlFor="email">Email *</Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              placeholder="Enter your email"
+                              value={enquiryData.email}
+                              onChange={(e) => setEnquiryData({ ...enquiryData, email: e.target.value })}
+                              required
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -366,13 +413,13 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                         <div className="space-y-4">
                           <div className="grid sm:grid-cols-2 gap-4">
                             <div>
-                              <Label htmlFor="propertyType">Property Type *</Label>
+                              <Label htmlFor="home_type">Property Type *</Label>
                               <Select
-                                value={enquiryData.propertyType}
-                                onValueChange={(value: string) => setEnquiryData({ ...enquiryData, propertyType: value })}
+                                value={enquiryData.home_type}
+                                onValueChange={(value: string) => setEnquiryData({ ...enquiryData, home_type: value })}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select property type" />
+                                  <SelectValue placeholder="Select Property Type" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {selectedType === 'residential' && (
@@ -405,13 +452,13 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                               </Select>
                             </div>
                             <div>
-                              <Label htmlFor="kv">System Size (KW) *</Label>
+                              <Label htmlFor="capacity">System Capacity *</Label>
                               <Select
-                                value={enquiryData.kv}
-                                onValueChange={(value: string) => setEnquiryData({ ...enquiryData, kv: value })}
+                                value={enquiryData.capacity}
+                                onValueChange={(value: string) => setEnquiryData({ ...enquiryData, capacity: value })}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select capacity" />
+                                  <SelectValue placeholder="Select System Capacity" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {selectedType === 'residential' && (
@@ -441,36 +488,20 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                                 </SelectContent>
                               </Select>
                             </div>
-                          </div>
-                          <div className="grid md:grid-cols-2 gap-4">
                             <div>
-                              <Label htmlFor="electricityBill">Monthly Electricity Bill *</Label>
+                              <Label htmlFor="service_type">Service Type *</Label>
                               <Select
-                                value={enquiryData.electricityBill}
-                                onValueChange={(value: string) => setEnquiryData({ ...enquiryData, electricityBill: value })}
+                                value={enquiryData.service_type}
+                                onValueChange={(value: string) => setEnquiryData({ ...enquiryData, service_type: value })}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select range" />
+                                  <SelectValue placeholder="Select Service Type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="under-2000">Under ₹2,000</SelectItem>
-                                  <SelectItem value="2000-5000">₹2,000 - ₹5,000</SelectItem>
-                                  <SelectItem value="5000-10000">₹5,000 - ₹10,000</SelectItem>
-                                  <SelectItem value="10000-25000">₹10,000 - ₹25,000</SelectItem>
-                                  <SelectItem value="25000-50000">₹25,000 - ₹50,000</SelectItem>
-                                  <SelectItem value="50000+">Above ₹50,000</SelectItem>
+                                  <SelectItem value="installation">Installation</SelectItem>
+                                  <SelectItem value="maintenance">Maintenance</SelectItem>
                                 </SelectContent>
                               </Select>
-                            </div>
-                            <div>
-                              <Label htmlFor="roofArea">Available Roof Area (sq ft)</Label>
-                              <Input
-                                id="roofArea"
-                                type="number"
-                                placeholder="e.g., 500"
-                                value={enquiryData.roofArea}
-                                onChange={(e) => setEnquiryData({ ...enquiryData, roofArea: e.target.value })}
-                              />
                             </div>
                           </div>
                         </div>
@@ -487,66 +518,14 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                       </h3>
                       <div className="space-y-4">
                         <div>
-                          <Label htmlFor="address">
-                            {selectedType === 'supplier' ? 'Business Address *' : 'Installation Address *'}
-                          </Label>
+                          <Label htmlFor="location">Address*</Label>
                           <Input
-                            id="address"
-                            placeholder="Street address, building name/number"
-                            value={enquiryData.address}
-                            onChange={(e) => setEnquiryData({ ...enquiryData, address: e.target.value })}
+                            id="location"
+                            placeholder="Enter your address"
+                            value={enquiryData.location}
+                            onChange={(e) => setEnquiryData({ ...enquiryData, location: e.target.value })}
                             required
                           />
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                          <div>
-                            <Label htmlFor="city">City *</Label>
-                            <Input
-                              id="city"
-                              placeholder="City"
-                              value={enquiryData.city}
-                              onChange={(e) => setEnquiryData({ ...enquiryData, city: e.target.value })}
-                              required
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="state">State *</Label>
-                            <Select
-                              value={enquiryData.state}
-                              onValueChange={(value: string) => setEnquiryData({ ...enquiryData, state: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select state" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="andhra-pradesh">Andhra Pradesh</SelectItem>
-                                <SelectItem value="karnataka">Karnataka</SelectItem>
-                                <SelectItem value="kerala">Kerala</SelectItem>
-                                <SelectItem value="tamil-nadu">Tamil Nadu</SelectItem>
-                                <SelectItem value="telangana">Telangana</SelectItem>
-                                <SelectItem value="maharashtra">Maharashtra</SelectItem>
-                                <SelectItem value="gujarat">Gujarat</SelectItem>
-                                <SelectItem value="rajasthan">Rajasthan</SelectItem>
-                                <SelectItem value="delhi">Delhi</SelectItem>
-                                <SelectItem value="haryana">Haryana</SelectItem>
-                                <SelectItem value="punjab">Punjab</SelectItem>
-                                <SelectItem value="uttar-pradesh">Uttar Pradesh</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label htmlFor="pincode">Pincode *</Label>
-                            <Input
-                              id="pincode"
-                              type="text"
-                              placeholder="000000"
-                              maxLength={6}
-                              value={enquiryData.pincode}
-                              onChange={(e) => setEnquiryData({ ...enquiryData, pincode: e.target.value })}
-                              required
-                            />
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -560,21 +539,11 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                         <span>Additional Information</span>
                       </h3>
                       <div>
-                        <Label htmlFor="message">
-                          {selectedType === 'job' ? 'Experience & Qualifications' :
-                           selectedType === 'supplier' ? 'Products & Services Description' :
-                           'Special Requirements or Questions'}
-                        </Label>
+                        <Label htmlFor="message">Message *</Label>
                         <Textarea
                           id="message"
                           rows={5}
-                          placeholder={
-                            selectedType === 'job' ? 
-                            'Tell us about your experience in solar installation, certifications, and what positions you\'re interested in...' :
-                            selectedType === 'supplier' ?
-                            'Describe the products you supply (panels, inverters, batteries, etc.), pricing structure, delivery terms, and certifications...' :
-                            'Any specific requirements like roof type, shading issues, timeline preferences, or questions about the installation...'
-                          }
+                          placeholder="Enter your message"
                           value={enquiryData.message}
                           onChange={(e) => setEnquiryData({ ...enquiryData, message: e.target.value })}
                         />
@@ -582,8 +551,17 @@ export function EnquiryPage({ onNavigate }: EnquiryPageProps) {
                     </div>
 
                     <Button type="submit" size="lg" className="w-full">
-                      Submit Request
-                      <ArrowRight className="ml-2 w-5 h-5" />
+                      {loading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="animate-spin h-5 w-5 text-[#FFA500]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                          Submitting...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2">
+                          Submit Request
+                          <ArrowRight className="ml-2 w-5 h-5" />
+                        </span>
+                      )}
                     </Button>
 
                     <p className="text-sm text-gray-500 text-center">

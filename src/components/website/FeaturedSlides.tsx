@@ -30,7 +30,7 @@ const slides: Slide[] = [
     cta: "Get Free Quote"
   },
   {
-    src: "/src/assets/commercialSolar.jpeg",
+    src: "/src/assets/IndustrialSolar.png",
     alt: "Commercial Building with Large-Scale Solar Panel System",
     title: "Commercial Solar Systems",
     subtitle: "Reduce Operating Costs for Your Business",

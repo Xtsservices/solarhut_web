@@ -101,11 +101,16 @@ export function ResidentialSolutionsPage({ onNavigate }: ResidentialSolutionsPag
     <div className="min-h-screen" style={{ backgroundColor: '#FEF7ED' }}>
       {/* Hero Section */}
       <section className="relative bg-[#FEF7ED] py-16 border-b border-gray-200"  style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(/src/assets/Residentialsolar1.png)`
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(/src/assets/Residentialsolar.jpeg)`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          height: '500px', // Added fixed height
+          display: 'flex',
+          alignItems: 'center'
         }}>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
            <div className="text-center">
-          <div className="bg-white p-1 rounded-lg shadow-lg inline-block">
+          <div className="">
               <h3 className="text-4xl md:text-5xl mb-2 px-4" style={{ color: 'rgb(255, 167, 3)' }}>
               Harness Solar Power for Your Home
             </h3>

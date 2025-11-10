@@ -25,14 +25,14 @@ export function MapSection({ onNavigate }: MapSectionProps) {
     {
       icon: MapPin,
       title: "Office Location",
-      content: "HITEC City, Hyderabad, Telangana",
+      content: "D No: 77-14-13, Ground Floor, Shanthi Nagar, Pypula Road, Ajith Singh Nagar, Vijayawada, India",
       action: handleDirections,
       actionText: "Get Directions",
     },
     {
       icon: Phone,
       title: "Call Us",
-      content: "+91 98765 43210",
+      content: "99661 77225",
       action: handlePhoneClick,
       actionText: "Call Now",
     },
@@ -46,7 +46,7 @@ export function MapSection({ onNavigate }: MapSectionProps) {
     {
       icon: Mail,
       title: "Email",
-      content: "info@solarhutsolutions.com",
+      content: "solarhutsolutions@gmail.com",
       action: handleEmailClick,
       actionText: "Send Email",
     },

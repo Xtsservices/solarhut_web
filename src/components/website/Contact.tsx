@@ -50,18 +50,18 @@ export function Contact({ onNavigate }: ContactProps) {
     {
       icon: MapPin,
       title: "Service Area",
-      details: ["Mumbai & Pune", "All of Maharashtra"]
+      details: ["D No: 77-14-13, Ground Floor, Shanthi Nagar, Pypula Road, Ajith Singh Nagar, Vijayawada, India"]
     },
     {
       icon: Phone,
       title: "Phone",
-      details: ["+91 98789 65431", "+91 98765 43210"],
+      details: ["99661 77225 "],
       clickable: true
     },
     {
       icon: Mail,
       title: "Email",
-      details: ["info@solarhutsolutions.com", "support@solarhutsolutions.com"],
+      details: ["solarhutsolutions@gmail.com"],
       clickable: true
     },
     {

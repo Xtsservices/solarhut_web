@@ -68,12 +68,17 @@ export function CommercialSolutionsPage({ onNavigate }: CommercialSolutionsPageP
       {/* Hero Section */}
       <section className="relative bg-[#FEF7ED] py-16 border-b border-gray-200"
        style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(/src/assets/GroundMountedSystems3.png)`
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(/src/assets/Commercial-Solar.png)`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          height: '500px', // Added fixed height
+          display: 'flex',
+          alignItems: 'center'
         }}
       >
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-           <div className="bg-white p-1 rounded-lg shadow-lg inline-block">
+           <div className="">
               <h3 className="text-4xl md:text-5xl mb-2 px-4" style={{ color: 'rgb(255, 167, 3)' }}>
               Commercial Solar Solutions
             </h3>
@@ -295,7 +300,7 @@ export function CommercialSolutionsPage({ onNavigate }: CommercialSolutionsPageP
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl text-black mb-4">Join the Solar Revolution</h2>
           <p className="text-2xl text-black/90 mb-8">
-            Partner with Solar Hut Solutions to power your business sustainably. Call now at +91 98765 43210!
+            Partner with Solar Hut Solutions to power your business sustainably. Call now at +99661 77225!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 

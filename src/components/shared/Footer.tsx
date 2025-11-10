@@ -2,7 +2,8 @@ import {
   MapPin, 
   Phone, 
   Mail, 
-  Facebook, 
+  Facebook,
+  Youtube, 
   Twitter, 
   Instagram, 
   Linkedin 
@@ -61,9 +62,10 @@ export function Footer({ onNavigate }: FooterProps) {
 
   const socialLinks = [
     { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
-    { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-    { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
-    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" }
+    { icon: Twitter, href: "https://x.com/SOLAR_HUT-Twitter ", label: "Twitter" },
+    { icon: Instagram, href: "https://www.instagram.com/solarhutsolutions?igsh=MW1icG1yeGoycWV3Mg%3D%3D&utm_source=qr", label: "Instagram" },
+    { icon: Linkedin, href: "https://www.linkedin.com/company/solar-hut-solutions", label: "LinkedIn" },
+    { icon: Youtube, href: "https://www.youtube.com/@SOLARHUT-q7o ", label: "YouTube" }
   ];
 
   return (
@@ -91,19 +93,19 @@ export function Footer({ onNavigate }: FooterProps) {
             <div className="space-y-2 sm:space-y-3">
               <div className="flex items-center space-x-3">
                 <MapPin className="w-4 h-4 text-[#FFA500] flex-shrink-0" />
-                <span className="text-sm text-gray-300">Hyderabad, Telangana, India</span>
+                <span className="text-sm text-gray-300">D No: 77-14-13, Ground Floor, Shanthi Nagar, Pypula Road, Ajith Singh Nagar, Vijayawada, India</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-4 h-4 text-[#FFA500] flex-shrink-0" />
-                <span className="text-sm text-gray-300">+91 98765 43210</span>
+                <span className="text-sm text-gray-300">99661 77225</span>
               </div>
-              <div className="flex items-center space-x-3">
+              {/* <div className="flex items-center space-x-3">
                 <Phone className="w-4 h-4 text-[#FFA500] flex-shrink-0" />
                 <span className="text-sm text-gray-300">+91 87654 32109</span>
-              </div>
+              </div> */}
               <div className="flex items-center space-x-3">
                 <Mail className="w-4 h-4 text-[#FFA500] flex-shrink-0" />
-                <span className="text-sm text-gray-300">info@solarhutsolutions.com</span>
+                <span className="text-sm text-gray-300">solarhutsolutions@gmail.com</span>
               </div>
             </div>
           </div>

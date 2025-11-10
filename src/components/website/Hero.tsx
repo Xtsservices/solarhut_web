@@ -38,11 +38,11 @@ export function Hero({ onNavigate }: HeroProps) {
   ];
 
   const socialLinks = [
-    { icon: Facebook, color: "#1877F2", href: "#" },
-    { icon: Twitter, color: "#000000", href: "#" },
-    { icon: Instagram, color: "#E4405F", href: "#" },
-    { icon: Linkedin, color: "#0A66C2", href: "#" },
-    { icon: Youtube, color: "#FF0000", href: "#" }
+    { icon: Facebook, color: "#1877F2", href: "https://facebook.com" },
+    { icon: Twitter, color: "#000000", href: "https://x.com/SOLAR_HUT-Twitter " },
+    { icon: Instagram, color: "#e4409aff", href: "https://www.instagram.com/solarhutsolutions?igsh=MW1icG1yeGoycWV3Mg%3D%3D&utm_source=qr" },
+    { icon: Linkedin, color: "#0A66C2", href: "https://www.linkedin.com/company/solar-hut-solutions " },
+    { icon: Youtube, color: "#FF0000", href: "#https://www.youtube.com/@SOLARHUT-q7o " }
   ];
 
   const contactLinks = [
@@ -169,7 +169,7 @@ export function Hero({ onNavigate }: HeroProps) {
           <div className="relative">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1674606071893-2a9023075f70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb2xhciUyMHBhbmVscyUyMGJsdWUlMjBza3l8ZW58MXx8fHwxNzYxNDg1NDg0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                src="/src/assets/PowerYourFuture.png"
                 alt="Solar panels installation in India"
                 className="w-full h-[500px] md:h-[600px] object-cover"
               />

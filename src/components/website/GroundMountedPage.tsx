@@ -80,7 +80,12 @@ export function GroundMountedPage({ onNavigate }: GroundMountedPageProps) {
       <section 
         className="relative py-16 border-b border-gray-200 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(/src/assets/GroundMountedSystems.png)`
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(/src/assets/GroundMountedSystems.png)`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          height: '500px', // Added fixed height
+          display: 'flex',
+          alignItems: 'center'
         }}
       >
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

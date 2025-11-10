@@ -224,7 +224,7 @@ export function Testimonials({ onNavigate }: TestimonialsProps) {
         <div className="mb-8 sm:mb-12">
           {/* Desktop Grid */}
           <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {testimonials.filter(testimonial => !testimonial.featured).map((testimonial) => (
+            {/* {testimonials.filter(testimonial => !testimonial.featured).map((testimonial) => (
               <Card key={testimonial.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-3 mb-3">
@@ -253,13 +253,13 @@ export function Testimonials({ onNavigate }: TestimonialsProps) {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            ))} */}
           </div>
 
           {/* Mobile/Tablet Horizontal Scroll */}
           <div className="md:hidden overflow-x-auto scrollbar-hide -mx-4 px-4">
             <div className="flex gap-4 pb-4" style={{ scrollSnapType: 'x mandatory' }}>
-              {testimonials.filter(testimonial => !testimonial.featured).map((testimonial) => (
+              {/* {testimonials.filter(testimonial => !testimonial.featured).map((testimonial) => (
                 <Card key={testimonial.id} className="border-0 shadow-lg flex-shrink-0 w-[280px] sm:w-[320px]" style={{ scrollSnapAlign: 'start' }}>
                   <CardContent className="p-5">
                     <div className="flex items-center space-x-3 mb-3">
@@ -288,7 +288,7 @@ export function Testimonials({ onNavigate }: TestimonialsProps) {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              ))} */}
             </div>
           </div>
         </div>

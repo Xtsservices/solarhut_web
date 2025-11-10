@@ -29,7 +29,7 @@ interface ContactPageProps {
 type ContactType = 'general' | 'job' | 'supplier';
 
 export function ContactPage({ onNavigate }: ContactPageProps) {
-  const [selectedType, setSelectedType] = useState<ContactType | null>(null);
+  const [selectedType, setSelectedType] = useState<ContactType | null>('job');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -145,17 +145,17 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
     {
       icon: MapPin,
       title: "Head Office",
-      details: ["123 Solar Street, Green City", "Mumbai, Maharashtra 400001"]
+      details: ["D No: 77-14-13, Ground Floor, Shanthi Nagar, Pypula Road, Ajith Singh Nagar, Vijayawada, India"]
     },
     {
       icon: Phone,
       title: "Phone Numbers",
-      details: ["Sales: +91 98123 45678", "Support: +91 91234 56789"]
+      details: ["99661 77225 "]
     },
     {
       icon: Mail,
       title: "Email Addresses",
-      details: ["sales@solarhutsolutions.com", "support@solarhutsolutions.com"]
+      details: ["solarhutsolutions@gmail.com"]
     },
     {
       icon: Clock,
@@ -265,122 +265,100 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
     </Card>
   );
 
-  // If no type is selected, show type selection
-  if (!selectedType) {
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: '#FEF7ED' }}>
-        {/* Hero Section */}
-        <section className="relative bg-[#FEF7ED] py-16 border-b border-gray-200">
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h1 className="text-4xl md:text-5xl text-gray-900 mb-4">
-                Get in Touch
-              </h1>
-              <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                Ready to start your solar journey? We're here to help you every step of the way.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Contact Type Selection */}
-        <section className="py-16">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl text-gray-900 mb-4">
-                How Can We Help You?
-              </h2>
-              <p className="text-xl text-gray-600">
-                Select the option that best fits your needs
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 mb-12">
-              {contactTypes.map((type) => {
-                const IconComponent = type.icon;
-                return (
-                  <Card 
-                    key={type.id}
-                    className="cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-[#FFA500] group"
-                    onClick={() => setSelectedType(type.id)}
-                  >
-                    <CardContent className="p-6 text-center">
-                      <div className={`w-16 h-16 ${type.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
-                        <IconComponent className={`w-8 h-8 ${type.iconColor}`} />
-                      </div>
-                      <h3 className="text-xl text-gray-900 mb-2">{type.title}</h3>
-                      <p className="text-gray-600">{type.description}</p>
-                      <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-[#FFA500] mx-auto mt-4 transform group-hover:translate-x-1 transition-all" />
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* Quick Contact Section */}
-        <section className="py-16 bg-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Card className="border-0 shadow-xl bg-orange-50">
-              <CardContent className="p-8 text-center">
-                <h2 className="text-3xl text-gray-900 mb-4">Need Immediate Assistance?</h2>
-                <p className="text-lg text-gray-600 mb-6">
-                  Our solar experts are standing by to help you with any questions or concerns
+  /*
+    // If no type is selected, show type selection
+    // Commented out so the page opens the Job Opportunities form directly.
+    if (!selectedType) {
+      return (
+        <div className="min-h-screen" style={{ backgroundColor: '#FEF7ED' }}>
+          {/* Hero Section *}
+          <section className="relative bg-[#FEF7ED] py-16 border-b border-gray-200">
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center">
+                <h1 className="text-4xl md:text-5xl text-gray-900 mb-4">
+                  Get in Touch
+                </h1>
+                <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                  Ready to start your solar journey? We're here to help you every step of the way.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button 
-                    size="lg" 
-                    className="bg-[#FFA500] hover:bg-[#FF8C00]"
-                    onClick={() => window.open('tel:+919876543210', '_self')}
-                  >
-                    <Phone className="mr-2 w-5 h-5" />
-                    Call Now: +91 9876543210
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
+              </div>
+            </div>
+          </section>
 
-        <MapSection />
-      </div>
-    );
-  }
+          {/* Contact Type Selection *}
+          <section className="py-16">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl text-gray-900 mb-4">
+                  How Can We Help You?
+                </h2>
+                <p className="text-xl text-gray-600">
+                  Select the option that best fits your needs
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6 mb-12">
+                {contactTypes.map((type) => {
+                  const IconComponent = type.icon;
+                  return (
+                    <Card 
+                      key={type.id}
+                      className="cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-[#FFA500] group"
+                      onClick={() => setSelectedType(type.id)}
+                    >
+                      <CardContent className="p-6 text-center">
+                        <div className={`w-16 h-16 ${type.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
+                          <IconComponent className={`w-8 h-8 ${type.iconColor}`} />
+                        </div>
+                        <h3 className="text-xl text-gray-900 mb-2">{type.title}</h3>
+                        <p className="text-gray-600">{type.description}</p>
+                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-[#FFA500] mx-auto mt-4 transform group-hover:translate-x-1 transition-all" />
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* Quick Contact Section *}
+          <section className="py-16 bg-white">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <Card className="border-0 shadow-xl bg-orange-50">
+                <CardContent className="p-8 text-center">
+                  <h2 className="text-3xl text-gray-900 mb-4">Need Immediate Assistance?</h2>
+                  <p className="text-lg text-gray-600 mb-6">
+                    Our solar experts are standing by to help you with any questions or concerns
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button 
+                      size="lg" 
+                      className="bg-[#FFA500] hover:bg-[#FF8C00]"
+                      onClick={() => window.open('tel:+919876543210', '_self')}
+                    >
+                      <Phone className="mr-2 w-5 h-5" />
+                      Call Now: +91 9876543210
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          <MapSection />
+        </div>
+      );
+    }
+  */
 
   // Show form based on selected type
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FEF7ED' }}>
-      {/* Breadcrumb Header */}
-      <section className="bg-[#FEF7ED] border-b border-gray-200 py-6 sm:py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <button
-            onClick={() => setSelectedType(null)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors text-sm"
-          >
-            <ArrowRight className="w-4 h-4 rotate-180 flex-shrink-0" />
-            <span>Back to options</span>
-          </button>
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl text-gray-900 mb-4">
-              {selectedType === 'job' ? 'Job Opportunities' :
-               selectedType === 'supplier' ? 'Supplier Partnership' :
-               'Get in Touch'}
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-              {selectedType === 'job' ? 'Join our team and build a career in renewable energy' :
-               selectedType === 'supplier' ? 'Partner with us to supply quality solar components' :
-               'Ready to start your solar journey? We\'re here to help you every step of the way.'}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Form & Info Section */}
+      {/* Job Application Form & Contact Info Section */}
       <section className="py-12 sm:py-14">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Contact Form */}
+            {/* Job Application Form */}
             {showThankYou ? (
               <ThankYouCard />
             ) : (
@@ -388,19 +366,14 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                 <CardHeader>
                   <CardTitle className="text-xl sm:text-2xl flex items-center">
                     <MessageSquare className="w-5 h-5 text-[#FFA500] mr-2" />
-                    {selectedType === 'job' ? 'Job Application Form' :
-                     selectedType === 'supplier' ? 'Supplier Registration Form' :
-                     'Request a Quote'}
+                    Job Application Form
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6">
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Personal Details - Common for all types */}
                     <div className="grid md:grid-cols-2 gap-3">
                       <div>
-                        <Label htmlFor="name">
-                          {selectedType === 'supplier' ? 'Contact Person Name *' : 'Full Name *'}
-                        </Label>
+                        <Label htmlFor="name">Full Name *</Label>
                         <Input
                           id="name"
                           type="text"
@@ -435,119 +408,29 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                       />
                     </div>
 
-                    {/* General Contact - Solution Type */}
-                    {selectedType === 'general' && (
-                      <div>
-                        <Label htmlFor="solutionType">Solution Type</Label>
-                        <Select onValueChange={(value: string) => setFormData({ ...formData, solutionType: value })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select solution type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="residential">Residential Solar</SelectItem>
-                            <SelectItem value="commercial">Commercial Solar</SelectItem>
-                            <SelectItem value="industrial">Industrial Solar</SelectItem>
-                            <SelectItem value="ground-mounted">Ground Mounted</SelectItem>
-                            <SelectItem value="water-heaters">Solar Water Heaters</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Job Application - Specific Fields */}
-                    {selectedType === 'job' && (
-                      <>
-                        <div>
-                          <Label htmlFor="position">Position Applying For *</Label>
-                          <Select onValueChange={(value: string) => setFormData({ ...formData, position: value })}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select position" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="field-executive">Field Executive</SelectItem>
-                              <SelectItem value="sales-person">Sales Person</SelectItem>
-                              <SelectItem value="installation-technician">Installation Technician</SelectItem>
-                              <SelectItem value="project-manager">Project Manager</SelectItem>
-                              <SelectItem value="customer-support">Customer Support</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="experience">Years of Experience *</Label>
-                          <Select onValueChange={(value: string) => setFormData({ ...formData, experience: value })}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select experience" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="0-1">0-1 years</SelectItem>
-                              <SelectItem value="1-3">1-3 years</SelectItem>
-                              <SelectItem value="3-5">3-5 years</SelectItem>
-                              <SelectItem value="5-10">5-10 years</SelectItem>
-                              <SelectItem value="10+">10+ years</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Supplier Partnership - Specific Fields */}
-                    {selectedType === 'supplier' && (
-                      <>
-                        <div>
-                          <Label htmlFor="companyName">Company Name *</Label>
-                          <Input
-                            id="companyName"
-                            type="text"
-                            value={formData.companyName}
-                            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                            placeholder="Your company name"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="productsSupplied">Products You Supply *</Label>
-                          <Input
-                            id="productsSupplied"
-                            type="text"
-                            value={formData.productsSupplied}
-                            onChange={(e) => setFormData({ ...formData, productsSupplied: e.target.value })}
-                            placeholder="e.g., Solar Panels, Inverters, Batteries"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="yearsInBusiness">Years in Business *</Label>
-                          <Select onValueChange={(value: string) => setFormData({ ...formData, yearsInBusiness: value })}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select years" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="0-2">0-2 years</SelectItem>
-                              <SelectItem value="2-5">2-5 years</SelectItem>
-                              <SelectItem value="5-10">5-10 years</SelectItem>
-                              <SelectItem value="10+">10+ years</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </>
-                    )}
+                    <div>
+                      <Label htmlFor="position">Position Applying For *</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select position" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="field-executive">Field Executive</SelectItem>
+                          <SelectItem value="sales-person">Sales Person</SelectItem>
+                          <SelectItem value="installation-technician">Installation Technician</SelectItem>
+                          <SelectItem value="project-manager">Project Manager</SelectItem>
+                          <SelectItem value="customer-support">Customer Support</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
                     <div>
-                      <Label htmlFor="message">
-                        {selectedType === 'job' ? 'Cover Letter / Additional Information' :
-                         selectedType === 'supplier' ? 'Additional Details' :
-                         'Message'}
-                      </Label>
-                      <Textarea
-                        id="message"
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        placeholder={
-                          selectedType === 'job' ? 'Tell us about yourself and why you want to join our team...' :
-                          selectedType === 'supplier' ? 'Tell us about your products and services...' :
-                          'Tell us about your requirements...'
-                        }
+                      <Label htmlFor="additionalInfo">Additional Information</Label>
+                      <textarea
+                        id="additionalInfo"
+                        name="additionalInfo"
+                        placeholder="Tell us about your experience and qualifications..."
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-[#FFA500] focus:outline-none resize-vertical"
                         rows={4}
                       />
                     </div>
@@ -558,10 +441,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                       size="lg"
                       disabled={isSubmitting}
                     >
-                      {isSubmitting ? 'Submitting...' : 
-                       selectedType === 'job' ? 'Submit Application' :
-                       selectedType === 'supplier' ? 'Submit Partnership Request' :
-                       'Send Message'}
+                      {isSubmitting ? 'Submitting...' : 'Submit Application'}
                       <Send className="ml-2 w-5 h-5" />
                     </Button>
                   </form>
@@ -599,92 +479,20 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
         </div>
       </section>
 
-      {/* Our Offices Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl text-gray-900 mb-4">Our Offices</h2>
-            <p className="text-xl text-gray-600">
-              Visit us at any of our offices across India
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {offices.map((office, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-xl text-[#FFA500]">{office.city}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-start space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0 mt-1" />
-                      <p className="text-sm text-gray-600">{office.address}</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                      <p className="text-sm text-gray-600">{office.phone}</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                      <p className="text-sm text-gray-600">{office.email}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Comment out all other sections */}
+      {/*
+        // Our Offices Section
+        <section className="py-16 bg-gray-50">...</section>
 
-      {/* Quick Contact Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="border-0 shadow-xl bg-orange-50">
-            <CardContent className="p-8 text-center">
-              <h2 className="text-3xl text-gray-900 mb-4">Need Immediate Assistance?</h2>
-              <p className="text-lg text-gray-600 mb-6">
-                Our solar experts are standing by to help you with any questions or concerns
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  size="lg" 
-                  className="bg-[#FFA500] hover:bg-[#FF8C00]"
-                  onClick={() => window.open('tel:+919876543210', '_self')}
-                >
-                  <Phone className="mr-2 w-5 h-5" />
-                  Call Now: +91 9876543210
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+        // Quick Contact Section
+        <section className="py-16 bg-white">...</section>
 
-      {/* Why Choose Us Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl text-gray-900 mb-4">Why Choose Solar Hut Solutions?</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              "Free site assessment and consultation",
-              "Customized solutions for your needs",
-              "Professional installation team",
-              "25-year comprehensive warranty",
-              "24/7 monitoring and support",
-              "Government subsidy assistance"
-            ].map((feature, index) => (
-              <div key={index} className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow">
-                <CheckCircle className="w-6 h-6 text-[#FFA500] flex-shrink-0" />
-                <span className="text-lg text-gray-700">{feature}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
-      <MapSection />
+        // Why Choose Us Section
+        <section className="py-16 bg-gray-50">...</section>
+        
+        // Map Section
+        <MapSection />
+      */}
     </div>
   );
 }

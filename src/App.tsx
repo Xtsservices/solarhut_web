@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { ScrollToTop } from './components/shared/ScrollToTop';
 
 import { Navbar } from './components/shared/Navbar';
 import { Footer } from './components/shared/Footer';
@@ -19,6 +20,9 @@ import { TestimonialsPage } from './components/website/TestimonialsPage';
 import { ProjectsPage } from './components/website/ProjectsPage';
 import { GalleryPage } from './components/website/GalleryPage';
 import TeamsPage from './components/website/TeamsPage';
+import ContactModal from './components/website/ContactModal';
+import { EnquiryFormPopup } from './components/website/EnquiryFormPopup';
+
 
 import { PortalSidebar } from './components/shared/PortalSidebar';
 import { PortalHeader } from './components/shared/PortalHeader';
@@ -56,6 +60,10 @@ type AuthState = {
 };
 
 function AppContent() {
+  // Add location state to track background
+  const location = useLocation();
+  const background = location.state?.background;
+
   const [auth, setAuth] = useState<AuthState>(() => {
     const stored = localStorage.getItem('auth');
     return stored ? JSON.parse(stored) : { role: 'guest', email: '' };
@@ -92,8 +100,15 @@ function AppContent() {
     navigate('/');
   };
 
-  // Handle navigation
+  // Add state for enquiry popup
+  const [showEnquiryPopup, setShowEnquiryPopup] = useState(false);
+
+  // Modify handleNavigate
   const handleNavigate = (page: string) => {
+    if (page === 'enquiry') {
+      setShowEnquiryPopup(true);
+      return;
+    }
     navigate('/' + page);
   };
 
@@ -160,6 +175,7 @@ function AppContent() {
           </CardContent>
         </Card>
         <Toaster />
+        
       </div>
     );
   }
@@ -248,12 +264,13 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar onNavigate={handleNavigate} currentPage={currentPage} />
+      
+      {/* Main Routes - always render current page */}
       <Routes>
         <Route path="/" element={<LandingPage onNavigate={handleNavigate} />} />
         <Route path="/home" element={<LandingPage onNavigate={handleNavigate} />} />
         <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/enquiry" element={<EnquiryPage />} />
+        <Route path="/contact" element={<ContactPage open={true} onClose={() => navigate("/")} />} />
         <Route path="/ground-mounted" element={<GroundMountedPage />} />
         <Route path="/residential" element={<ResidentialSolutionsPage />} />
         <Route path="/commercial" element={<CommercialSolutionsPage />} />
@@ -265,6 +282,20 @@ function AppContent() {
         <Route path="/gallery" element={<GalleryPage />} />
         <Route path="*" element={<LandingPage onNavigate={handleNavigate} />} />
       </Routes>
+
+      {/* Enquiry popup overlays current page */}
+      {showEnquiryPopup && (
+        <EnquiryFormPopup 
+          selectedType="residential"
+          open={true}
+          onClose={() => setShowEnquiryPopup(false)}
+          onSuccess={() => {
+            toast.success("Thank you for your enquiry!");
+            setShowEnquiryPopup(false);
+          }}
+        />
+      )}
+
       <Footer onNavigate={handleNavigate} />
       <Toaster />
     </div>
@@ -274,6 +305,7 @@ function AppContent() {
 export default function App() {
   return (
     <BrowserRouter>
+    <ScrollToTop />
       <AppContent />
     </BrowserRouter>
   );

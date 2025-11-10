@@ -2,6 +2,12 @@ import React from 'react';
 import { Mail, Phone, Linkedin, Award, Users, Target, Lightbulb } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
+import kishoreImg from '../../../src/assets/kishorekodali.png'
+import sampathImg from '../../../src/assets/sampathkumar.png';
+import SubbuImg from '../../../src/assets/SubbuMetadev.png';
+import DevunipallyPhaniImg from '../../../src/assets/DevunipallyPhani.jpeg';
+import GowthamRajuImg from '../../../src/assets/GowthamRaju.jpeg';
+import SiramVenkataGowthamImg from '../../../src/assets/SiramVenkataGowtham.jpeg';
 
 interface TeamMember {
   id: string;
@@ -23,10 +29,10 @@ const TeamsPage: React.FC = () => {
   const directors: TeamMember[] = [
     {
       id: 'dir-1',
-      name: 'Rajesh Kumar',
-      role: 'Managing Director & CEO',
+      name: 'KISHORE KODALI',
+      role: 'Managing Partner & Head IT & Marketing',
       department: 'Leadership',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
+      image: kishoreImg, 
       bio: 'With over 15 years of experience in renewable energy sector, Rajesh leads Solar Hut Solutions with a vision to make solar energy accessible to every household and business in India.',
       email: 'rajesh@solarhut.com',
       phone: '+91 98765 43210',
@@ -41,10 +47,10 @@ const TeamsPage: React.FC = () => {
     },
     {
       id: 'dir-2',
-      name: 'Priya Sharma',
-      role: 'Director - Operations',
+      name: 'SAMPATH KUMAR GRANDHI',
+      role: 'Managing Partner & CFO',
       department: 'Leadership',
-      image: 'https://images.unsplash.com/photo-1720952118796-87e374ceec00?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=2340',
+      image: sampathImg,
       bio: 'Priya oversees all operational aspects of Solar Hut Solutions, ensuring quality delivery and customer satisfaction across all projects.',
       email: 'priya@solarhut.com',
       phone: '+91 98765 43211',
@@ -59,10 +65,10 @@ const TeamsPage: React.FC = () => {
     },
     {
       id: 'dir-3',
-      name: 'Amit Patel',
-      role: 'Technical Director',
+      name: 'SUBBU',
+      role: 'Managing Director',
       department: 'Leadership',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
+      image: SubbuImg,
       bio: 'Amit brings deep technical expertise in solar technology and engineering, driving innovation and technical excellence in all our solutions.',
       email: 'amit@solarhut.com',
       phone: '+91 98765 43212',
@@ -78,14 +84,14 @@ const TeamsPage: React.FC = () => {
   ];
 
   // Department Teams
-const teamMembers: TeamMember[] = [
+  const teamMembers: TeamMember[] = [
     // Sales Team
     {
         id: 'sales-1',
-        name: 'Arjun Malhotra',
-        role: 'Head of Sales',
+        name: 'DEVUNIPALLY PHANI',
+        role: 'Managing Partner and Ap state head ',
         department: 'Sales',
-        image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=250&h=250&fit=crop&crop=face',
+        image: DevunipallyPhaniImg,
         bio: 'Arjun drives our sales strategy with a focus on sustainable energy solutions and customer satisfaction.',
         email: 'arjun@solarhut.com',
         specialties: ['Sales Leadership', 'Market Strategy', 'Client Relations'],
@@ -93,26 +99,27 @@ const teamMembers: TeamMember[] = [
     },
     {
         id: 'sales-2',
-        name: 'Deepika Nair',
-        role: 'Commercial Sales Manager',
+        name: 'Gowtham raju Suklaboina',
+        role: 'Ap Marketing',
         department: 'Sales',
-        image: 'https://images.unsplash.com/photo-1607694793239-9936e3cfe782?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=2344',
+        image: GowthamRajuImg,
         bio: 'Deepika specializes in large-scale commercial solar projects and enterprise solutions.',
         specialties: ['Enterprise Sales', 'Commercial Projects', 'Business Development'],
         experience: '9+ Years'
     },
     {
         id: 'sales-3',
-        name: 'Karan Thakur',
-        role: 'Residential Sales Consultant',
+        name: 'Siram Venkata Gowtham',
+        role: 'Manager operations',
         department: 'Sales',
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face',
+        image: SiramVenkataGowthamImg,
         bio: 'Karan helps families transition to solar energy with personalized consultation and support.',
         specialties: ['Residential Solar', 'Home Consultation', 'Energy Planning'],
         experience: '6+ Years'
     },
 
-    // Technical Team
+    // === TECHNICAL TEAM COMMENTED OUT ===
+    /*
     {
         id: 'tech-1',
         name: 'Dr. Sanjay Rao',
@@ -143,8 +150,10 @@ const teamMembers: TeamMember[] = [
         specialties: ['Field Operations', 'Project Coordination', 'Quality Assurance'],
         experience: '11+ Years'
     },
+    */
 
-    // Customer Support
+    // === CUSTOMER SUPPORT TEAM COMMENTED OUT ===
+    /*
     {
         id: 'cs-1',
         name: 'Shreya Iyer',
@@ -175,9 +184,11 @@ const teamMembers: TeamMember[] = [
         specialties: ['Technical Assistance', 'System Diagnostics', 'Customer Solutions'],
         experience: '6+ Years'
     }
-];
+    */
+  ];
 
-  const departments = ['Sales', 'Technical', 'Customer Support'];
+  // Only show Sales department
+  const departments = ['Sales'];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50">
@@ -225,6 +236,7 @@ const teamMembers: TeamMember[] = [
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Visionary leaders driving innovation and excellence in solar energy solutions
+            firing
             </p>
           </div>
 
@@ -235,13 +247,12 @@ const teamMembers: TeamMember[] = [
                   <img
                     src={director.image}
                     alt={director.name}
-                    className="w-full h-80 object-cover"
+                    className="w-full h-100 object-cover rounded-b-lg shadow-md"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute bottom-4 left-4 text-white">
                     <h3 className="text-xl font-bold">{director.name}</h3>
                     <p className="text-blue-200">{director.role}</p>
-                    <Badge className="mt-2 bg-orange-500">{director.experience}</Badge>
                   </div>
                 </div>
                 <CardContent className="p-6">
@@ -329,8 +340,8 @@ const teamMembers: TeamMember[] = [
             const deptMembers = teamMembers.filter(member => member.department === department);
             const deptColors = {
               'Sales': 'bg-green-100 text-green-800',
-              'Technical': 'bg-blue-100 text-blue-800',
-              'Customer Support': 'bg-purple-100 text-purple-800'
+              // 'Technical': 'bg-blue-100 text-blue-800',      // Commented
+              // 'Customer Support': 'bg-purple-100 text-purple-800' // Commented
             };
             
             return (
@@ -355,9 +366,6 @@ const teamMembers: TeamMember[] = [
                           <div className="flex-1">
                             <h4 className="text-lg font-semibold text-gray-900">{member.name}</h4>
                             <p className="text-sm text-gray-600 mb-2">{member.role}</p>
-                            <Badge variant="outline" className="text-xs mb-3">
-                              {member.experience}
-                            </Badge>
                           </div>
                         </div>
 

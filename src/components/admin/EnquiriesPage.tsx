@@ -21,14 +21,18 @@ export function EnquiriesPage() {
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [serviceTypeFilter, setServiceTypeFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [selectedEnquiry, setSelectedEnquiry] = useState<any>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [selectedSalesPerson, setSelectedSalesPerson] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [salesPersons, setSalesPersons] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [roles, setRoles] = useState<string[]>([]);
   const [createEmployeeDialogOpen, setCreateEmployeeDialogOpen] = useState(false);
   const [newEmployeeName, setNewEmployeeName] = useState('');
   const [newEmployeeEmail, setNewEmployeeEmail] = useState('');
@@ -123,13 +127,139 @@ export function EnquiriesPage() {
     }
   };
 
+  // Fetch all employees from API (using same method as EmployeesPage)
+  const fetchAllEmployees = async () => {
+    try {
+      console.log('🔍 Fetching employees from:', `${API_BASE_URL}/api/employees/`);
+      
+      const response = await fetch(`${API_BASE_URL}/api/employees/`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      console.log('📡 Fetch employees response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        console.log('⚠️ Employees API not available, using empty array');
+        setEmployees([]);
+        return;
+      }
+
+      const result = await response.json();
+      console.log('📊 COMPLETE EMPLOYEES API Response:', JSON.stringify(result, null, 2));
+      
+      if (result.success && Array.isArray(result.data)) {
+        // Process employees to ensure consistent role structure
+        const processedEmployees = result.data.map((emp: any) => {
+          console.log('👤 Processing employee:', emp);
+          
+          // Handle different role formats from API
+          let processedRoles = [];
+          if (emp.roles && Array.isArray(emp.roles)) {
+            processedRoles = emp.roles;
+          } else if (emp.role && typeof emp.role === 'string') {
+            processedRoles = [emp.role];
+          }
+          
+          return {
+            ...emp,
+            roles: processedRoles,
+            // Keep original role for backward compatibility
+            role: emp.role || (processedRoles.length > 0 ? processedRoles[0] : '')
+          };
+        });
+        
+        setEmployees(processedEmployees);
+        console.log('✅ All employees loaded and processed:', processedEmployees.length);
+      } else {
+        setEmployees([]);
+      }
+    } catch (error) {
+      console.log('⚠️ Error fetching employees, using empty array:', error);
+      setEmployees([]);
+    }
+  };
+
+  // Fetch roles from API (using same method as EmployeesPage)
+  const fetchRoles = async () => {
+    try {
+      console.log('🔍 Fetching roles from:', `${API_BASE_URL}/api/roles`);
+      
+      const response = await fetch(`${API_BASE_URL}/api/roles`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      console.log('📡 Response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('📊 COMPLETE ROLES API Response:', JSON.stringify(result, null, 2));
+      
+      if (result.data && Array.isArray(result.data)) {
+        // Process roles to handle different response formats
+        const processedRoles = result.data.map((role: any) => {
+          if (typeof role === 'string') {
+            return role;
+          } else if (role && typeof role === 'object' && role.role_name) {
+            return role.role_name;
+          } else if (role && typeof role === 'object' && role.name) {
+            return role.name;
+          }
+          return String(role);
+        }).filter(Boolean); // Remove any null/undefined values
+        
+        setRoles(processedRoles);
+        console.log('✅ Roles loaded:', processedRoles);
+      } else {
+        // Fallback to default roles if API doesn't return expected format
+        const defaultRoles = ['Sales Person', 'Field Executive', 'Manager', 'Admin'];
+        setRoles(defaultRoles);
+        console.log('📊 Using default roles:', defaultRoles);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching roles:', error);
+      // Fallback to default roles
+      const defaultRoles = ['Sales Person', 'Field Executive', 'Manager', 'Admin'];
+      setRoles(defaultRoles);
+      console.log('📊 Using default roles after error:', defaultRoles);
+    }
+  };
 
 
-  // Refresh sales persons list
+
+  // Refresh employees and roles list
   const refreshSalesPersons = async () => {
-    console.log('🔄 Refreshing sales persons list...');
+    console.log('🔄 Refreshing employees and roles list...');
     await fetchSalesPersons();
-    toast.success('Sales persons list refreshed');
+    await fetchAllEmployees();
+    await fetchRoles();
+    toast.success('Employees and roles list refreshed');
+  };
+
+  // Function to filter employees by selected role (using same logic as EmployeesPage)
+  const getEmployeesByRole = (role: string) => {
+    if (!role) return [];
+    
+    return employees.filter((emp: any) => {
+      // Check direct role match
+      if (emp.role === role) return true;
+      
+      // Check if employee has multiple roles containing the selected role
+      if (emp.roles && Array.isArray(emp.roles)) {
+        return emp.roles.some((empRole: string) => empRole === role);
+      }
+      
+      // Handle case where roles might be a string instead of array
+      if (typeof emp.roles === 'string' && emp.roles === role) {
+        return true;
+      }
+      
+      return false;
+    });
   };
 
   // Create new employee function
@@ -210,14 +340,18 @@ export function EnquiriesPage() {
   useEffect(() => {
     fetchLeads();
     fetchSalesPersons();
+    fetchAllEmployees();
+    fetchRoles();
   }, []);
 
   // Add visibility change listener to refresh sales persons when user returns to the page
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('🔄 Page became visible, refreshing sales persons...');
+        console.log('🔄 Page became visible, refreshing employees and roles...');
         fetchSalesPersons();
+        fetchAllEmployees();
+        fetchRoles();
       }
     };
 
@@ -236,6 +370,18 @@ export function EnquiriesPage() {
     };
     const config = variants[status] || variants.new;
     return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  // Helper function to get service type
+  const getServiceType = (enquiry: any) => {
+    const serviceType = enquiry.service_type || enquiry.serviceType || enquiry.services_type || enquiry.type || '';
+    
+    // Format service type for display
+    if (serviceType) {
+      return serviceType.charAt(0).toUpperCase() + serviceType.slice(1).toLowerCase();
+    }
+    
+    return 'General';
   };
 
   // Helper function to get full name from various name fields
@@ -302,12 +448,18 @@ export function EnquiriesPage() {
     const status = enquiry.status || 'new';
     const matchesStatus = statusFilter === 'all' || status === statusFilter;
     
+    const serviceType = (enquiry.service_type || enquiry.serviceType || enquiry.services_type || enquiry.type || '').toLowerCase();
+    const matchesServiceType = serviceTypeFilter === 'all' || 
+      serviceType === serviceTypeFilter ||
+      (serviceTypeFilter === 'maintenance' && (serviceType === 'maintenance' || serviceType === 'repair' || serviceType === 'service')) ||
+      (serviceTypeFilter === 'installation' && (serviceType === 'installation' || serviceType === 'install' || serviceType === 'setup' || serviceType === 'new'));
+    
     const createdDate = enquiry.createdAt || enquiry.created_at || enquiry.date_created;
     const matchesDate = !dateFilter || !createdDate ||
       new Date(createdDate).toDateString() === dateFilter.toDateString();
     
-    const result = matchesSearch && matchesStatus && matchesDate;
-    console.log('🔍 Filter result:', { matchesSearch, matchesStatus, matchesDate, result });
+    const result = matchesSearch && matchesStatus && matchesServiceType && matchesDate;
+    console.log('🔍 Filter result:', { matchesSearch, matchesStatus, matchesServiceType, matchesDate, result });
     
     return result;
   });
@@ -321,7 +473,7 @@ export function EnquiriesPage() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, searchTerm, dateFilter]);
+  }, [statusFilter, serviceTypeFilter, searchTerm, dateFilter]);
 
   const handleAssign = async () => {
     if (!selectedSalesPerson) {
@@ -432,6 +584,20 @@ export function EnquiriesPage() {
             </Select>
           </div>
 
+          <div className="flex-1 sm:flex-none sm:w-48">
+            <Label className="text-sm">Service Type</Label>
+            <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
+              <SelectTrigger className="mt-1 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Services</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="installation">Installation</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex-1 sm:flex-none sm:w-56">
             <Label className="text-sm">Date</Label>
             <Popover>
@@ -472,6 +638,7 @@ export function EnquiriesPage() {
                   <TableHead className="text-xs sm:text-sm text-center">ID</TableHead>
                   <TableHead className="text-xs sm:text-sm text-center">Name</TableHead>
                   <TableHead className="text-xs sm:text-sm text-center">Mobile</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-center">Service Type</TableHead>
                   <TableHead className="text-xs sm:text-sm text-center">KV</TableHead>
                   <TableHead className="text-xs sm:text-sm text-center">Status</TableHead>
                   <TableHead className="text-xs sm:text-sm text-center">Date</TableHead>
@@ -489,6 +656,9 @@ export function EnquiriesPage() {
                     </TableCell>
                     <TableCell className="text-xs sm:text-sm text-center">
                       {enquiry.mobile || enquiry.phone || enquiry.contact || 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm text-center">
+                      {getServiceType(enquiry)}
                     </TableCell>
                     <TableCell className="text-xs sm:text-sm text-center">
                       {enquiry.kv || enquiry.system_size || enquiry.capacity || 'N/A'}
@@ -512,6 +682,7 @@ export function EnquiriesPage() {
                           setViewDialogOpen(true);
                           setShowAssignForm(false);
                           setSelectedSalesPerson('');
+                          setSelectedRole('');
                         }}
                       >
                         <Eye className="h-4 w-4" />
@@ -521,14 +692,14 @@ export function EnquiriesPage() {
                 ))}
                 {paginatedEnquiries.length === 0 && filteredEnquiries.length === 0 && enquiries.length > 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       No enquiries match your current filters. ({enquiries.length} total enquiries loaded)
                     </TableCell>
                   </TableRow>
                 )}
                 {enquiries.length === 0 && !isLoading && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       No enquiries found in database. Check your API connection.
                     </TableCell>
                   </TableRow>
@@ -631,6 +802,14 @@ export function EnquiriesPage() {
                     </p>
                   </div>
                   <div>
+                    <p className="text-gray-500 mb-0.5">Service Type</p>
+                    <p className="text-gray-900 font-medium">
+                      {getServiceType(enquiry)}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-2 text-xs pt-2">
+                  <div>
                     <p className="text-gray-500 mb-0.5">Capacity</p>
                     <p className="text-gray-900 font-medium">
                       {enquiry.kv || enquiry.system_size || enquiry.capacity || 'N/A'}
@@ -653,6 +832,7 @@ export function EnquiriesPage() {
                     setViewDialogOpen(true);
                     setShowAssignForm(false);
                     setSelectedSalesPerson('');
+                    setSelectedRole('');
                   }}
                 >
                   <Eye className="h-3 w-3 mr-1.5" />
@@ -713,6 +893,7 @@ export function EnquiriesPage() {
         setViewDialogOpen(open);
         if (!open) {
           setSelectedSalesPerson('');
+          setSelectedRole('');
         }
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
@@ -895,7 +1076,7 @@ export function EnquiriesPage() {
                         );
                       })}
                       
-                      {/* Assign to Sales Person - Show for unassigned enquiries */}
+                      {/* Assignment Section with Role and Employee Selection */}
                       {(() => {
                         const currentStatus = selectedEnquiry.status || 'new';
                         const canAssign = currentStatus === 'new' || currentStatus === 'pending' || !currentStatus || currentStatus === '';
@@ -910,13 +1091,13 @@ export function EnquiriesPage() {
                           <div className="sm:col-span-2 mt-4 pt-4 border-t">
                             <div className="space-y-3">
                               <div className="flex items-center justify-between">
-                                <Label className="text-xs sm:text-sm text-gray-600">Assign to Sales Person</Label>
+                                <Label className="text-xs sm:text-sm text-gray-600">Assign Enquiry</Label>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={refreshSalesPersons}
                                   className="text-xs px-2 py-1 h-auto"
-                                  title="Refresh sales persons list"
+                                  title="Refresh employees list"
                                 >
                                   <RefreshCw className="h-3 w-3 mr-1" />
                                   Refresh
@@ -926,66 +1107,103 @@ export function EnquiriesPage() {
                                 Current Status: <span className="font-medium">{currentStatus}</span>
                               </div>
                               
-                              {/* Single Dropdown with conditional options */}
-                              <Select 
-                                value={selectedSalesPerson} 
-                                onValueChange={(value) => {
-                                  if (value === 'create_new') {
-                                    setCreateEmployeeDialogOpen(true);
-                                    // Reset selected value so dropdown doesn't show "Create New Employee"
-                                    setSelectedSalesPerson('');
-                                  } else {
-                                    setSelectedSalesPerson(value);
-                                  }
-                                }}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder={
-                                    salesPersons.length > 0 
-                                      ? "Choose sales person..." 
-                                      : "No sales persons available - Click to create"
-                                  } />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {salesPersons.length > 0 ? (
-                                    // Show sales persons if available
-                                    <>
-                                      {salesPersons.map((sp: any) => (
-                                        <SelectItem key={sp.id} value={sp.id}>
-                                          <div className="flex items-center">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                                            {sp.name}
+                              {/* Role Selection Dropdown */}
+                              <div>
+                                <Label className="text-xs sm:text-sm text-gray-600 mb-2 block">Select Role</Label>
+                                <Select 
+                                  value={selectedRole} 
+                                  onValueChange={setSelectedRole}
+                                  disabled={roles.length === 0}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder={roles.length === 0 ? "Loading roles..." : "Choose role..."} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {roles.length > 0 ? (
+                                      roles.map((role) => (
+                                        <SelectItem key={role} value={role}>
+                                          {role}
+                                        </SelectItem>
+                                      ))
+                                    ) : (
+                                      // Fallback options if roles haven't loaded yet
+                                      <>
+                                        <SelectItem value="Sales Person">Sales Person</SelectItem>
+                                        <SelectItem value="Field Executive">Field Executive</SelectItem>
+                                        <SelectItem value="Manager">Manager</SelectItem>
+                                        <SelectItem value="Admin">Admin</SelectItem>
+                                      </>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              {/* Employee Selection Dropdown - Shows only when role is selected */}
+                              {selectedRole && (
+                                <div>
+                                  <Label className="text-xs sm:text-sm text-gray-600 mb-2 block">Select Employee</Label>
+                                  <Select 
+                                    value={selectedSalesPerson} 
+                                    disabled={employees.length === 0}
+                                    onValueChange={(value) => {
+                                      if (value === 'create_new') {
+                                        // Set the role for the new employee based on selected role
+                                        const roleToSet = selectedRole || (roles.length > 0 ? roles[0] : 'Sales Person');
+                                        setNewEmployeeRole(roleToSet);
+                                        setCreateEmployeeDialogOpen(true);
+                                        setSelectedSalesPerson('');
+                                      } else {
+                                        setSelectedSalesPerson(value);
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder={
+                                        getEmployeesByRole(selectedRole).length > 0 
+                                          ? `Choose ${selectedRole.toLowerCase()}...` 
+                                          : `No ${selectedRole.toLowerCase()}s available - Click to create`
+                                      } />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {getEmployeesByRole(selectedRole).length > 0 ? (
+                                        <>
+                                          {getEmployeesByRole(selectedRole).map((emp: any) => (
+                                            <SelectItem key={emp.id} value={emp.id}>
+                                              <div className="flex items-center">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                                {emp.name || `${emp.first_name} ${emp.last_name}`}
+                                              </div>
+                                            </SelectItem>
+                                          ))}
+                                          <hr className="my-1" />
+                                          <SelectItem value="create_new">
+                                            <div className="flex items-center text-blue-600">
+                                              <UserPlus className="h-4 w-4 mr-2" />
+                                              Create New {selectedRole}
+                                            </div>
+                                          </SelectItem>
+                                        </>
+                                      ) : (
+                                        <SelectItem value="create_new">
+                                          <div className="flex items-center text-blue-600">
+                                            <UserPlus className="h-4 w-4 mr-2" />
+                                            Create New {selectedRole}
                                           </div>
                                         </SelectItem>
-                                      ))}
-                                      <hr className="my-1" />
-                                      <SelectItem value="create_new">
-                                        <div className="flex items-center text-blue-600">
-                                          <UserPlus className="h-4 w-4 mr-2" />
-                                          Create New Employee
-                                        </div>
-                                      </SelectItem>
-                                    </>
-                                  ) : (
-                                    // Show create new employee option if no sales persons available
-                                    <SelectItem value="create_new">
-                                      <div className="flex items-center text-blue-600">
-                                        <UserPlus className="h-4 w-4 mr-2" />
-                                        Create New Employee
-                                      </div>
-                                    </SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
 
-                              {/* Show assign button only if a sales person is selected */}
-                              {selectedSalesPerson && selectedSalesPerson !== 'create_new' && (
+                              {/* Show assign button only if both role and employee are selected */}
+                              {selectedRole && selectedSalesPerson && selectedSalesPerson !== 'create_new' && (
                                 <Button 
                                   onClick={handleAssign} 
                                   className="w-full"
                                 >
                                   <UserPlus className="h-4 w-4 mr-2" />
-                                  Assign Enquiry
+                                  Assign to {selectedRole}
                                 </Button>
                               )}
                             </div>
@@ -1111,10 +1329,21 @@ export function EnquiriesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Sales Person">Sales Person</SelectItem>
-                  <SelectItem value="Field Executive">Field Executive</SelectItem>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Manager">Manager</SelectItem>
+                  {roles.length > 0 ? (
+                    roles.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {role}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    // Fallback options if roles haven't loaded yet
+                    <>
+                      <SelectItem value="Sales Person">Sales Person</SelectItem>
+                      <SelectItem value="Field Executive">Field Executive</SelectItem>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                      <SelectItem value="Manager">Manager</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>

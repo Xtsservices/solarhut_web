@@ -3,7 +3,7 @@
 
 export const LOCAL_API_IP = 'localhost'; 
 // export const LOCAL_API_IP = '127.0.0.1'; // Replace with your actual IP if needed
-export const API_PORT = '3300';
+export const API_PORT = '3300'; // Fixed: Backend API runs on port 3300
 export const API_BASE_URL = `http://${LOCAL_API_IP}:${API_PORT}`;
 console.log('API_BASE_URL:', API_BASE_URL);
 // export const API_BASE_URL = `http://10.110.140.61:3300/api/leads`;

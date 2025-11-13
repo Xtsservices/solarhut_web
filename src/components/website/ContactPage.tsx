@@ -20,7 +20,10 @@ import {
 } from "lucide-react";
 import { MapSection } from "./MapSection";
 import { toast } from 'sonner';
-import { API_BASE_URL } from './ip';
+// import { API_BASE_URL } from './ip';
+
+const API_BASE_URL = import.meta.env.API_BASE_URL;
+
 
 interface ContactPageProps {
   onNavigate?: (page: string) => void;
@@ -54,11 +57,17 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
     setIsSubmitting(true);
 
     try {
-      // Determine the reason based on selected type and form data
-      let reason = 'General Enquiry';
-      if (selectedType === 'job') {
+      // Validate required fields
+      if (!formData.name || !formData.email || !formData.phone || !formData.position) {
+        toast.error('Please fill all required fields');
+        return;
+      }
+
+      // Use the reason from form position field, or determine from selected type
+      let reason = formData.position || 'General Enquiry';
+      if (selectedType === 'job' && !formData.position) {
         reason = 'Job Opportunity';
-      } else if (selectedType === 'supplier') {
+      } else if (selectedType === 'supplier' && !formData.position) {
         reason = 'Supplier Partnership';
       } else if (formData.solutionType) {
         reason = `Solar Solution - ${formData.solutionType}`;
@@ -80,6 +89,9 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
         message: message
       };
 
+      console.log('🚀 Submitting contact form:', payload);
+      console.log('📡 API Endpoint:', `${API_BASE_URL}/api/contacts`);
+
       const response = await fetch(`${API_BASE_URL}/api/contacts`, {
         method: 'POST',
         headers: {
@@ -88,12 +100,22 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
         body: JSON.stringify(payload),
       });
 
+      console.log('📡 Response status:', response.status);
+
       if (response.ok) {
         const result = await response.json();
-        toast.success('Your request has been submitted successfully! Our team will contact you within 24 hours.');
-        setShowThankYou(true);
+        console.log('✅ API Response:', result);
+        
+        if (result.success) {
+          toast.success('Your request has been submitted successfully! Our team will contact you within 24 hours.');
+          setShowThankYou(true);
+        } else {
+          toast.error(result.message || 'Failed to submit request');
+        }
       } else {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ API Error:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
     } catch (error) {
@@ -409,28 +431,26 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                     </div>
 
                     <div>
-                      <Label htmlFor="position">Position Applying For *</Label>
-                      <Select>
+                      <Label htmlFor="position">Purpose of Contact *</Label>
+                      <Select value={formData.position} onValueChange={(value) => setFormData({ ...formData, position: value })}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select position" />
+                          <SelectValue placeholder="Select purpose" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="field-executive">Field Executive</SelectItem>
-                          <SelectItem value="sales-person">Sales Person</SelectItem>
-                          <SelectItem value="installation-technician">Installation Technician</SelectItem>
-                          <SelectItem value="project-manager">Project Manager</SelectItem>
-                          <SelectItem value="customer-support">Customer Support</SelectItem>
+                          <SelectItem value="Job Opportunity">Job Opportunity</SelectItem>
+                          <SelectItem value="Supplier Partnership">Supplier Partnership</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div>
-                      <Label htmlFor="additionalInfo">Additional Information</Label>
-                      <textarea
-                        id="additionalInfo"
-                        name="additionalInfo"
+                      <Label htmlFor="message">Additional Information</Label>
+                      <Textarea
+                        id="message"
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         placeholder="Tell us about your experience and qualifications..."
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-[#FFA500] focus:outline-none resize-vertical"
+                        className="resize-vertical"
                         rows={4}
                       />
                     </div>

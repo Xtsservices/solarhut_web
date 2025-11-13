@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { FileText, CheckCircle2, Clock, IndianRupee, Users, Wrench } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -111,6 +111,7 @@ export function AdminDashboard() {
       return itemMonthIndex >= startIndex && itemMonthIndex <= endIndex;
     });
   }
+
 
   return (
     <div className="space-y-4 sm:space-y-6">

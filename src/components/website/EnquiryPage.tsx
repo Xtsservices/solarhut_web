@@ -5,7 +5,9 @@ import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
-import { API_BASE_URL } from './ip';
+// import { API_BASE_URL } from './ip';
+const API_BASE_URL = import.meta.env.API_BASE_URL;
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { 

@@ -2,7 +2,7 @@ import {
   LayoutDashboard, 
   FileText, 
   Users, 
-  Wrench, 
+  Shield, 
   IndianRupee, 
   Briefcase, 
   TrendingUp, 
@@ -40,6 +40,7 @@ const adminMenuItems: MenuItem[] = [
   { id: 'payments', label: 'Payments', icon: IndianRupee },
   { id: 'job-requests', label: 'Job/Supplier', icon: Briefcase },
   { id: 'work-progress', label: 'Work Progress', icon: TrendingUp },
+  { id: 'masters', label: 'Masters', icon: Shield },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'profile', label: 'Profile', icon: User },
@@ -98,7 +99,7 @@ export function PortalSidebar({
             return (
               <li key={item.id}>
                 <button
-                    onClick={() => handleNavigate(item.id)}
+                  onClick={() => handleNavigate(item.id === 'masters' ? 'masters' : item.id)}
                   className={cn(
                     'w-full flex items-center gap-2 sm:gap-3 px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-colors',
                     isActive

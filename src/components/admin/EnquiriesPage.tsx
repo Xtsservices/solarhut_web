@@ -15,7 +15,8 @@ import { Eye, UserPlus, Search, ChevronDown, ChevronUp, Calendar as CalendarIcon
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '../ui/utils';
-import { API_BASE_URL } from '../website/ip';
+// import { API_BASE_URL } from '../website/ip';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function EnquiriesPage() {
   const [enquiries, setEnquiries] = useState<any[]>([]);
@@ -26,6 +27,8 @@ export function EnquiriesPage() {
   const [selectedEnquiry, setSelectedEnquiry] = useState<any>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [showAssignForm, setShowAssignForm] = useState(false);
+  const [assignToEmployeeId, setAssignToEmployeeId] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
   const [selectedSalesPerson, setSelectedSalesPerson] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -445,8 +448,8 @@ export function EnquiriesPage() {
       phone.includes(searchTerm) ||
       id.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const status = enquiry.status || 'new';
-    const matchesStatus = statusFilter === 'all' || status === statusFilter;
+  const status = (enquiry.status || 'new').toLowerCase();
+  const matchesStatus = statusFilter === 'all' || status === statusFilter.toLowerCase();
     
     const serviceType = (enquiry.service_type || enquiry.serviceType || enquiry.services_type || enquiry.type || '').toLowerCase();
     const matchesServiceType = serviceTypeFilter === 'all' || 
@@ -475,62 +478,59 @@ export function EnquiriesPage() {
     setCurrentPage(1);
   }, [statusFilter, serviceTypeFilter, searchTerm, dateFilter]);
 
-  const handleAssign = async () => {
-    if (!selectedSalesPerson) {
-      toast.error('Please select a sales person');
+  // Assign lead using assignleads API
+  const handleAssignTo = async () => {
+    if (!assignToEmployeeId) {
+      toast.error('Please select an employee');
       return;
     }
-
     if (!selectedEnquiry) {
       toast.error('No enquiry selected');
       return;
     }
-
+    setIsAssigning(true);
     try {
       const enquiryId = selectedEnquiry.id || selectedEnquiry.lead_id;
-      console.log('Assigning enquiry:', enquiryId, 'to sales person:', selectedSalesPerson);
-      
-      // Update the enquiry status to 'assigned'
-      const response = await fetch(`${API_BASE_URL}/api/leads/${enquiryId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      // Get token from localStorage or context
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/assignleads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
         body: JSON.stringify({
-          status: 'assigned',
-          salesPersonId: selectedSalesPerson,
+          leadId: enquiryId,
+          employeeId: assignToEmployeeId,
         }),
       });
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
       const result = await response.json();
-      
       if (result.success) {
-        toast.success('Enquiry assigned successfully');
-        
-        // Update local state
-        setEnquiries(prev => prev.map(enquiry => 
-          (enquiry.id || enquiry.lead_id) === enquiryId 
-            ? { ...enquiry, status: 'assigned', salesPersonId: selectedSalesPerson }
+        const emp = employees.find(e => e.id === assignToEmployeeId);
+        toast.success(`Successfully assigned to ${emp ? emp.name : 'Employee'}`);
+        // Update table status and assigned_to
+        setEnquiries(prev => prev.map(enquiry =>
+          (enquiry.id || enquiry.lead_id) === enquiryId
+            ? { ...enquiry, status: 'Assigned', assigned_to: assignToEmployeeId }
             : enquiry
         ));
-        
-        // Update selected enquiry
-        setSelectedEnquiry((prev: any) => ({ 
-          ...prev, 
-          status: 'assigned', 
-          salesPersonId: selectedSalesPerson 
+        setSelectedEnquiry((prev: any) => ({
+          ...prev,
+          status: 'Assigned',
+          assigned_to: assignToEmployeeId
         }));
-        
-        setShowAssignForm(false);
-        setSelectedSalesPerson('');
+        setAssignToEmployeeId('');
+        setViewDialogOpen(false);
       } else {
-        toast.error(result.message || 'Failed to assign enquiry');
+        toast.error(result.message || 'Failed to assign');
       }
     } catch (error) {
-      console.error('Error assigning enquiry:', error);
-      toast.error('Failed to assign enquiry. Please try again.');
+      toast.error('Failed to assign. Please try again.');
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -1020,8 +1020,16 @@ export function EnquiriesPage() {
                   </div>
                   <div>
                     <Label className="text-xs sm:text-sm font-semibold text-blue-700">Status</Label>
-                    <div className="mt-1">{getStatusBadge(selectedEnquiry.status || 'new')}</div>
+                    <div className="mt-1">
+                      {selectedEnquiry.status === 'Assigned'
+                        ? <Badge className="bg-green-100 text-green-700">Assigned</Badge>
+                        : <Badge className="bg-gray-100 text-gray-700">Unassigned</Badge>
+                      }
+                    </div>
                   </div>
+                {/* ...existing code... */}
+                {/* Move Assign To dropdown to the bottom of the modal for better alignment */}
+                {/* ...existing code... */}
                   <div>
                     <Label className="text-xs sm:text-sm font-semibold text-blue-700">Full Name</Label>
                     <p className="text-sm sm:text-base text-gray-900 mt-1 font-medium">{getFullName(selectedEnquiry)}</p>
@@ -1167,14 +1175,18 @@ export function EnquiriesPage() {
                                     <SelectContent>
                                       {getEmployeesByRole(selectedRole).length > 0 ? (
                                         <>
-                                          {getEmployeesByRole(selectedRole).map((emp: any) => (
-                                            <SelectItem key={emp.id} value={emp.id}>
-                                              <div className="flex items-center">
-                                                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                                                {emp.name || `${emp.first_name} ${emp.last_name}`}
-                                              </div>
-                                            </SelectItem>
-                                          ))}
+                                          {getEmployeesByRole(selectedRole).map((emp: any) => {
+                                            // Ensure name and role are strings
+                                            const displayName = typeof emp.name === 'string' && emp.name.trim().length > 0
+                                              ? emp.name
+                                              : `${emp.first_name || ''} ${emp.last_name || ''}`.trim();
+                                            const displayRole = typeof emp.role === 'string' ? emp.role : '';
+                                            return (
+                                              <SelectItem key={emp.id} value={String(emp.id)}>
+                                                {`${displayName}${displayRole ? ` (${displayRole})` : ''}`}
+                                              </SelectItem>
+                                            );
+                                          })}
                                           <hr className="my-1" />
                                           <SelectItem value="create_new">
                                             <div className="flex items-center text-blue-600">
@@ -1199,7 +1211,7 @@ export function EnquiriesPage() {
                               {/* Show assign button only if both role and employee are selected */}
                               {selectedRole && selectedSalesPerson && selectedSalesPerson !== 'create_new' && (
                                 <Button 
-                                  onClick={handleAssign} 
+                                  onClick={handleAssignTo} 
                                   className="w-full"
                                 >
                                   <UserPlus className="h-4 w-4 mr-2" />
@@ -1277,7 +1289,41 @@ export function EnquiriesPage() {
                 )}
 
 
-              </div>
+              {/* Assign To dropdown always visible if not assigned */}
+              {selectedEnquiry.status !== 'Assigned' && (
+                <div className="pt-6 mt-8 border-t">
+                  <Label className="text-xs sm:text-sm text-gray-600 mb-2 block">Assign To</Label>
+                  <select
+                    className="w-full border rounded px-3 py-2 text-sm"
+                    value={assignToEmployeeId}
+                    onChange={e => setAssignToEmployeeId(e.target.value)}
+                    disabled={isAssigning}
+                  >
+                    <option value="">Select Employee</option>
+                    {employees.map(emp => {
+                      // Ensure name and role are strings
+                      const displayName = typeof emp.name === 'string' && emp.name.trim().length > 0
+                        ? emp.name
+                        : `${emp.first_name || ''} ${emp.last_name || ''}`.trim();
+                      const displayRole = typeof emp.role === 'string' ? emp.role : '';
+                      return (
+                        <option key={emp.id} value={String(emp.id)}>
+                          {`${displayName}${displayRole ? ` (${displayRole})` : ''}`}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <Button
+                    onClick={handleAssignTo}
+                    className="w-full mt-3"
+                    style={{ backgroundColor: '#F97316', color: 'white' }}
+                    disabled={isAssigning || !assignToEmployeeId}
+                  >
+                    {isAssigning ? 'Assigning...' : 'Submit'}
+                  </Button>
+                </div>
+              )}
+            </div>
             );
           })()}
         </DialogContent>

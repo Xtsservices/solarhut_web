@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
+import MastersPage from './components/admin/MastersPage';
 import { Toaster } from './components/ui/sonner';
+import { toast } from 'sonner';
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { ScrollToTop } from './components/shared/ScrollToTop';
@@ -45,13 +47,13 @@ import { FieldDashboard } from './components/field/FieldDashboard';
 import { AssignedJobs } from './components/field/AssignedJobs';
 import { PaymentStatusPage } from './components/field/PaymentStatusPage';
 
-import { Button } from './components/ui/button';
-import { Card, CardContent } from './components/ui/card';
-import { Input } from './components/ui/input';
-import { Label } from './components/ui/label';
-// @ts-ignore: Vite virtual asset provided at build time
-import logoImage from './assets/image.png';
+import LoginPage from './components/shared/LoginPage';
+import { useDispatch, useSelector } from 'react-redux';
+import { apiCurrentUserData } from './api';
 
+interface RootState {
+  currentUserData: any;
+}
 
 type UserRole = 'guest' | 'admin' | 'sales' | 'field';
 type AuthState = {
@@ -60,43 +62,107 @@ type AuthState = {
 };
 
 function AppContent() {
-  // Add location state to track background
+  const user = useSelector((state: RootState) => state.currentUserData);
   const location = useLocation();
   const background = location.state?.background;
+  const token = localStorage.getItem("authToken");
 
   const [auth, setAuth] = useState<AuthState>(() => {
     const stored = localStorage.getItem('auth');
     return stored ? JSON.parse(stored) : { role: 'guest', email: '' };
   });
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const portalContentRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     localStorage.setItem('auth', JSON.stringify(auth));
   }, [auth]);
 
-  // Handle login
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+   const getCurrentUserData = async () => {
+    try {
+
+      console.log("Fetching user data from API");
+      
+      const response = await apiCurrentUserData();
+
+      const userData = response.data || response;
+      console.log("userDatafrom app.jsx", userData)
+
+      if (userData) {
+        dispatch({
+          type: "currentUserData",
+          payload: userData,
+        });
+       
+
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
+
+    useEffect(() => {
+    if (token && !user) {
+      getCurrentUserData()
+    }
+  }, [user])
+
+  // Handle login from LoginPage component
+  const handleLogin = (mobile: string, otp: string) => {
+    // Get user data from localStorage (set during OTP verification)
+    const employeeData = localStorage.getItem('employeeData');
     let role: UserRole = 'guest';
-    if (loginEmail.includes('admin')) role = 'admin';
-    else if (loginEmail.includes('sales') || loginEmail.includes('rahul')) role = 'sales';
-    else if (loginEmail.includes('field') || loginEmail.includes('manoj')) role = 'field';
+    let userInfo = { mobile, name: 'User' };
+
+    if (employeeData) {
+      try {
+        const userData = JSON.parse(employeeData);
+        userInfo.name = userData.first_name || 'User';
+        
+        // Determine role based on user data or mobile number
+        if (userData.role) {
+          const userRole = userData.role.toLowerCase();
+          if (userRole.includes('admin')) role = 'admin';
+          else if (userRole.includes('sales')) role = 'sales';
+          else if (userRole.includes('field')) role = 'field';
+          else role = 'admin';
+        } else {
+          // Fallback: determine role based on mobile number for demo
+          if (mobile === '9876543210') role = 'admin';
+          else if (mobile === '9876543211') role = 'sales';
+          else if (mobile === '9876543212') role = 'field';
+          else role = 'admin';
+        }
+      } catch (error) {
+        console.error('Error parsing employee data:', error);
+        // Fallback role assignment
+        if (mobile === '9876543210') role = 'admin';
+        else if (mobile === '9876543211') role = 'sales';
+        else if (mobile === '9876543212') role = 'field';
+        else role = 'admin';
+      }
+    } else {
+      // Fallback role assignment for demo
+      if (mobile === '9876543210') role = 'admin';
+      else if (mobile === '9876543211') role = 'sales';
+      else if (mobile === '9876543212') role = 'field';
+      else role = 'admin';
+    }
     
-    setAuth({ role, email: loginEmail });
+    setAuth({ role, email: mobile }); // Using mobile as email for compatibility
     navigate('/dashboard');
   };
 
   // Handle logout
   const handleLogout = () => {
     setAuth({ role: 'guest', email: '' });
-    setLoginEmail('');
-    setLoginPassword('');
     localStorage.removeItem('auth');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('employeeData');
     navigate('/');
   };
 
@@ -114,70 +180,7 @@ function AppContent() {
 
   // Login Page
   if (auth.role === 'guest' && window.location.pathname === '/login') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8">
-            <div className="text-center mb-8">
-              <div className="flex justify-center mb-6">
-                <img
-                  src={logoImage}
-                  alt="Solar Hut Solutions Logo"
-                  className="h-24 sm:h-24 w-auto object-contain"
-                />
-              </div>
-              <h1 className="text-gray-900 mb-2">Portal Login</h1>
-              <p className="text-gray-600">Access your dashboard</p>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-
-              <Button type="submit" className="w-full bg-[#FFA500] hover:bg-[#FF8C00] text-white">
-                Login
-              </Button>
-            </form>
-
-            <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <p className="text-sm text-orange-900 mb-2">Demo Credentials:</p>
-              <p className="text-xs text-orange-700">Admin: admin@solarhut.com</p>
-              <p className="text-xs text-orange-700">Sales: rahul.verma@solarhut.com</p>
-              <p className="text-xs text-orange-700">Field: manoj.kumar@solarhut.com</p>
-            </div>
-
-            <div className="mt-4 text-center">
-              <Button variant="link" onClick={() => navigate('/')} className="text-[#FFA500] hover:text-[#FF8C00]">
-                Back to Landing Page
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        <Toaster />
-        
-      </div>
-    );
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   // Portal Pages (Admin/Sales/Field)
@@ -214,6 +217,7 @@ function AppContent() {
                 <Route path="/payments" element={<PaymentsPage />} />
                 <Route path="/job-requests" element={<JobRequestsPage />} />
                 <Route path="/work-progress" element={<WorkProgressPage />} />
+                <Route path="/masters" element={<MastersPage />} />
                 <Route path="/notifications" element={<NotificationsPage role={auth.role} />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/profile" element={<ProfilePage role={auth.role} />} />
@@ -270,7 +274,7 @@ function AppContent() {
         <Route path="/" element={<LandingPage onNavigate={handleNavigate} />} />
         <Route path="/home" element={<LandingPage onNavigate={handleNavigate} />} />
         <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<ContactPage open={true} onClose={() => navigate("/")} />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/ground-mounted" element={<GroundMountedPage />} />
         <Route path="/residential" element={<ResidentialSolutionsPage />} />
         <Route path="/commercial" element={<CommercialSolutionsPage />} />
@@ -286,7 +290,6 @@ function AppContent() {
       {/* Enquiry popup overlays current page */}
       {showEnquiryPopup && (
         <EnquiryFormPopup 
-          selectedType="residential"
           open={true}
           onClose={() => setShowEnquiryPopup(false)}
           onSuccess={() => {

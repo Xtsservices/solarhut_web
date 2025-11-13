@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Button } from '../ui/button';
@@ -7,14 +7,15 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { TabsList, TabsTrigger } from '../ui/tabs';
 import { Checkbox } from '../ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { UserPlus, Edit, Trash2, Eye, Settings, ChevronDown } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Eye, Settings, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { AssignedEnquiries } from '../sales/AssignedEnquiries';
 import { AssignedJobs } from '../field/AssignedJobs';
-import { API_BASE_URL } from '../website/ip';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // 🔹 Type Definitions
 type RoleResponse = {
@@ -147,13 +148,15 @@ export function EmployeesPage() {
     
     switch (field) {
       case 'first_name':
-        // Only alphabets, 2-50 characters
+        // Alphabets and spaces allowed, 2-50 characters
         if (!value) {
           errors.first_name = 'First name is required';
-        } else if (!/^[A-Za-z]+$/.test(value)) {
-          errors.first_name = 'First name must contain only alphabets (no spaces, numbers, or special characters)';
-        } else if (value.length < 2 || value.length > 50) {
+        } else if (!/^[A-Za-z\s]+$/.test(value)) {
+          errors.first_name = 'First name must contain only alphabets and spaces (no numbers or special characters)';
+        } else if (value.trim().length < 2 || value.trim().length > 50) {
           errors.first_name = 'First name must be between 2-50 characters';
+        } else if (value.trim() !== value || /\s{2,}/.test(value)) {
+          errors.first_name = 'First name cannot have leading/trailing spaces or multiple consecutive spaces';
         }
         break;
         
@@ -191,6 +194,29 @@ export function EmployeesPage() {
           errors.address = 'Address must be between 5-200 characters';
         }
         break;
+        
+      case 'joining_date':
+        if (!value) {
+          errors.joining_date = 'Joining date is required';
+        } else {
+          const selectedDate = new Date(value);
+          const today = new Date();
+          const thirtyDaysFromNow = new Date();
+          thirtyDaysFromNow.setDate(today.getDate() + 30);
+          
+          // Reset time to compare only dates
+          today.setHours(0, 0, 0, 0);
+          selectedDate.setHours(0, 0, 0, 0);
+          
+          if (isNaN(selectedDate.getTime())) {
+            errors.joining_date = 'Please enter a valid date';
+          } else if (selectedDate < today) {
+            errors.joining_date = 'Joining date cannot be in the past';
+          } else if (selectedDate > thirtyDaysFromNow) {
+            errors.joining_date = 'Joining date cannot be more than 30 days in the future';
+          }
+        }
+        break;
     }
     
     return errors;
@@ -211,20 +237,27 @@ export function EmployeesPage() {
       allErrors.roles = 'Please select at least one role';
     }
     
-    // Validate joining date
-    if (!data.joining_date) {
-      allErrors.joining_date = 'Joining date is required';
-    }
+    // Validate joining date using field validation
+    allErrors = { ...allErrors, ...validateField('joining_date', data.joining_date) };
     
     return allErrors;
   };
   
   const handleFieldChange = (field: string, value: string) => {
+    // Auto-capitalize first name as user types
+    let processedValue = value;
+    if (field === 'first_name') {
+      // Capitalize first letter of each word in real-time
+      processedValue = value.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    }
+    
     // Update form data
-    setFormData({ ...formData, [field]: value });
+    setFormData({ ...formData, [field]: processedValue });
     
     // Real-time validation
-    const fieldErrors = validateField(field, value);
+    const fieldErrors = validateField(field, processedValue);
     setValidationErrors(prev => {
       const updated = { ...prev };
       if (fieldErrors[field]) {
@@ -246,15 +279,32 @@ export function EmployeesPage() {
   const [roles, setRoles] = useState<string[]>([]);
   const [roleData, setRoleData] = useState<Role[]>([]);
   const [newRole, setNewRole] = useState('');
-  const [salesFilter, setSalesFilter] = useState<string>('All');
-  const [fieldFilter, setFieldFilter] = useState<string>('All');
   const [isCreatingRole, setIsCreatingRole] = useState(false);
   const [isDeletingRole, setIsDeletingRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingEmployees, setIsLoadingEmployees] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(Date.now());
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [activeTab, setActiveTab] = useState('roles');
+  const [activeTab, setActiveTab] = useState('all');
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('All');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentRolePage, setCurrentRolePage] = useState(1);
+  const employeesPerPage = 10;
+  const rolesPerPage = 10;
+
+  // Custom handlers to reset pagination
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    setCurrentPage(1);
+    setCurrentRolePage(1);
+  };
+
+  const handleRoleFilterChange = (newRole: string) => {
+    setSelectedRoleFilter(newRole);
+    setCurrentPage(1);
+  };
 
   // 🔹 Fetch Roles
   const fetchRoles = async () => {
@@ -384,6 +434,74 @@ export function EmployeesPage() {
       setRoles([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // 🔹 Fetch Employees by Role ID
+  const fetchEmployeesByRole = async (roleId: number | string) => {
+    try {
+      console.log('🔍 Fetching employees by role ID:', roleId);
+      const response = await fetch(`${API_BASE_URL}/api/employees/role/${roleId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        console.log('⚠️ Employees by role API failed:', response.status);
+        return [];
+      }
+
+      const result = await response.json();
+      console.log('📊 Employees by role API response:', result);
+      
+      if (result.success && Array.isArray(result.data)) {
+        return result.data;
+      } else if (Array.isArray(result.data)) {
+        return result.data;
+      } else {
+        return [];
+      }
+    } catch (error) {
+      console.error('💥 Error fetching employees by role:', error);
+      return [];
+    }
+  };
+
+  // 🔹 Assign Multiple Roles to Employee
+  const assignRolesToEmployee = async (employeeId: number | string, roleIds: number[]) => {
+    try {
+      console.log('🔄 Assigning roles to employee:', { employeeId, roleIds });
+      const response = await fetch(`${API_BASE_URL}/api/employees/${employeeId}/roles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roles: roleIds.map(roleId => ({ role_id: roleId }))
+        }),
+      });
+
+      console.log('📡 Assign roles response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Assign roles failed:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Assign roles result:', result);
+
+      if (result.success) {
+        toast.success(result.message || 'Roles assigned successfully');
+        // Refresh employees to get updated role assignments
+        await fetchEmployees();
+        return result;
+      } else {
+        throw new Error(result.message || 'Failed to assign roles');
+      }
+    } catch (error) {
+      console.error('💥 Error assigning roles:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to assign roles');
+      return null;
     }
   };
 
@@ -567,7 +685,7 @@ export function EmployeesPage() {
     email: '',
     mobile: '',
     address: '',
-    joining_date: '',
+    joining_date: new Date().toISOString().split('T')[0], // Default to today's date
     roles: [] as string[],
   });
 
@@ -577,16 +695,465 @@ export function EmployeesPage() {
     fetchEmployees();
   }, []);
 
-  // Update active tab based on available roles
-  useEffect(() => {
-    if (roles.includes('Sales Person')) {
-      setActiveTab('sales');
-    } else if (roles.includes('Field Executive')) {
-      setActiveTab('field');
-    } else {
-      setActiveTab('roles');
+  // Helper function to get employees by role
+  const getEmployeesByRole = (role: string) => {
+    if (role === 'All') {
+      return employees;
     }
-  }, [roles]);
+    
+    return employees.filter(emp => {
+      // Direct role match
+      if (emp.role === role) return true;
+      
+      // Check roles array if it exists
+      if (emp.roles && Array.isArray(emp.roles)) {
+        return emp.roles.some((r: any) => {
+          const roleString = typeof r === 'object' ? (r.role_name || r.name) : r;
+          return roleString === role;
+        });
+      }
+      
+      return false;
+    });
+  };
+
+  // Helper function to get all unique roles from employees
+  const getAllEmployeeRoles = () => {
+    const roleSet = new Set<string>();
+    
+    employees.forEach(emp => {
+      // Add primary role
+      if (emp.role) {
+        roleSet.add(emp.role);
+      }
+      
+      // Add roles from roles array
+      if (emp.roles && Array.isArray(emp.roles)) {
+        emp.roles.forEach((r: any) => {
+          const roleString = typeof r === 'object' ? (r.role_name || r.name) : r;
+          if (roleString) {
+            roleSet.add(roleString);
+          }
+        });
+      }
+    });
+    
+    return Array.from(roleSet).filter(role => role && role.trim());
+  };
+
+  // Unified Employee Table Component with Pagination
+  const EmployeeTable = ({ employees: tableEmployees, title }: { employees: any[], title: string }) => {
+    // Calculate pagination
+    const totalPages = Math.ceil(tableEmployees.length / employeesPerPage);
+    const startIndex = (currentPage - 1) * employeesPerPage;
+    const endIndex = startIndex + employeesPerPage;
+    const currentEmployees = tableEmployees.slice(startIndex, endIndex);
+    
+    // Debug pagination state
+    console.log('📄 Pagination State:', { 
+      title, 
+      currentPage, 
+      totalPages, 
+      totalEmployees: tableEmployees.length, 
+      employeesPerPage,
+      startIndex, 
+      endIndex, 
+      currentEmployeesCount: currentEmployees.length 
+    });
+    
+    // Reset to first page only if current page is beyond available pages
+    React.useEffect(() => {
+      if (totalPages > 0 && currentPage > totalPages) {
+        setCurrentPage(1);
+      }
+    }, [totalPages, currentPage]);
+
+    const handlePageChange = (page: number) => {
+      console.log('📄 Page number clicked:', page);
+      setCurrentPage(page);
+    };
+
+    const handlePrevious = () => {
+      console.log('📄 Previous button clicked:', { currentPage, canGoPrevious: currentPage > 1 });
+      if (currentPage > 1) {
+        const newPage = currentPage - 1;
+        console.log('📄 Moving to page:', newPage);
+        setCurrentPage(newPage);
+      }
+    };
+
+    const handleNext = () => {
+      console.log('📄 Next button clicked:', { currentPage, totalPages, canGoNext: currentPage < totalPages });
+      if (currentPage < totalPages) {
+        const newPage = currentPage + 1;
+        console.log('📄 Moving to page:', newPage);
+        setCurrentPage(newPage);
+      }
+    };
+
+    // Generate page numbers for pagination
+    const getPageNumbers = () => {
+      const pages = [];
+      const maxVisiblePages = 5;
+      
+      if (totalPages <= maxVisiblePages) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        let start = Math.max(1, currentPage - 2);
+        let end = Math.min(totalPages, start + maxVisiblePages - 1);
+        
+        if (end - start < maxVisiblePages - 1) {
+          start = Math.max(1, end - maxVisiblePages + 1);
+        }
+        
+        for (let i = start; i <= end; i++) {
+          pages.push(i);
+        }
+      }
+      
+      return pages;
+    };
+
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <CardTitle>{title}</CardTitle>
+          {title === 'All Employees' && (
+            <div className="flex items-center gap-2">
+              <Label className="text-sm">Filter by Role:</Label>
+              <Select value={selectedRoleFilter} onValueChange={handleRoleFilterChange}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="All roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Roles ({employees.length})</SelectItem>
+                  {getAllEmployeeRoles().map((role) => {
+                    const count = getEmployeesByRole(role).length;
+                    return (
+                      <SelectItem key={role} value={role}>
+                        {role} ({count})
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Mobile</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Joining Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentEmployees.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    <p>No employees found for the selected criteria.</p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                currentEmployees.map((emp) => (
+                  <TableRow key={emp.id}>
+                    <TableCell>{emp.id}</TableCell>
+                    <TableCell>{emp.first_name} {emp.last_name}</TableCell>
+                    <TableCell>{emp.email}</TableCell>
+                    <TableCell>{emp.mobile}</TableCell>
+                    <TableCell>
+                      <Badge className="bg-blue-100 text-blue-700">{emp.role}</Badge>
+                    </TableCell>
+                    <TableCell>{emp.joining_date ? new Date(emp.joining_date).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{getStatusBadge(emp.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleView(emp, emp.role)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(emp, emp.role)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(emp.id, emp.role)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+          
+          {/* Pagination Controls */}
+          {tableEmployees.length > employeesPerPage && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-gray-500">
+                Showing {startIndex + 1} to {Math.min(endIndex, tableEmployees.length)} of {tableEmployees.length} entries
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {/* Previous Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrevious}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {getPageNumbers().map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                
+                {/* Next Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNext}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Roles Table Component with Pagination
+  const RolesTable = () => {
+    // Calculate pagination for roles
+    const totalRolePages = Math.ceil(roleData.length / rolesPerPage);
+    const startRoleIndex = (currentRolePage - 1) * rolesPerPage;
+    const endRoleIndex = startRoleIndex + rolesPerPage;
+    const currentRoles = roleData.slice(startRoleIndex, endRoleIndex);
+    
+    // Debug roles pagination state
+    console.log('📄 Roles Pagination State:', { 
+      currentRolePage, 
+      totalRolePages, 
+      totalRoles: roleData.length, 
+      rolesPerPage,
+      startRoleIndex, 
+      endRoleIndex, 
+      currentRolesCount: currentRoles.length 
+    });
+
+    // Reset to first page only if current page is beyond available pages
+    React.useEffect(() => {
+      if (totalRolePages > 0 && currentRolePage > totalRolePages) {
+        setCurrentRolePage(1);
+      }
+    }, [totalRolePages, currentRolePage]);
+
+    const handleRolePageChange = (page: number) => {
+      console.log('📄 Role page number clicked:', page);
+      setCurrentRolePage(page);
+    };
+
+    const handleRolePrevious = () => {
+      console.log('📄 Role previous button clicked:', { currentRolePage, canGoPrevious: currentRolePage > 1 });
+      if (currentRolePage > 1) {
+        const newPage = currentRolePage - 1;
+        console.log('📄 Moving to role page:', newPage);
+        setCurrentRolePage(newPage);
+      }
+    };
+
+    const handleRoleNext = () => {
+      console.log('📄 Role next button clicked:', { currentRolePage, totalRolePages, canGoNext: currentRolePage < totalRolePages });
+      if (currentRolePage < totalRolePages) {
+        const newPage = currentRolePage + 1;
+        console.log('📄 Moving to role page:', newPage);
+        setCurrentRolePage(newPage);
+      }
+    };
+
+    // Generate page numbers for roles pagination
+    const getRolePageNumbers = () => {
+      const pages = [];
+      const maxVisiblePages = 5;
+      
+      if (totalRolePages <= maxVisiblePages) {
+        for (let i = 1; i <= totalRolePages; i++) {
+          pages.push(i);
+        }
+      } else {
+        let start = Math.max(1, currentRolePage - 2);
+        let end = Math.min(totalRolePages, start + maxVisiblePages - 1);
+        
+        if (end - start < maxVisiblePages - 1) {
+          start = Math.max(1, end - maxVisiblePages + 1);
+        }
+        
+        for (let i = start; i <= end; i++) {
+          pages.push(i);
+        }
+      }
+      
+      return pages;
+    };
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Role Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table key={`roles-table-${roleData.length}-${lastUpdate}`}>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-center">Role ID</TableHead>
+                <TableHead className="text-center">Role Name</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentRoles.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                    <p>No roles found. Create a new role to get started.</p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                currentRoles.map((roleInfo, index) => {
+                  const role = roleInfo.role_name;
+                  const employeeCount = getEmployeesByRole(role).length;
+
+                  return (
+                    <TableRow key={roleInfo.id || index}>
+                      <TableCell className="text-center">
+                        {roleInfo.id || 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-center font-medium">
+                        {role}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-sm text-gray-500">
+                            {employeeCount} employee{employeeCount !== 1 ? 's' : ''}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteRole(roleInfo.id, role)}
+                            disabled={employeeCount > 0 || isDeletingRole === role}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            {isDeletingRole === role ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+          
+          {/* Roles Pagination Controls */}
+          {roleData.length > rolesPerPage && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-gray-500">
+                Showing {startRoleIndex + 1} to {Math.min(endRoleIndex, roleData.length)} of {roleData.length} roles
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {/* Previous Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRolePrevious}
+                  disabled={currentRolePage === 1}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {getRolePageNumbers().map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentRolePage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleRolePageChange(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                
+                {/* Next Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRoleNext}
+                  disabled={currentRolePage === totalRolePages}
+                  className="flex items-center gap-1"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Update active tab to default to 'all'
+  useEffect(() => {
+    // Default to showing all employees
+    handleTabChange('all');
+  }, []);
 
 
 
@@ -600,6 +1167,19 @@ export function EmployeesPage() {
       return;
     }
 
+    // Process first name - if it contains spaces, split it properly
+    let processedFirstName = formData.first_name.trim();
+    let processedLastName = formData.last_name.trim();
+    
+    // If first name contains spaces and last name is empty, split the first name
+    if (processedFirstName.includes(' ') && !processedLastName) {
+      const nameParts = processedFirstName.split(/\s+/);
+      processedFirstName = nameParts[0]; // First part becomes first name (already capitalized from input)
+      processedLastName = nameParts.slice(1).join(' '); // Rest becomes last name
+    }
+    // If first name contains spaces but last name is also provided, keep first name as is
+    // If no spaces in first name, keep as is (already capitalized from input)
+
     try {
       if (editMode && editingId) {
         // Update existing employee via API
@@ -607,8 +1187,8 @@ export function EmployeesPage() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            first_name: formData.first_name,
-            last_name: formData.last_name,
+            first_name: processedFirstName,
+            last_name: processedLastName,
             email: formData.email,
             mobile: formData.mobile,
             address: formData.address,
@@ -627,7 +1207,7 @@ export function EmployeesPage() {
           // Update local state
           setEmployees(employees.map((emp) =>
             emp.id === editingId
-              ? { ...emp, first_name: formData.first_name, last_name: formData.last_name, email: formData.email, mobile: formData.mobile, address: formData.address, roles: formData.roles, joining_date: formData.joining_date }
+              ? { ...emp, first_name: processedFirstName, last_name: processedLastName, email: formData.email, mobile: formData.mobile, address: formData.address, roles: formData.roles, joining_date: formData.joining_date }
               : emp
           ));
           toast.success('Employee updated successfully');
@@ -637,8 +1217,8 @@ export function EmployeesPage() {
       } else {
         // Add new employee via API
         console.log('🚀 Creating employee with data:', {
-          first_name: formData.first_name,
-          last_name: formData.last_name,
+          first_name: processedFirstName,
+          last_name: processedLastName,
           email: formData.email,
           mobile: formData.mobile,
           address: formData.address,
@@ -650,8 +1230,8 @@ export function EmployeesPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            first_name: formData.first_name,
-            last_name: formData.last_name,
+            first_name: processedFirstName,
+            last_name: processedLastName,
             email: formData.email,
             mobile: formData.mobile,
             address: formData.address,
@@ -695,7 +1275,7 @@ export function EmployeesPage() {
       }
 
       setDialogOpen(false);
-      setFormData({ first_name: '', last_name: '', email: '', mobile: '', address: '', roles: [], joining_date: '' });
+      setFormData({ first_name: '', last_name: '', email: '', mobile: '', address: '', roles: [], joining_date: new Date().toISOString().split('T')[0] });
       setValidationErrors({});
       setEditMode(false);
       setEditingId(null);
@@ -706,21 +1286,32 @@ export function EmployeesPage() {
   };
 
   const handleEdit = (employee: any, role: string) => {
-    // Convert role name to role names array for roles
-    const roleNames = employee.roles || [role];
+    console.log('🔧 Edit button clicked for employee:', employee);
+    console.log('🔧 Employee role:', role);
+    
+    try {
+      // Convert role name to role names array for roles
+      const roleNames = employee.roles || [role];
+      console.log('🔧 Setting form data for employee:', employee.id);
 
-    setFormData({
-      first_name: employee.first_name || '',
-      last_name: employee.last_name || '',
-      email: employee.email || '',
-      mobile: employee.mobile || '',
-      address: employee.address || '',
-      roles: Array.isArray(roleNames) ? roleNames : [roleNames],
-      joining_date: employee.joining_date || '',
-    });
-    setEditingId(employee.id);
-    setEditMode(true);
-    setDialogOpen(true);
+      setFormData({
+        first_name: employee.first_name || '',
+        last_name: employee.last_name || '',
+        email: employee.email || '',
+        mobile: employee.mobile || '',
+        address: employee.address || '',
+        roles: Array.isArray(roleNames) ? roleNames : [roleNames],
+        joining_date: employee.joining_date || '',
+      });
+      setEditingId(employee.id);
+      setEditMode(true);
+      setDialogOpen(true);
+      
+      console.log('✅ Edit dialog state set successfully');
+    } catch (error) {
+      console.error('💥 Error in handleEdit:', error);
+      toast.error('Error opening edit dialog');
+    }
   };
 
   const handleDelete = async (id: string, role: string) => {
@@ -750,12 +1341,19 @@ export function EmployeesPage() {
   };
 
   const handleDialogChange = (open: boolean) => {
-    setDialogOpen(open);
-    if (!open) {
-      setFormData({ first_name: '', last_name: '', email: '', mobile: '', address: '', roles: [], joining_date: '' });
-      setValidationErrors({});
-      setEditMode(false);
-      setEditingId(null);
+    console.log('🔄 Dialog state changing to:', open);
+    
+    try {
+      setDialogOpen(open);
+      if (!open) {
+        console.log('🧹 Cleaning up dialog state');
+        setFormData({ first_name: '', last_name: '', email: '', mobile: '', address: '', roles: [], joining_date: new Date().toISOString().split('T')[0] });
+        setValidationErrors({});
+        setEditMode(false);
+        setEditingId(null);
+      }
+    } catch (error) {
+      console.error('💥 Error in handleDialogChange:', error);
     }
   };
 
@@ -860,7 +1458,7 @@ export function EmployeesPage() {
         setRoleDialogOpen(false);
 
         // Switch to roles tab to show the newly created role
-        setActiveTab('roles');
+        handleTabChange('roles');
       } else {
         console.error('❌ Create role API returned unexpected format:', result);
         toast.error(result.error || result.message || 'Role creation failed - unexpected response format');
@@ -1063,27 +1661,83 @@ export function EmployeesPage() {
 
   // If viewing employee details, show their specific page
   if (viewingDetails && selectedEmployee) {
-    return (
-      <div className="space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-gray-900 mb-2">
-              {selectedEmployee.role === 'Sales Person' ? 'Assigned Enquiries' : 'Assigned Jobs'}
-            </h1>
-            <p className="text-gray-600">
-              {selectedEmployee.role === 'Sales Person'
-                ? 'Manage assigned customer enquiries'
-                : 'Manage assigned field jobs'}
-            </p>
+    console.log('🔍 Viewing employee details:', selectedEmployee);
+    
+    try {
+      return (
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-gray-900 mb-2">
+                {selectedEmployee.role === 'Sales Person' ? 'Assigned Enquiries' : 'Assigned Jobs'}
+              </h1>
+              <p className="text-gray-600">
+                {selectedEmployee.role === 'Sales Person'
+                  ? 'Manage assigned customer enquiries'
+                  : 'Manage assigned field jobs'}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-gray-900">{`${selectedEmployee.first_name || ''} ${selectedEmployee.last_name || ''}`.trim() || 'Unknown Employee'}</p>
+              <p className="text-sm text-gray-600">{selectedEmployee.email || 'No email'}</p>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  console.log('🔙 Going back to employee list');
+                  setViewingDetails(false);
+                  setSelectedEmployee(null);
+                }}
+                className="mt-2 sm:mt-0"
+              >
+                ← Back to Employees
+              </Button>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-gray-900">{selectedEmployee.name}</p>
-            <p className="text-sm text-gray-600">{selectedEmployee.email}</p>
+          
+          {/* Add error boundary around components */}
+          <div className="min-h-[200px]">
+            {selectedEmployee.role === 'Sales Person' ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Assigned Enquiries</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Enquiry management for {selectedEmployee.first_name} {selectedEmployee.last_name}</p>
+                    <p className="text-sm mt-2">This feature is under development</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Assigned Jobs</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Job management for {selectedEmployee.first_name} {selectedEmployee.last_name}</p>
+                    <p className="text-sm mt-2">This feature is under development</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
-        {selectedEmployee.role === 'Sales Person' ? <AssignedEnquiries /> : <AssignedJobs />}
-      </div>
-    );
+      );
+    } catch (error) {
+      console.error('💥 Error rendering employee details:', error);
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+          <p className="text-red-600 mb-4">Error loading employee details</p>
+          <Button onClick={() => {
+            setViewingDetails(false);
+            setSelectedEmployee(null);
+          }}>
+            ← Back to Employees
+          </Button>
+        </div>
+      );
+    }
   }
 
   // Debug: Check roleData before rendering
@@ -1102,34 +1756,53 @@ export function EmployeesPage() {
         <div className="flex flex-col sm:flex-row gap-2">
           {/* Create Role Button */}
           <Dialog open={roleDialogOpen} onOpenChange={handleRoleDialogChange}>
-            <DialogTrigger asChild>
+            {/* <DialogTrigger asChild>
               <Button variant="outline" className="w-full sm:w-auto">
                 <Settings className="h-4 w-4 mr-2" />
                 Create Role
               </Button>
-            </DialogTrigger>
+            </DialogTrigger> */}
             <DialogContent className="p-6 max-w-md">
               <DialogHeader className="space-y-2">
                 <DialogTitle className="text-xl">Create New Role</DialogTitle>
-                <DialogDescription className="text-sm text-gray-600">
-                  Enter a name for the new employee role
-                </DialogDescription>
+              
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div>
-                  <Label className="text-sm font-medium">Enter Role Name</Label>
+                  <Label className="text-sm font-medium">Enter Role Name <span style={{color:'#FF0000'}}>*</span></Label>
                   <Input
                     value={newRole}
-                    onChange={(e) => setNewRole(e.target.value)}
+                    onChange={(e) => {
+                      setNewRole(e.target.value);
+                      if (!e.target.value.trim()) {
+                        setValidationErrors(prev => ({ ...prev, newRole: 'This field is required.' }));
+                      } else {
+                        setValidationErrors(prev => { const updated = { ...prev }; delete updated.newRole; return updated; });
+                      }
+                    }}
+                    onBlur={e => {
+                      if (!e.target.value.trim()) {
+                        setValidationErrors(prev => ({ ...prev, newRole: 'This field is required.' }));
+                      } else {
+                        setValidationErrors(prev => { const updated = { ...prev }; delete updated.newRole; return updated; });
+                      }
+                    }}
                     placeholder="e.g., HR Manager"
-                    className="mt-1"
+                    className={`mt-1 ${validationErrors.newRole ? 'border-[#FF0000]' : ''}`}
                   />
+                  {validationErrors.newRole && (
+                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.newRole}</p>
+                  )}
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button variant="outline" onClick={() => setRoleDialogOpen(false)} className="flex-1" disabled={isCreatingRole}>
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateRole} className="flex-1" disabled={isCreatingRole}>
+                  <Button 
+                    onClick={handleCreateRole} 
+                    className="flex-1" 
+                    disabled={isCreatingRole || !newRole.trim() || !!validationErrors.newRole}
+                  >
                     {isCreatingRole ? 'Creating...' : 'Create Role'}
                   </Button>
                 </div>
@@ -1145,66 +1818,81 @@ export function EmployeesPage() {
                 Create New Employee
               </Button>
             </DialogTrigger>
-            <DialogContent className="p-6 max-w-lg">
+            <DialogContent className="p-6 max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader className="space-y-2">
                 <DialogTitle className="text-xl">{editMode ? 'Edit Employee' : 'Add New Employee'}</DialogTitle>
                 <DialogDescription className="text-sm text-gray-600">
-                  {editMode ? 'Update the employee details' : 'Fill in the employee information below'}
+                  {editMode ? 'Update the employee details' : 'Fill in the employee information below. First name auto-capitalizes as you type and you can enter full names like "lalitha krishna".'}
                 </DialogDescription>
               </DialogHeader>
+              
+              {/* Debug info for troubleshooting */}
+              {editMode && (
+                <div className="bg-blue-50 p-2 rounded text-xs text-blue-700 mb-2 mt-4">
+                  <span>Editing: {formData.first_name} {formData.last_name} (ID: {editingId})</span>
+                </div>
+              )}
+              
               <div className="space-y-4 mt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium">First Name</Label>
+                    <Label className="text-sm font-medium">First Name <span style={{color:'#FF0000'}}>*</span></Label>
                     <Input
                       value={formData.first_name}
                       onChange={(e) => handleFieldChange('first_name', e.target.value)}
-                      placeholder="Enter first name (alphabets only)"
-                      className={`mt-1 ${validationErrors.first_name ? 'border-red-500 focus:border-red-500' : ''}`}
+                      onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('first_name', e.target.value) }))}
+                      placeholder="Enter first name "
+                      className={`mt-1 ${validationErrors.first_name ? 'border-[#FF0000]' : ''}`}
                     />
                     {validationErrors.first_name && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.first_name}</p>
+                      <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.first_name}</p>
+                    )}
+                    {!validationErrors.first_name && formData.first_name.includes(' ') && !formData.last_name && (
+                      <p className="text-blue-600 text-xs mt-1">💡 Will auto-split when submitted</p>
                     )}
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Last Name</Label>
+                    <Label className="text-sm font-medium">Last Name <span style={{color:'#FF0000'}}>*</span></Label>
                     <Input
                       value={formData.last_name}
                       onChange={(e) => handleFieldChange('last_name', e.target.value)}
-                      placeholder="Enter last name (alphabets only)"
-                      className={`mt-1 ${validationErrors.last_name ? 'border-red-500 focus:border-red-500' : ''}`}
+                      onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('last_name', e.target.value) }))}
+                      placeholder="Enter last name "
+                      className={`mt-1 ${validationErrors.last_name ? 'border-[#FF0000]' : ''}`}
                     />
                     {validationErrors.last_name && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.last_name}</p>
+                      <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.last_name}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Email</Label>
+                  <Label className="text-sm font-medium">Email <span style={{color:'#FF0000'}}>*</span></Label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleFieldChange('email', e.target.value)}
+                    onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('email', e.target.value) }))}
                     placeholder="Enter email address"
-                    className={`mt-1 ${validationErrors.email ? 'border-red-500 focus:border-red-500' : ''}`}
+                    className={`mt-1 ${validationErrors.email ? 'border-[#FF0000]' : ''}`}
                   />
                   {validationErrors.email && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
+                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.email}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Mobile</Label>
+                  <Label className="text-sm font-medium">Mobile <span style={{color:'#FF0000'}}>*</span></Label>
                   <Input
                     type="tel"
                     value={formData.mobile}
                     onChange={(e) => handleFieldChange('mobile', e.target.value)}
-                    placeholder="Enter mobile number (10 digits)"
-                    className={`mt-1 ${validationErrors.mobile ? 'border-red-500 focus:border-red-500' : ''}`}
+                    onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('mobile', e.target.value) }))}
+                    placeholder="Enter mobile number "
+                    className={`mt-1 ${validationErrors.mobile ? 'border-[#FF0000]' : ''}`}
                   />
                   {validationErrors.mobile && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.mobile}</p>
+                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.mobile}</p>
                   )}
                 </div>
 
@@ -1213,96 +1901,39 @@ export function EmployeesPage() {
                   <Input
                     value={formData.address}
                     onChange={(e) => handleFieldChange('address', e.target.value)}
+                    onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('address', e.target.value) }))}
                     placeholder="Enter address"
-                    className={`mt-1 ${validationErrors.address ? 'border-red-500 focus:border-red-500' : ''}`}
+                    className={`mt-1 ${validationErrors.address ? 'border-[#FF0000]' : ''}`}
                   />
                   {validationErrors.address && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.address}</p>
+                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.address}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Joining Date</Label>
+                  <Label className="text-sm font-medium">Joining Date <span style={{color:'#FF0000'}}>*</span></Label>
                   <Input
                     type="date"
                     value={formData.joining_date}
                     onChange={(e) => handleFieldChange('joining_date', e.target.value)}
-                    className={`mt-1 ${validationErrors.joining_date ? 'border-red-500 focus:border-red-500' : ''}`}
+                    onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('joining_date', e.target.value) }))}
+                    className={`mt-1 ${validationErrors.joining_date ? 'border-[#FF0000]' : ''}`}
+                    min={new Date().toISOString().split('T')[0]} // Today's date - no past dates allowed
+                    max={(() => {
+                      const thirtyDaysFromNow = new Date();
+                      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+                      return thirtyDaysFromNow.toISOString().split('T')[0];
+                    })()}
                   />
                   {validationErrors.joining_date && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.joining_date}</p>
+                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.joining_date}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Roles (Select multiple)</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        className={`mt-1 w-full justify-between ${editMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        disabled={editMode}
-                      >
-                        <span className="truncate">
-                          {formData.roles.length === 0 
-                            ? "Select roles..." 
-                            : `${formData.roles.length} role${formData.roles.length === 1 ? '' : 's'} selected`
-                          }
-                        </span>
-                        <ChevronDown className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0" align="start">
-                      <div className="max-h-48 overflow-y-auto">
-                        {roles.length === 0 ? (
-                          <div className="p-3 text-sm text-gray-500">No roles available. Create roles first.</div>
-                        ) : (
-                          <div className="p-1">
-                            {roles.map((roleInfo) => (
-                              <div
-                                key={roleInfo}
-                                className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-sm"
-                                onClick={() => {
-                                  const isSelected = formData.roles.includes(roleInfo);
-                                  let newRoles;
-                                  if (isSelected) {
-                                    // Remove role if already selected
-                                    newRoles = formData.roles.filter(r => r !== roleInfo);
-                                  } else {
-                                    // Add role if not selected
-                                    newRoles = [...formData.roles, roleInfo];
-                                  }
-                                  setFormData({ ...formData, roles: newRoles });
-                                  
-                                  // Clear roles validation error if roles are selected
-                                  if (newRoles.length > 0 && validationErrors.roles) {
-                                    setValidationErrors(prev => {
-                                      const updated = { ...prev };
-                                      delete updated.roles;
-                                      return updated;
-                                    });
-                                  }
-                                }}
-                              >
-                                <span className="text-sm">{roleInfo}</span>
-                                {formData.roles.includes(roleInfo) && (
-                                  <span className="text-green-600 font-bold text-lg">✓</span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  {validationErrors.roles && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.roles}</p>
-                  )}
-                  {editMode && (
-                    <p className="text-xs text-gray-500 mt-1">Roles cannot be changed when editing</p>
-                  )}
-                  {formData.roles.length > 0 && (
-                    <div className="mt-2">
+                  <Label className="text-sm font-medium">Roles <span style={{color:'#FF0000'}}>*</span></Label>
+                  {editMode ? (
+                    <div className="mt-1 p-3 bg-gray-50 border rounded-md">
                       <div className="flex flex-wrap gap-1">
                         {formData.roles.map((role) => (
                           <Badge key={role} variant="secondary" className="text-xs">
@@ -1310,10 +1941,112 @@ export function EmployeesPage() {
                           </Badge>
                         ))}
                       </div>
+                      <p className="text-xs text-gray-500 mt-2">Roles cannot be changed when editing</p>
+                    </div>
+                  ) : (
+                    <div className="mt-1">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`w-full flex justify-between items-center text-left font-normal ${
+                              formData.roles.length === 0 ? 'text-muted-foreground' : ''
+                            } ${validationErrors.roles ? 'border-[#FF0000]' : ''}`}
+                            style={{width: '100%'}}
+                          >
+                            <span className="flex flex-wrap gap-1 w-full">
+                              {formData.roles.length === 0
+                                ? 'Select roles...'
+                                : <>{formData.roles.slice(0, 2).map((role) => (
+                                    <Badge key={role} variant="secondary" className="text-xs">{role}</Badge>
+                                  ))}
+                                  {formData.roles.length > 2 && (
+                                    <Badge variant="outline" className="text-xs">+{formData.roles.length - 2} more</Badge>
+                                  )}
+                                </>}
+                            </span>
+                            <span className="flex flex-1 justify-end">
+                              <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                            </span>
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <div className="p-2 w-full" style={{width: '100%', minWidth: '100%', maxWidth: '100%'}}>
+                            <p className="text-sm font-medium mb-2 w-full" style={{width: '100%'}}>Select roles:</p>
+                            {roles.length === 0 ? (
+                              <p className="text-sm text-gray-500 p-2">No roles available</p>
+                            ) : (
+                              <div className="space-y-1 max-h-48 overflow-y-auto">
+                                {roles.map((role) => (
+                                  <div 
+                                    key={role} 
+                                    className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                    onClick={() => {
+                                      const isSelected = formData.roles.includes(role);
+                                      const updatedRoles = isSelected
+                                        ? formData.roles.filter((r) => r !== role)
+                                        : [...formData.roles, role];
+                                      setFormData({ ...formData, roles: updatedRoles });
+                                      // Clear roles validation error if at least one role is selected
+                                      if (updatedRoles.length > 0 && validationErrors.roles) {
+                                        setValidationErrors(prev => {
+                                          const updated = { ...prev };
+                                          delete updated.roles;
+                                          return updated;
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    <span className={`text-lg ${
+                                      formData.roles.includes(role) 
+                                        ? 'text-green-600' 
+                                        : 'text-transparent'
+                                    }`}>
+                                      ✓
+                                    </span>
+                                    <Label
+                                      className="text-sm font-normal cursor-pointer flex-1"
+                                    >
+                                      {role}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                     
+                      {formData.roles.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-500 mb-1">Selected roles:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {formData.roles.map((role) => (
+                              <Badge
+                                key={role}
+                                variant="secondary"
+                                className="text-xs flex items-center gap-1"
+                              >
+                                {role}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updatedRoles = formData.roles.filter((r) => r !== role);
+                                    setFormData({ ...formData, roles: updatedRoles });
+                                  }}
+                                  className="hover:bg-gray-300 rounded-full p-0.5"
+                                >
+                                  ×
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
-                  {formData.roles.length === 0 && !editMode && (
-                    <p className="text-xs text-red-500 mt-1">Please select at least one role</p>
+                  {validationErrors.roles && (
+                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.roles}</p>
                   )}
                 </div>
 
@@ -1331,7 +2064,11 @@ export function EmployeesPage() {
                   <Button variant="outline" onClick={() => setDialogOpen(false)} className="flex-1">
                     Cancel
                   </Button>
-                  <Button onClick={handleAdd} className="flex-1">
+                  <Button 
+                    onClick={handleAdd} 
+                    className="flex-1"
+                    disabled={Object.keys(validationErrors).length > 0 || !formData.first_name || !formData.last_name || !formData.email || !formData.mobile || !formData.joining_date || !formData.roles.length}
+                  >
                     {editMode ? 'Update Employee' : 'Submit'}
                   </Button>
                 </div>
@@ -1371,433 +2108,75 @@ export function EmployeesPage() {
       </div>
 
       <div className="space-y-6">
-        {/* Role Selection Dropdown */}
+        {/* Role Selection Dropdown and Manage Roles Button */}
         <div className="flex items-center gap-4">
-          <Label className="text-sm font-medium">Select Team:</Label>
-          <Select value={activeTab} onValueChange={setActiveTab}>
+          <Label className="text-sm font-medium">Select View:</Label>
+          <Select value={activeTab} onValueChange={handleTabChange}>
             <SelectTrigger className="w-64">
-              <SelectValue placeholder="Choose a team" />
+              <SelectValue placeholder="Choose a view" />
             </SelectTrigger>
             <SelectContent>
-              {roles.includes('Sales Person') && (
-                <SelectItem value="sales">Sales Team ({employees.filter(emp => isSalesRole(emp)).length})</SelectItem>
-              )}
-              {roles.includes('Field Executive') && (
-                <SelectItem value="field">Field Team ({employees.filter(emp => isFieldRole(emp)).length})</SelectItem>
-              )}
-              {/* Dynamic options for custom roles */}
-              {roles.filter(role => role && role !== 'Sales Person' && role !== 'Field Executive').map((role) => {
-                const roleEmployeeCount = employees.filter(emp => emp.role === role).length;
-                console.log(`🎯 DROPDOWN ${role}: found ${roleEmployeeCount} employees`);
+              <SelectItem value="all">All Employees ({employees.length})</SelectItem>
+              {getAllEmployeeRoles().map((role) => {
+                const roleEmployeeCount = getEmployeesByRole(role).length;
                 return (
                   <SelectItem key={role} value={role.toLowerCase().replace(/\s+/g, '-')}>
                     {role} ({roleEmployeeCount})
                   </SelectItem>
                 );
               })}
-              <SelectItem value="roles">Manage Roles</SelectItem>
             </SelectContent>
           </Select>
+          
+          {/* Manage Roles Button */}
+          {/* <Button
+            variant={activeTab === 'roles' ? 'default' : 'outline'}
+            onClick={() => handleTabChange('roles')}
+            className="flex items-center gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            Manage Roles
+          </Button> */}
         </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-
-        {roles.includes('Sales Person') && (
-          <TabsContent value="sales" className="space-y-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <CardTitle>Sales Team</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm">Filter by Status:</Label>
-                  <Select value={salesFilter} onValueChange={setSalesFilter}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="All statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Statuses</SelectItem>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Mobile</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Joining Date</TableHead>
-                      <TableHead>Assigned</TableHead>
-                      <TableHead>Pending</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(() => {
-                      const salesEmployees = employees.filter(emp => isSalesRole(emp));
-                      const filteredEmployees = salesEmployees.filter(emp => {
-                        if (salesFilter === 'All') return true;
-                        if (salesFilter === 'Active') return emp.status === 'Active' || emp.status === 'available';
-                        if (salesFilter === 'Inactive') return emp.status === 'Inactive' || emp.status === 'unavailable';
-                        return true;
-                      });
-                      console.log('🎯 SALES TABLE - Total employees:', employees.length);
-                      console.log('🎯 SALES TABLE - Sales employees:', salesEmployees.length, salesEmployees);
-                      console.log('🎯 SALES TABLE - Filter applied:', salesFilter);
-                      console.log('🎯 SALES TABLE - Filtered employees:', filteredEmployees.length, filteredEmployees);
-                      return null;
-                    })()}
-                    {employees
-                      .filter(emp => isSalesRole(emp))
-                      .filter(emp => {
-                        if (salesFilter === 'All') return true;
-                        if (salesFilter === 'Active') return emp.status === 'Active' || emp.status === 'available';
-                        if (salesFilter === 'Inactive') return emp.status === 'Inactive' || emp.status === 'unavailable';
-                        return true;
-                      })
-                      .length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-gray-500">
-                          <p>No sales team members found.</p>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      employees
-                        .filter(emp => emp.role === 'Sales Person')
-                        .map((emp, index) => {
-                          console.log(`🎯 RENDERING SALES EMPLOYEE ${index}:`, emp);
-                          return (
-                            <TableRow key={emp.id}>
-                              <TableCell>{emp.id}</TableCell>
-                              <TableCell>{emp.first_name} {emp.last_name}</TableCell>
-                              <TableCell>{emp.email}</TableCell>
-                              <TableCell>{emp.mobile}</TableCell>
-                              <TableCell>
-                                <Badge className="bg-purple-100 text-purple-700">Sales Person</Badge>
-                              </TableCell>
-                              <TableCell>{emp.joining_date ? new Date(emp.joining_date).toLocaleDateString() : 'N/A'}</TableCell>
-                              <TableCell>
-                                <Badge variant="secondary">{emp.assignedEnquiries || 0}</Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline">{emp.pendingQuotations || 0}</Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleView(emp, 'Sales Person')}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleEdit(emp, 'Sales Person')}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleDelete(emp.id, emp.role)}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-red-600" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-
-        {roles.includes('Field Executive') && (
-          <TabsContent value="field" className="space-y-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <CardTitle>Field Team</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm">Filter by Status:</Label>
-                  <Select value={fieldFilter} onValueChange={setFieldFilter}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="All statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Statuses</SelectItem>
-                      <SelectItem value="Available">Available</SelectItem>
-                      <SelectItem value="On Job">On Job</SelectItem>
-                      <SelectItem value="Busy">Busy</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Mobile</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Joining Date</TableHead>
-                      <TableHead>Assigned</TableHead>
-                      <TableHead>Pending</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {employees
-                      .filter(emp => isFieldRole(emp))
-                      .filter(emp => {
-                        if (fieldFilter === 'All') return true;
-                        if (fieldFilter === 'Available') return emp.status === 'available' || emp.status === 'Available';
-                        if (fieldFilter === 'On Job') return emp.status === 'on-job' || emp.status === 'On Job';
-                        if (fieldFilter === 'Busy') return emp.status === 'busy' || emp.status === 'Busy';
-                        return true;
-                      })
-                      .map((emp) => (
-                        <TableRow key={emp.id}>
-                          <TableCell>{emp.id}</TableCell>
-                          <TableCell>{emp.first_name} {emp.last_name}</TableCell>
-                          <TableCell>{emp.email}</TableCell>
-                          <TableCell>{emp.mobile}</TableCell>
-                          <TableCell>
-                            <Badge className="bg-blue-100 text-blue-700">Field Executive</Badge>
-                          </TableCell>
-                          <TableCell>{emp.joining_date ? new Date(emp.joining_date).toLocaleDateString() : 'N/A'}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{emp.totalWorks || 0}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{emp.pendingWorks || 0}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleView(emp, 'Field Executive')}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleEdit(emp, 'Field Executive')}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDelete(emp.id, emp.role)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-
-        {/* Dynamic TabsContent for custom roles */}
-        {roles.filter(role => role && role !== 'Sales Person' && role !== 'Field Executive').map((role) => {
-          // Enhanced role matching - try exact match first, then partial match
-          console.log(`🚀 STARTING ROLE FILTERING FOR TAB: "${role}"`);
-          console.log(`🚀 Total employees available:`, employees.length);
-          console.log(`🚀 All employees:`, employees.map((emp, i) => `${i+1}. ${emp.first_name} ${emp.last_name} (${emp.role})`));
-          
-          const roleEmployees = employees.filter(emp => {
-            const matches = matchesRoleTab(emp, role);
-            const empRoles = emp.roles && Array.isArray(emp.roles) ? emp.roles.join(', ') : emp.role;
-            console.log(`🔍 Employee "${emp.first_name} ${emp.last_name}" (roles: ${empRoles}) vs tab "${role}": ${matches ? '✅ MATCH' : '❌ NO MATCH'}`);
-            return matches;
-          });
-          
-          console.log(`🎯 TAB "${role}" - Found ${roleEmployees.length} employees:`, roleEmployees.map(emp => `${emp.first_name} (${emp.role})`));
-          console.log(`🎯 TAB "${role}" - Looking for employees with roles containing: "${role}"`);
-          console.log(`🎯 TAB "${role}" - All employee roles:`, employees.map(emp => emp.role));
-          console.log(`🎯 TAB "${role}" - Total employees in state:`, employees.length);
-          console.log(`🎯 TAB "${role}" - Employees state:`, employees.map(emp => ({ id: emp.id, name: `${emp.first_name} ${emp.last_name}`, role: emp.role })));
-          
-          const tabValue = role.toLowerCase().replace(/\s+/g, '-');
-
-          return (
-            <TabsContent key={role} value={tabValue} className="space-y-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                  <CardTitle>{role}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Mobile</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Joining Date</TableHead>
-                        <TableHead>Assigned</TableHead>
-                        <TableHead>Pending</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {roleEmployees.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={9} className="text-center py-8 text-gray-500">
-                            <p>No {role.toLowerCase()} team members found.</p>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        roleEmployees
-                          .map((employee, index) => {
-                            console.log(`🎯 RENDERING ${role.toUpperCase()} EMPLOYEE ${index}:`, employee);
-                            return (
-                              <TableRow key={employee.id}>
-                                <TableCell>{employee.id}</TableCell>
-                                <TableCell>{employee.first_name} {employee.last_name}</TableCell>
-                                <TableCell>{employee.email}</TableCell>
-                                <TableCell>{employee.mobile}</TableCell>
-                                <TableCell>
-                                  <Badge className="bg-orange-100 text-orange-700">{employee.role}</Badge>
-                                </TableCell>
-                                <TableCell>{employee.joining_date ? new Date(employee.joining_date).toLocaleDateString() : 'N/A'}</TableCell>
-                                <TableCell>
-                                  <Badge variant="secondary">{employee.assignedTasks || 0}</Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant="outline">{employee.pendingTasks || 0}</Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleView(employee, employee.role)}
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleEdit(employee, employee.role)}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleDelete(employee.id, employee.role)}
-                                    >
-                                      <Trash2 className="h-4 w-4 text-red-600" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          );
-        })}
-
-        <TabsContent value="roles" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Role Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table key={`roles-table-${roleData.length}-${lastUpdate}`}>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-center">Role ID</TableHead>
-                    <TableHead className="text-center">Role Name</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(() => {
-                    console.log('🎯 TABLE RENDER - roleData:', roleData, 'length:', roleData.length);
-                    return null;
-                  })()}
-                  {roleData.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center py-8 text-gray-500">
-                        <Settings className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                        <p>No roles created yet. Create your first role to get started.</p>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    roleData.map((roleInfo, index) => {
-                      console.log(`🎯 RENDERING ROLE ${index}:`, {
-                        full_roleInfo: roleInfo,
-                        id_value: roleInfo.id,
-                        id_type: typeof roleInfo.id,
-                        role_name: roleInfo.role_name,
-                        has_valid_id: !!(roleInfo.id)
-                      });
-                      const role = roleInfo.role_name;
-                      const employeeCount = employees.filter(emp => emp.role === role).length;
-
-                      return (
-                        <TableRow key={`role-${roleInfo.id}-${lastUpdate}`}>
-                          <TableCell className="text-center">
-                            <span className="text-xs text-gray-600">
-                              #{roleInfo.id}
-                            </span>
-                          </TableCell>
-                          <TableCell className="font-medium text-center">{role}</TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDeleteRole(roleInfo.id, role)}
-                                disabled={employeeCount > 0 || isDeletingRole === role}
-                                title={employeeCount > 0 ? 'Cannot delete role with assigned employees' : 'Delete role'}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                {isDeletingRole === role ? (
-                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
-                                ) : (
-                                  <Trash2 className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        {/* Dynamic content based on active tab */}
+        <div className="space-y-4">
+          {activeTab === 'all' ? (
+            <EmployeeTable 
+              employees={getEmployeesByRole(selectedRoleFilter)} 
+              title="All Employees" 
+            />
+          ) : activeTab === 'roles' ? (
+            <RolesTable />
+          ) : (
+            // Show employees for specific role
+            (() => {
+              const selectedRole = getAllEmployeeRoles().find(role => 
+                role.toLowerCase().replace(/\s+/g, '-') === activeTab
+              );
+              
+              if (selectedRole) {
+                const roleEmployees = getEmployeesByRole(selectedRole);
+                return (
+                  <EmployeeTable 
+                    employees={roleEmployees} 
+                    title={`${selectedRole} (${roleEmployees.length})`} 
+                  />
+                );
+              }
+              
+              return (
+                <Card>
+                  <CardContent className="p-8">
+                    <div className="text-center text-gray-500">
+                      <p>Role not found or no employees assigned to this role.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()
+          )}
+        </div>
       </div>
     </div>
   );

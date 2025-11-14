@@ -251,7 +251,7 @@ export function IndustrialSolutionsPage({ onNavigate }: IndustrialSolutionsPageP
             </div>
             <div className="relative">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1745162451436-2593789f3c94?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080"
+                src="/src/assets/SuccessStories2.jpg"
                 alt="Industrial Solar Facility"
                 className="w-full h-96 object-cover rounded-2xl shadow-xl"
               />
@@ -328,7 +328,7 @@ export function IndustrialSolutionsPage({ onNavigate }: IndustrialSolutionsPageP
             </div>
             <div className="relative">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080"
+                src="/src/assets/calculating.jpg"
                 alt="Industrial ROI calculator"
                 className="w-full h-80 object-cover rounded-2xl shadow-xl"
               />

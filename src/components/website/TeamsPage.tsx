@@ -247,7 +247,7 @@ const TeamsPage: React.FC = () => {
                   <img
                     src={director.image}
                     alt={director.name}
-                    className="w-full h-100 object-cover rounded-b-lg shadow-md"
+                    className="w-full h-80 object-cover "
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute bottom-4 left-4 text-white">

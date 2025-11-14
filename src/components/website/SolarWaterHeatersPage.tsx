@@ -38,7 +38,7 @@ export function SolarWaterHeatersPage({ onNavigate }: SolarWaterHeatersPageProps
       capacity: "100-300 Liters",
       type: "Evacuated Tube Collector",
       price: "₹15,000 - ₹35,000",
-      image: "https://images.unsplash.com/photo-1727637598483-0c139a8fb48f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb2xhciUyMHdhdGVyJTIwaGVhdGVyJTIwaW5zdGFsbGF0aW9uJTIwcm9vZnxlbnwxfHx8fDE3NTkwMzkwNTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      image: "/src/assets/solar.jpg",
       features: ["High efficiency in cold weather", "Frost resistant", "5-year warranty", "Pressurized system"],
       applications: ["Homes", "Small families", "Apartments"]
     },
@@ -56,7 +56,7 @@ export function SolarWaterHeatersPage({ onNavigate }: SolarWaterHeatersPageProps
       capacity: "2000-10000 Liters",
       type: "Solar Heat Pump",
       price: "₹2,00,000 - ₹8,00,000",
-      image: "https://images.unsplash.com/photo-1727637598483-0c139a8fb48f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb2xhciUyMHdhdGVyJTIwaGVhdGVyJTIwaW5zdGFsbGF0aW9uJTIwcm9vZnxlbnwxfHx8fDE3NTkwMzkwNTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      image: "/src/assets/commercial.jpg",
       features: ["COP up to 4.0", "All weather operation", "Remote monitoring", "Energy efficient"],
       applications: ["Industries", "Large complexes", "Process heating", "Swimming pools"]
     }

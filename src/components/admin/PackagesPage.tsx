@@ -10,7 +10,21 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Switch } from '../ui/switch';
 import { Package, Plus, Edit, Trash2, RefreshCw, IndianRupee } from 'lucide-react';
 import { toast } from 'sonner';
-import { getPackages, addPackage, updatePackage, deletePackage, resetToDefaults, type SolarPackage } from '../../lib/packagesData';
+// import { getPackages, addPackage, updatePackage, deletePackage, resetToDefaults, type SolarPackage } from '../../lib/packagesData';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+interface SolarPackage {
+  id?: string | number;
+  name: string;
+  capacity: string;
+  price: string;
+    originalPrice: string;
+    savings: string;
+    monthlyGeneration: string;
+  features: string[];
+  recommended?: boolean;
+  status?: string;
+}
 
 export function PackagesPage() {
   const [packages, setPackages] = useState<SolarPackage[]>([]);
@@ -29,16 +43,38 @@ export function PackagesPage() {
   });
 
   useEffect(() => {
-    const loadedPackages = getPackages();
-    setPackages(loadedPackages);
+    loadPackages();
   }, []);
 
-  const loadPackages = () => {
-    const loadedPackages = getPackages();
-    setPackages(loadedPackages);
+  const getToken = () => localStorage.getItem('authToken');
+
+  const loadPackages = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/packages`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+      if (result.success && Array.isArray(result.data)) {
+        setPackages(result.data.map((pkg: any) => ({
+          ...pkg,
+          features: typeof pkg.features === 'string' ? pkg.features.split(',').map((f: string) => f.trim()) : pkg.features || [],
+          price: pkg.price !== undefined && pkg.price !== null ? String(pkg.price) : '',
+          originalPrice: pkg.original_price !== undefined && pkg.original_price !== null ? String(pkg.original_price) : '',
+          savings: pkg.savings !== undefined && pkg.savings !== null ? String(pkg.savings) : '',
+          monthlyGeneration: pkg.monthly_generation !== undefined && pkg.monthly_generation !== null ? String(pkg.monthly_generation) : '',
+          recommended: pkg.recommended === true,
+        })));
+      } else {
+        setPackages([]);
+      }
+    } catch (error) {
+      toast.error('Failed to load packages');
+      setPackages([]);
+    }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!formData.name || !formData.capacity || !formData.price) {
       toast.error('Please fill all required fields');
       return;
@@ -54,35 +90,42 @@ export function PackagesPage() {
       return;
     }
 
-    try {
-      if (editMode && editingId) {
-        updatePackage(editingId, {
-          name: formData.name,
-          capacity: formData.capacity,
-          price: formData.price,
-          originalPrice: formData.originalPrice,
-          savings: formData.savings,
-          monthlyGeneration: formData.monthlyGeneration,
-          features: featuresArray,
-          recommended: formData.recommended,
-        });
-        toast.success('Package updated successfully');
-      } else {
-        addPackage({
-          name: formData.name,
-          capacity: formData.capacity,
-          price: formData.price,
-          originalPrice: formData.originalPrice,
-          savings: formData.savings,
-          monthlyGeneration: formData.monthlyGeneration,
-          features: featuresArray,
-          recommended: formData.recommended,
-        });
-        toast.success('Package added successfully');
-      }
+    const token = getToken();
+    const payload = {
+      name: formData.name,
+      capacity: formData.capacity,
+      price: formData.price,
+      original_price: formData.originalPrice,
+      savings: formData.savings,
+      monthly_generation: formData.monthlyGeneration,
+      features: featuresArray.join(', '),
+      status: 'Active',
+      recommended: formData.recommended,
+    };
 
-      loadPackages();
-      handleDialogClose();
+    try {
+      let url = `${API_BASE_URL}/api/packages`;
+      let method = 'POST';
+      if (editMode && editingId) {
+        url = `${API_BASE_URL}/api/packages/${editingId}`;
+        method = 'PUT';
+      }
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (result.success) {
+        toast.success(editMode ? 'Package updated successfully' : 'Package added successfully');
+        loadPackages();
+        handleDialogClose();
+      } else {
+        toast.error(result.message || 'Failed to save package');
+      }
     } catch (error) {
       toast.error('Failed to save package');
     }
@@ -96,31 +139,41 @@ export function PackagesPage() {
       originalPrice: pkg.originalPrice,
       savings: pkg.savings,
       monthlyGeneration: pkg.monthlyGeneration,
-      features: pkg.features.join('\n'),
-      recommended: pkg.recommended,
+      features: Array.isArray(pkg.features) ? pkg.features.join('\n') : pkg.features,
+      recommended: pkg.recommended === true,
     });
-    setEditingId(pkg.id);
+    setEditingId(pkg.id?.toString() ?? '');
     setEditMode(true);
     setDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string | number) => {
     if (confirm('Are you sure you want to delete this package?')) {
-      if (deletePackage(id)) {
-        toast.success('Package deleted successfully');
-        loadPackages();
-      } else {
+      const token = getToken();
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/packages/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+          },
+        });
+        const result = await response.json();
+        if (result.success) {
+          toast.success('Package deleted successfully');
+          loadPackages();
+        } else {
+          toast.error(result.message || 'Failed to delete package');
+        }
+      } catch (error) {
         toast.error('Failed to delete package');
       }
     }
   };
 
+  // Optionally implement reset using backend if available
   const handleReset = () => {
-    if (confirm('Are you sure you want to reset to default packages? This will remove all custom packages.')) {
-      resetToDefaults();
-      toast.success('Packages reset to defaults');
-      loadPackages();
-    }
+    toast.info('Reset to defaults is not available for backend API.');
   };
 
   const handleDialogClose = () => {
@@ -321,44 +374,50 @@ export function PackagesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {packages.map((pkg) => (
-                  <TableRow key={pkg.id}>
-                    <TableCell className="text-xs sm:text-sm font-medium">{pkg.name}</TableCell>
-                    <TableCell className="text-xs sm:text-sm">{pkg.capacity}</TableCell>
-                    <TableCell className="text-xs sm:text-sm">
-                      <div className="flex items-center">
-                        <IndianRupee className="h-3 w-3" />
-                        {pkg.price}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs sm:text-sm">{pkg.monthlyGeneration}</TableCell>
-                    <TableCell className="text-xs sm:text-sm">
-                      {pkg.recommended && (
-                        <Badge variant="secondary" className="bg-[#FFA500] text-white text-xs">
-                          Popular
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(pkg)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(pkg.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {packages.map((pkg) => {
+                  const isInactive = pkg.status === 'Inactive';
+                  return (
+                    <TableRow key={pkg.id} className={isInactive ? 'opacity-50 pointer-events-none' : ''}>
+                      <TableCell className="text-xs sm:text-sm font-medium">{pkg.name}</TableCell>
+                      <TableCell className="text-xs sm:text-sm">{pkg.capacity}</TableCell>
+                      <TableCell className="text-xs sm:text-sm">
+                        <div className="flex items-center">
+                          <IndianRupee className="h-3 w-3" />
+                          {pkg.price}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs sm:text-sm">{pkg.monthlyGeneration}</TableCell>
+                      <TableCell className="text-xs sm:text-sm">
+                        {pkg.recommended && (
+                          <Badge variant="secondary" className="bg-[#FFA500] text-white text-xs">
+                            Popular
+                          </Badge>
+                        )}
+                        {/* Inactive badge removed as requested */}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(pkg)}
+                            disabled={isInactive}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(pkg.id ?? '')}
+                            disabled={isInactive}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -366,56 +425,62 @@ export function PackagesPage() {
       </Card>
 
       <div className="md:hidden space-y-2">
-        {packages.map((pkg) => (
-          <Card key={pkg.id} className="overflow-hidden">
-            <CardContent className="p-3">
-              <div className="space-y-2">
-                <div className="flex justify-between items-start gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{pkg.name}</p>
-                    <p className="text-xs text-gray-500">{pkg.capacity}</p>
+        {packages.map((pkg) => {
+          const isInactive = pkg.status === 'Inactive';
+          return (
+            <Card key={pkg.id} className={`overflow-hidden ${isInactive ? 'opacity-50 pointer-events-none' : ''}`}>
+              <CardContent className="p-3">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{pkg.name}</p>
+                      <p className="text-xs text-gray-500">{pkg.capacity}</p>
+                    </div>
+                    {pkg.recommended && (
+                      <Badge className="bg-[#FFA500] text-white text-xs">Popular</Badge>
+                    )}
+                    {/* Inactive badge removed as requested */}
                   </div>
-                  {pkg.recommended && (
-                    <Badge className="bg-[#FFA500] text-white text-xs">Popular</Badge>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t">
-                  <div>
-                    <p className="text-gray-500 mb-0.5">Price</p>
-                    <p className="text-gray-900 font-medium flex items-center">
-                      <IndianRupee className="h-3 w-3" />
-                      {pkg.price}
-                    </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t">
+                    <div>
+                      <p className="text-gray-500 mb-0.5">Price</p>
+                      <p className="text-gray-900 font-medium flex items-center">
+                        <IndianRupee className="h-3 w-3" />
+                        {pkg.price}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 mb-0.5">Generation</p>
+                      <p className="text-gray-900 font-medium">{pkg.monthlyGeneration}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-500 mb-0.5">Generation</p>
-                    <p className="text-gray-900 font-medium">{pkg.monthlyGeneration}</p>
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 h-8 text-xs"
+                      onClick={() => handleEdit(pkg)}
+                      disabled={isInactive}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 h-8 text-xs text-red-600"
+                      onClick={() => handleDelete(pkg.id !== undefined && pkg.id !== null ? pkg.id : '')}
+                      disabled={isInactive}
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Delete
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-8 text-xs"
-                    onClick={() => handleEdit(pkg)}
-                  >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-8 text-xs text-red-600"
-                    onClick={() => handleDelete(pkg.id)}
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {packages.length === 0 && (

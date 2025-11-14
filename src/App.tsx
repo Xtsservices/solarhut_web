@@ -50,6 +50,7 @@ import { PaymentStatusPage } from './components/field/PaymentStatusPage';
 import LoginPage from './components/shared/LoginPage';
 import { useDispatch, useSelector } from 'react-redux';
 import { apiCurrentUserData } from './api';
+import { LocationsPage } from './components/admin/LocationsPage';
 
 interface RootState {
   currentUserData: any;
@@ -218,6 +219,7 @@ function AppContent() {
                 <Route path="/job-requests" element={<JobRequestsPage />} />
                 <Route path="/work-progress" element={<WorkProgressPage />} />
                 <Route path="/masters" element={<MastersPage />} />
+                <Route path="/locations" element={<LocationsPage />} />
                 <Route path="/notifications" element={<NotificationsPage role={auth.role} />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/profile" element={<ProfilePage role={auth.role} />} />

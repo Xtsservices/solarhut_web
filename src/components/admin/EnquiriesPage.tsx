@@ -16,6 +16,16 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '../ui/utils';
 // import { API_BASE_URL } from '../website/ip';
+// Add this type declaration at the top of your file (or in a global .d.ts file)
+interface ImportMetaEnv {
+  VITE_API_BASE_URL: string;
+  // add other env variables here if needed
+}
+
+interface ImportMeta {
+  env: ImportMetaEnv;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function EnquiriesPage() {
@@ -365,7 +375,7 @@ export function EnquiriesPage() {
   }, []);
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, any> = {
+    const variants: Record<string, any> ={
       new: { variant: 'secondary', label: 'New' },
       assigned: { variant: 'default', label: 'Assigned' },
       scheduled: { variant: 'outline', label: 'Scheduled' },
@@ -492,7 +502,8 @@ export function EnquiriesPage() {
     try {
       const enquiryId = selectedEnquiry.id || selectedEnquiry.lead_id;
       // Get token from localStorage or context
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
+      console.log(token,"authToken");
       const response = await fetch(`${API_BASE_URL}/api/assignleads`, {
         method: 'POST',
         headers: {
@@ -501,7 +512,7 @@ export function EnquiriesPage() {
         },
         body: JSON.stringify({
           leadId: enquiryId,
-          employeeId: assignToEmployeeId,
+          employeeId: parseInt(assignToEmployeeId, 10),
         }),
       });
       if (!response.ok) {

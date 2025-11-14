@@ -3,6 +3,7 @@ import {
   FileText, 
   Users, 
   Shield, 
+  // LocateIcon,
   IndianRupee, 
   Briefcase, 
   TrendingUp, 
@@ -12,7 +13,8 @@ import {
   LogOut,
   ClipboardCheck,
   X,
-  Package
+  Package,
+  MapPin
 } from 'lucide-react';
   import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
@@ -41,6 +43,7 @@ const adminMenuItems: MenuItem[] = [
   { id: 'job-requests', label: 'Job/Supplier', icon: Briefcase },
   { id: 'work-progress', label: 'Work Progress', icon: TrendingUp },
   { id: 'masters', label: 'Masters', icon: Shield },
+  { id: 'locations', label: 'Locations', icon: MapPin },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'profile', label: 'Profile', icon: User },

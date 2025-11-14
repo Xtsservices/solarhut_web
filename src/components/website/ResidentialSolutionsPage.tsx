@@ -16,31 +16,65 @@ import {
   Wifi,
   IndianRupee
 } from "lucide-react";
-import { getPackages } from "../../lib/packagesData";
+import { fetchPackages } from "../../lib/api.ts";
 
 interface ResidentialSolutionsPageProps {
   onNavigate?: (page: string) => void;
 }
 
+interface Package {
+  id: string;
+  name: string;
+  capacity: string;
+  price: string;
+  originalPrice: string;
+  savings: string;
+  monthlyGeneration: string;
+  features: string[];
+  recommended?: boolean;
+}
 export function ResidentialSolutionsPage({ onNavigate }: ResidentialSolutionsPageProps) {
-  const [packages, setPackages] = useState(getPackages());
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Listen for storage changes to update packages in real-time
   useEffect(() => {
-    const handleStorageChange = () => {
-      setPackages(getPackages());
+    const getPackages = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem('token');
+        const data = await fetchPackages(token || undefined);
+        console.log('API response:', data);
+        if (data.success && Array.isArray(data.data)) {
+          // Normalize features to always be an array
+          const normalized = data.data.map((pkg: any) => ({
+            ...pkg,
+            features: Array.isArray(pkg.features)
+              ? pkg.features
+              : typeof pkg.features === 'string'
+                ? pkg.features.split(',').map((f: string) => f.trim()).filter((f: string) => f.length > 0)
+                : [],
+            monthlyGeneration: pkg.monthlyGeneration || pkg.monthly_generation || '',
+            // Use backend 'recommended' value only
+          }));
+          // Only show active packages
+          const activePackages = normalized.filter((pkg: any) => pkg.status !== 'Inactive');
+          setPackages(activePackages);
+          console.log('Packages state:', activePackages);
+        } else {
+          setError('Failed to load packages');
+          console.error('Failed to load packages:', data);
+        }
+      } catch (err) {
+        setError('Error fetching packages');
+        console.error('Error fetching packages:', err);
+      } finally {
+        setLoading(false);
+        console.log('Loading state:', false);
+      }
     };
-
-    // Listen for custom event when packages are updated
-    window.addEventListener('packagesUpdated', handleStorageChange);
-    
-    // Also listen for storage events (from other tabs)
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('packagesUpdated', handleStorageChange);
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    getPackages();
   }, []);
 
   const features = [
@@ -151,57 +185,87 @@ export function ResidentialSolutionsPage({ onNavigate }: ResidentialSolutionsPag
               Customized plans designed for small to large homes to meet your energy needs
             </p>
           </div>
-          <div className="grid lg:grid-cols-3 gap-8">
-            {packages.map((pkg, index) => (
-              <Card key={index} className={`relative overflow-hidden border-0 shadow-xl ${pkg.recommended ? 'ring-2 ring-[#FFA500]' : ''}`}>
-                {pkg.recommended && (
-                  <div className="absolute top-0 left-0 right-0 text-center py-2 bg-[#FFA500]">
-                    <Badge className="bg-white text-[#FFA500]">Most Popular</Badge>
-                  </div>
-                )}
-                <CardHeader className={pkg.recommended ? 'pt-12' : ''}>
-                  <div className="text-center">
-                    <CardTitle className="text-2xl mb-2">{pkg.name}</CardTitle>
-                    <div className="text-3xl text-[#FFA500] mb-1">{pkg.capacity}</div>
-                    <div className="text-sm text-gray-600 mb-4">System Capacity</div>
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="flex items-center">
-                        <IndianRupee className="w-6 h-6 text-gray-900" />
-                        <span className="text-3xl text-gray-900">{pkg.price}</span>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center text-sm text-gray-500 line-through">
-                          <IndianRupee className="w-3 h-3" />
-                          <span>{pkg.originalPrice}</span>
+          {loading ? (
+            <div className="text-center text-xl text-gray-500">Loading packages...</div>
+          ) : error ? (
+            <div className="text-center text-red-500 text-lg">{error}</div>
+          ) : (
+            <div
+              className={
+                packages.length === 1
+                  ? "flex justify-center items-center"
+                  : packages.length === 2
+                    ? "flex flex-wrap justify-center gap-8"
+                    : "grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+              }
+            >
+              {packages.map((pkg, index) => (
+                <Card
+                  key={pkg.id || index}
+                  className={`relative overflow-hidden border-0 shadow-xl ${pkg.recommended ? 'ring-2 ring-[#FFA500]' : ''} bg-white p-6`}
+                  style={{
+                    maxWidth: '400px',
+                    width: '100%',
+                    margin: packages.length === 1
+                      ? '0 auto'
+                      : packages.length === 2
+                        ? '0 16px'
+                        : '0',
+                  }}
+                >
+                  {pkg.recommended === true && (
+                    <div className="absolute top-0 left-0 right-0 text-center py-2 bg-[#FFA500]">
+                      <Badge className="bg-white text-[#FFA500]">Most Popular</Badge>
+                    </div>
+                  )}
+                  <CardHeader className={pkg.recommended ? 'pt-12' : ''}>
+                    <div className="text-center">
+                      <CardTitle className="text-2xl font-bold mb-2 text-gray-900">{pkg.name}</CardTitle>
+                      <div className="text-3xl text-[#FFA500] mb-1 font-semibold">{pkg.capacity}</div>
+                      <div className="text-sm text-gray-600 mb-4">System Capacity</div>
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <div className="flex items-center">
+                          <IndianRupee className="w-6 h-6 text-gray-900" />
+                          <span className="text-3xl text-gray-900 font-bold">{pkg.price}</span>
                         </div>
-                        <div className="text-sm text-green-600">{pkg.savings}</div>
+                        <div className="text-right">
+                          {pkg.originalPrice && (
+                            <div className="flex items-center text-sm text-gray-500 line-through">
+                              <IndianRupee className="w-3 h-3" />
+                              <span>{pkg.originalPrice}</span>
+                            </div>
+                          )}
+                          {pkg.savings && (
+                            <div className="text-sm text-green-600 font-semibold">{pkg.savings}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                        <div className="text-sm text-gray-600">Monthly Generation</div>
+                        <div className="text-green-600 font-semibold">{pkg.monthlyGeneration}</div>
                       </div>
                     </div>
-                    <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                      <div className="text-sm text-gray-600">Monthly Generation</div>
-                      <div className="text-green-600">{pkg.monthlyGeneration}</div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 mb-6">
-                    {pkg.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center space-x-2">
-                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        <span className="text-gray-700">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button 
-                    className={`w-full ${pkg.recommended ? 'bg-[#FFA500] hover:bg-[#FF8C00]' : ''}`}
-                    onClick={handleGetQuote}
-                  >
-                    Get This Package
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3 mb-6">
+                      {Array.isArray(pkg.features) && pkg.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center space-x-2">
+                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                          <span className="text-gray-700 text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      className={`w-full ${pkg.recommended ? 'bg-[#FFA500] hover:bg-[#FF8C00]' : 'bg-gray-900 text-white hover:bg-gray-800'} py-3 font-semibold text-lg rounded-lg`}
+                      onClick={handleGetQuote}
+                    >
+                      Get This Package
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

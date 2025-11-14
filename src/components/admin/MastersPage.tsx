@@ -114,6 +114,7 @@ export default function MastersPage() {
   const [roleFormErrors, setRoleFormErrors] = useState({ role_name: '' });
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
+  const [features, setFeatures] = useState<Feature[]>([]);
   // Pagination state for Roles (must be after roles state)
   const [rolesPage, setRolesPage] = useState(1);
   const rolesPerPage = 10;
@@ -132,11 +133,8 @@ export default function MastersPage() {
       });
       if (!response.ok) throw new Error('Failed to fetch roles');
       const result = await response.json();
-      console.log('Roles API response:', result); // Debug API response
-      // Try to support various possible response shapes
       let data = Array.isArray(result) ? result : result.data;
       if (!Array.isArray(data) && result.roles) data = result.roles;
-      // If data is array of strings, map to objects with id and role_name
       const mappedRoles = (data || []).map((r: any, idx: number) => {
         if (typeof r === 'string') {
           return {
@@ -161,12 +159,34 @@ export default function MastersPage() {
     }
   };
 
+  // Fetch features from API
+  const fetchFeatures = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/features`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error('Failed to fetch features');
+      const result = await response.json();
+      let data = Array.isArray(result) ? result : result.data;
+      if (!Array.isArray(data) && result.features) data = result.features;
+      const mappedFeatures = (data || []).map((f: any, idx: number) => ({
+        id: f.id?.toString() || f.feature_id?.toString() || f._id?.toString() || (idx + 1).toString(),
+        feature_name: f.feature_name || f.name || '',
+        created_date: f.created_date || f.created_at || '',
+      }));
+      setFeatures(mappedFeatures);
+    } catch (err) {
+      toast.error('Error loading features');
+      setFeatures([]);
+    }
+  };
+
   useEffect(() => {
     fetchRoles();
+    fetchFeatures();
   }, []);
 
-  // State for Features
-  const [features, setFeatures] = useState<Feature[]>(initialFeatures);
   const [isFeatureDialogOpen, setIsFeatureDialogOpen] = useState(false);
   const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
   const [featureFormData, setFeatureFormData] = useState({ feature_name: '' });
@@ -271,44 +291,79 @@ export default function MastersPage() {
     setIsFeatureDialogOpen(true);
   };
 
-  const handleSaveFeature = () => {
+  const handleSaveFeature = async () => {
     // Validate
     if (!featureFormData.feature_name.trim()) {
       setFeatureFormErrors({ feature_name: 'Feature name is required' });
       return;
     }
-
-    if (editingFeature) {
-      // Update existing feature
-      setFeatures(
-        features.map((f) =>
-          f.id === editingFeature.id
-            ? { ...f, feature_name: featureFormData.feature_name }
-            : f
-        )
-      );
-      toast.success('Feature updated successfully');
-    } else {
-      // Add new feature
-      const newFeature: Feature = {
-        id: Date.now().toString(),
-        feature_name: featureFormData.feature_name,
-        created_date: new Date().toISOString().split('T')[0],
-      };
-      setFeatures([...features, newFeature]);
-      toast.success('Feature added successfully');
+    const token = localStorage.getItem('authtoken');
+     console.log(token,"authToken");
+    try {
+      if (editingFeature) {
+        // Update existing feature via backend
+        const response = await fetch(`${API_BASE_URL}/api/features/${editingFeature.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ feature_name: featureFormData.feature_name }),
+        });
+        const result = await response.json();
+        if (result.success) {
+          toast.success('Feature updated successfully');
+          fetchFeatures();
+        } else {
+          toast.error(result.message || 'Failed to update feature');
+        }
+      } else {
+        // Add new feature via backend
+        const response = await fetch(`${API_BASE_URL}/api/features`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ feature_name: featureFormData.feature_name }),
+        });
+        const result = await response.json();
+        if (result.success) {
+          toast.success('Feature added successfully');
+          fetchFeatures();
+        } else {
+          toast.error(result.message || 'Failed to add feature');
+        }
+      }
+    } catch (err) {
+      toast.error('Error saving feature');
     }
-
     setIsFeatureDialogOpen(false);
     setFeatureFormData({ feature_name: '' });
     setEditingFeature(null);
   };
 
-  const handleDeleteFeature = (id: string) => {
-    setFeatures(features.filter((f) => f.id !== id));
-    // Also delete related permissions
-    setPermissions(permissions.filter((p) => p.feature_id !== id));
-    toast.success('Feature deleted successfully');
+  const handleDeleteFeature = async (id: string) => {
+    const token = localStorage.getItem('authtoken');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/features/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
+      const result = await response.json();
+      if (result.success) {
+        toast.success('Feature deleted successfully');
+        fetchFeatures();
+        setPermissions(permissions.filter((p) => p.feature_id !== id));
+      } else {
+        toast.error(result.message || 'Failed to delete feature');
+      }
+    } catch (err) {
+      toast.error('Error deleting feature');
+    }
     setFeatureToDelete(null);
   };
 
@@ -458,6 +513,18 @@ export default function MastersPage() {
 
   const getRoleName = (roleId: string) => {
     return roles.find((r) => r.id === roleId)?.role_name || 'Unknown';
+  };
+
+
+  // Format date as DD/MM/YYYY
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const getFeatureName = (featureId: string) => {
@@ -616,7 +683,7 @@ export default function MastersPage() {
                       <TableRow key={feature.id}>
                         <TableCell style={{ textAlign: 'center' }}>{index + 1}</TableCell>
                         <TableCell style={{ textAlign: 'center' }}>{feature.feature_name}</TableCell>
-                        <TableCell style={{ textAlign: 'center', color: '#6B7280' }}>{feature.created_date}</TableCell>
+                        <TableCell style={{ textAlign: 'center', color: '#6B7280' }}>{formatDate(feature.created_date)}</TableCell>
                         <TableCell style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                             <Button

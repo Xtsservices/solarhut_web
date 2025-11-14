@@ -87,7 +87,8 @@ export default function LoginPage({ onLogin }: { onLogin: (mobile: string, otp: 
         }
 console.log('✅ Login successful: token', result.data);
 console.log('✅ Login successful: user', user);
-        localStorage.setItem("authToken", result.data?.token || '');
+console.log('Storing authToken in localStorage', result.data?.token);
+        localStorage.setItem("authToken", result.data?.data?.token || '');
         console.log('🛡️ OTP verified successfully for mobile:', user);
         // Call onLogin with mobile and verified OTP
         onLogin(mobile, otp);
@@ -200,7 +201,7 @@ console.log('✅ Login successful: user', user);
 
           <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
             <p className="text-sm text-orange-900 mb-2">Demo Mobile Numbers:</p>
-            <p className="text-xs text-orange-700">Admin: 9876543210</p>
+            <p className="text-xs text-orange-700">Admin: 9701646859</p>
             <p className="text-xs text-orange-700">Sales: 9876543211</p>
             <p className="text-xs text-orange-700">Field: 9876543212</p>
             <p className="text-xs text-orange-600 mt-2">OTP: Use any 6-digit number (e.g., 123456)</p>

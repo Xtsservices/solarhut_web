@@ -1,3 +1,16 @@
+// Create a new feature via API
+export async function createFeature(featureName: string, token?: string) {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const response = await fetch(`${API_BASE_URL}/api/features`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ feature_name: featureName }),
+  });
+  return response.json();
+}
 // src/api/api.ts
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, CancelToken } from 'axios';
 import { toast } from 'sonner';

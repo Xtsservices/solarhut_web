@@ -23,21 +23,21 @@ export function CommercialSolutionsPage({ onNavigate }: CommercialSolutionsPageP
       title: "Office Buildings",
       capacity: "50 kW - 1 MW",
       description: "Solar solutions for corporate offices and business complexes",
-      image: "https://images.unsplash.com/photo-1745242655016-ee4136634674?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb21tZXJjaWFsJTIwYnVpbGRpbmclMjBvZmZpY2UlMjBzb2xhciUyMHBhbmVsc3xlbnwxfHx8fDE3NTkwMzg3ODB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      image: "/src/assets/officeBuildings.jpg",
       features: ["Rooftop installation", "Grid tie system", "Remote monitoring", "LEED certification support"]
     },
     {
       title: "Retail & Malls",
       capacity: "100 kW - 2 MW",
       description: "Large-scale installations for shopping centers and retail chains",
-      image: "https://images.unsplash.com/photo-1745242655016-ee4136634674?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb21tZXJjaWFsJTIwYnVpbGRpbmclMjBvZmZpY2UlMjBzb2xhciUyMHBhbmVsc3xlbnwxfHx8fDE3NTkwMzg3ODB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      image: "/src/assets/malls.jpg",
       features: ["Carport structures", "Energy storage", "Demand management", "Green building credits"]
     },
     {
       title: "Healthcare Facilities",
       capacity: "200 kW - 1.5 MW",
       description: "Reliable solar power for hospitals and medical centers",
-      image: "https://images.unsplash.com/photo-1745242655016-ee4136634674?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb21tZXJjaWFsJTIwYnVpbGRpbmclMjBvZmZpY2UlMjBzb2xhciUyMHBhbmVsc3xlbnwxfHx8fDE3NTkwMzg3ODB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      image: "/src/assets/healthcare.jpg",
       features: ["Backup power", "Critical load support", "Emergency systems", "Uninterrupted operation"]
     }
   ];
@@ -286,7 +286,7 @@ export function CommercialSolutionsPage({ onNavigate }: CommercialSolutionsPageP
             </div>
             <div className="relative">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1497366216548-37526070297c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080"
+                src="/src/assets/SuccessStories.jpg.jpg"
                 alt="Commercial solar success story"
                 className="w-full h-80 object-cover rounded-2xl shadow-xl"
               />

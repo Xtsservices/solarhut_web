@@ -170,11 +170,18 @@ export default function MastersPage() {
       const result = await response.json();
       let data = Array.isArray(result) ? result : result.data;
       if (!Array.isArray(data) && result.features) data = result.features;
-      const mappedFeatures = (data || []).map((f: any, idx: number) => ({
-        id: f.id?.toString() || f.feature_id?.toString() || f._id?.toString() || (idx + 1).toString(),
-        feature_name: f.feature_name || f.name || '',
-        created_date: f.created_date || f.created_at || '',
-      }));
+      // Debug: log raw features data
+      console.log('Raw features data:', data);
+      const mappedFeatures = (data || [])
+        .filter((f: any) => {
+          if (typeof f.status === 'undefined') return true;
+          return String(f.status).toLowerCase() === 'active';
+        })
+        .map((f: any, idx: number) => ({
+          id: f.id?.toString() || f.feature_id?.toString() || f._id?.toString() || (idx + 1).toString(),
+          feature_name: f.feature_name || f.name || '',
+          created_date: f.created_date || f.created_at || '',
+        }));
       setFeatures(mappedFeatures);
     } catch (err) {
       toast.error('Error loading features');
@@ -297,8 +304,7 @@ export default function MastersPage() {
       setFeatureFormErrors({ feature_name: 'Feature name is required' });
       return;
     }
-    const token = localStorage.getItem('authtoken');
-     console.log(token,"authToken");
+    const token = localStorage.getItem('authToken');
     try {
       if (editingFeature) {
         // Update existing feature via backend
@@ -344,7 +350,7 @@ export default function MastersPage() {
   };
 
   const handleDeleteFeature = async (id: string) => {
-    const token = localStorage.getItem('authtoken');
+  const token = localStorage.getItem('authToken');
     try {
       const response = await fetch(`${API_BASE_URL}/api/features/${id}`, {
         method: 'DELETE',

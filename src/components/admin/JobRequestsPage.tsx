@@ -515,7 +515,7 @@ export function JobRequestsPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-gray-900 mb-2">Job & Supplier Requests</h1>
+            <h1 className="text-gray-900 mb-2">Contacts</h1>
             <p className="text-gray-600">Manage partnership and job requests</p>
           </div>
         

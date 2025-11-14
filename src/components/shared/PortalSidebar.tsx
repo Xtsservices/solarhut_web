@@ -14,7 +14,8 @@ import {
   ClipboardCheck,
   X,
   Package,
-  MapPin
+  MapPin,
+  Handshake
 } from 'lucide-react';
   import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
@@ -36,11 +37,11 @@ interface PortalSidebarProps {
 
 const adminMenuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'enquiries', label: 'Enquiries', icon: FileText },
+  { id: 'enquiries', label: 'Leads', icon: FileText },
   { id: 'employees', label: 'Employees', icon: Users },
   { id: 'packages', label: 'Packages', icon: Package },
   { id: 'payments', label: 'Payments', icon: IndianRupee },
-  { id: 'job-requests', label: 'Job/Supplier', icon: Briefcase },
+  { id: 'job-requests', label: 'Contacts', icon: Handshake },
   { id: 'work-progress', label: 'Work Progress', icon: TrendingUp },
   { id: 'masters', label: 'Masters', icon: Shield },
   { id: 'locations', label: 'Locations', icon: MapPin },

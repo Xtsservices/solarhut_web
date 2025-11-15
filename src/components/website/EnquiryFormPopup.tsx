@@ -1,23 +1,14 @@
 // components/EnquiryForm.tsx
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { createLead } from '../../api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-
-type EnquiryType = 'residential' | 'commercial' | 'industrial';
-
-interface EnquiryFormProps {
-  open: boolean;
-  onClose: () => void;
-  onSuccess?: () => void;
-}
 
 interface EnquiryData {
   first_name: string;
@@ -32,13 +23,25 @@ interface EnquiryData {
   property_type: string;
 }
 
+interface FieldErrors {
+  first_name?: string;
+  last_name?: string;
+  mobile?: string;
+  email?: string;
+  service_type?: string;
+  solar_service?: string;
+  capacity?: string;
+  property_type?: string;
+  location?: string;
+  message?: string;
+}
+
 const solarServices = [
   { value: 'residential', label: 'Residential Solar' },
   { value: 'commercial', label: 'Commercial Solar' },
   { value: 'industrial', label: 'Industrial Solar' },
 ];
 
-// Property types for different solar services - using API-accepted values
 const propertyTypes = {
   residential: [
     { value: 'Apartment', label: 'Apartment' },
@@ -68,7 +71,7 @@ const capacities = {
   industrial: ['10KW', '25KW', '50KW', '100KW', '100KW+'],
 };
 
-export function EnquiryFormPopup({ open, onClose, onSuccess }: EnquiryFormProps) {
+export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess?: () => void }) {
   const [enquiryData, setEnquiryData] = useState<EnquiryData>({
     first_name: '',
     last_name: '',
@@ -81,319 +84,364 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: EnquiryFormProps)
     location: '',
     property_type: '',
   });
+
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
+
+  // Real-time validation
+  const validateField = (name: keyof EnquiryData, value: string): string | undefined => {
+    switch (name) {
+      case 'first_name':
+      case 'last_name':
+        const trimmed = value.trim();
+        if (!trimmed) return 'This field is required.';
+        const nameRegex = /^[A-Za-z\s]{2,50}$/;
+        if (!nameRegex.test(trimmed)) return 'Only alphabets and spaces allowed (2–50 chars).';
+        const noSpaces = trimmed.replace(/\s+/g, '');
+        if (noSpaces.length < 2 || noSpaces.length > 50) return 'After removing spaces, must be 2–50 characters.';
+        return undefined;
+
+      case 'mobile':
+        if (!value) return 'Mobile number is required.';
+        const mobileRegex = /^[6-9]\d{9}$/;
+        if (!mobileRegex.test(value)) return 'Enter valid 10-digit Indian mobile number.';
+        return undefined;
+
+      case 'email':
+        if (!value) return 'Email is required.';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) return 'Enter a valid email address.';
+        return undefined;
+
+      case 'location':
+        if (!value.trim()) return 'Location is required.';
+        if (value.trim().length < 10) return 'Please enter full address with city & pin code.';
+        return undefined;
+
+      case 'message':
+        if (value && value.trim().length > 0 && value.trim().length < 5) {
+          return 'Message must be at least 5 characters if provided.';
+        }
+        return undefined;
+
+      default:
+        return undefined;
+    }
+  };
+
+  const handleInputChange = (name: keyof EnquiryData, value: string) => {
+    let sanitized = value;
+
+    // Sanitize mobile: only digits, max 10
+    if (name === 'mobile') {
+      sanitized = value.replace(/\D/g, '').slice(0, 10);
+    }
+
+    setEnquiryData(prev => ({ ...prev, [name]: sanitized }));
+    const error = validateField(name, sanitized);
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  const validateAll = (): boolean => {
+    const newErrors: FieldErrors = {};
+
+    // Personal
+    newErrors.first_name = validateField('first_name', enquiryData.first_name);
+    newErrors.last_name = validateField('last_name', enquiryData.last_name);
+    newErrors.mobile = validateField('mobile', enquiryData.mobile);
+    newErrors.email = validateField('email', enquiryData.email);
+
+    // Installation
+    if (!enquiryData.solar_service) newErrors.solar_service = 'Please select solar service.';
+    if (!enquiryData.property_type) newErrors.property_type = 'Please select property type.';
+    if (!enquiryData.capacity) newErrors.capacity = 'Please select system capacity.';
+    if (!enquiryData.service_type) newErrors.service_type = 'Please select service type.';
+
+    // Location & Message
+    newErrors.location = validateField('location', enquiryData.location);
+    newErrors.message = validateField('message', enquiryData.message);
+
+    setErrors(newErrors);
+    return Object.values(newErrors).every(err => !err);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (!enquiryData.first_name || !enquiryData.last_name || !enquiryData.mobile || !enquiryData.email) {
-      toast.error('Please fill all personal details.');
-      return;
-    }
-
-    // Validate first name format - Allow spaces in UI, will be removed for API
-    const nameRegex = /^[A-Za-z\s]{2,50}$/;
-    if (!nameRegex.test(enquiryData.first_name.trim())) {
-      toast.error('First name must contain only alphabets and spaces, and be between 2-50 characters.');
-      return;
-    }
-
-    if (!nameRegex.test(enquiryData.last_name.trim())) {
-      toast.error('Last name must contain only alphabets and spaces, and be between 2-50 characters.');
-      return;
-    }
-
-    // Check if names without spaces meet API requirements (2-50 characters)
-    const firstNameNoSpaces = enquiryData.first_name.replace(/\s+/g, '');
-    const lastNameNoSpaces = enquiryData.last_name.replace(/\s+/g, '');
-    
-    if (firstNameNoSpaces.length < 2 || firstNameNoSpaces.length > 50) {
-      toast.error('First name (without spaces) must be between 2-50 characters.');
-      return;
-    }
-    
-    if (lastNameNoSpaces.length < 2 || lastNameNoSpaces.length > 50) {
-      toast.error('Last name (without spaces) must be between 2-50 characters.');
-      return;
-    }
-
-    // Validate mobile number format
-    const mobileRegex = /^[6-9]\d{9}$/;
-    if (!mobileRegex.test(enquiryData.mobile)) {
-      toast.error('Please enter a valid 10-digit mobile number.');
-      return;
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(enquiryData.email)) {
-      toast.error('Please enter a valid email address.');
-      return;
-    }
-
-    if (!enquiryData.service_type || !enquiryData.solar_service || !enquiryData.capacity || !enquiryData.property_type) {
-      toast.error('Please fill all installation details.');
-      return;
-    }
-
-    if (!enquiryData.location) {
-      toast.error('Please provide your location.');
-      return;
-    }
-
-    // Validate message length (API requires at least 5 characters)
-    if (enquiryData.message && enquiryData.message.trim().length < 5) {
-      toast.error('Message must be at least 5 characters long.');
+    if (!validateAll()) {
+      toast.error('Please fix the errors below.');
       return;
     }
 
     setLoading(true);
 
     const capitalizeFirst = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
-    const lowercaseFirst = (str: string) => str ? str.charAt(0).toLowerCase() + str.slice(1) : '';
     const formatCapacity = (str: string) => {
       if (!str) return '';
-      // Handle capacity formatting: "100KW" -> "100kW", "100 KW" -> "100kW"
       return str.replace(/([0-9]+)\s*(KW|kw|Kw|kW)(\+)?/i, '$1kW$3').replace(/KW\+/i, 'kW+');
     };
 
-    // Get the full solar service label from the selected value
     const getSolarServiceLabel = (value: string) => {
       const service = solarServices.find(s => s.value === value);
       return service ? service.label : value;
     };
 
-    // Map frontend fields to API expected fields
     const payload = {
-      first_name: capitalizeFirst(enquiryData.first_name.replace(/\s+/g, '').trim()), // Remove spaces and capitalize first letter
-      last_name: capitalizeFirst(enquiryData.last_name.replace(/\s+/g, '').trim()), // Remove spaces and capitalize first letter
+      first_name: capitalizeFirst(enquiryData.first_name.replace(/\s+/g, '').trim()),
+      last_name: capitalizeFirst(enquiryData.last_name.replace(/\s+/g, '').trim()),
       mobile: enquiryData.mobile.trim(),
       email: enquiryData.email.trim().toLowerCase(),
       service_type: capitalizeFirst(enquiryData.service_type),
-      solar_service: getSolarServiceLabel(enquiryData.solar_service), // Send full label "Residential Solar"
+      solar_service: getSolarServiceLabel(enquiryData.solar_service),
       capacity: formatCapacity(enquiryData.capacity),
-      message: capitalizeFirst(enquiryData.message.trim()), // Capitalize first letter of message
-      location: capitalizeFirst(enquiryData.location.trim()), // Capitalize first letter of location
-      property_type: enquiryData.property_type, // Property type values are already properly formatted
+      message: enquiryData.message.trim() ? capitalizeFirst(enquiryData.message.trim()) : '',
+      location: capitalizeFirst(enquiryData.location.trim()),
+      property_type: enquiryData.property_type,
     };
 
-    console.log('🚀 Submitting lead:', payload);
+    console.log('Submitting lead:', payload);
 
     try {
-      // Use the centralized API module
       const result = await createLead(payload);
-      
       if (result.ok) {
-        console.log('✅ Lead created successfully:', result.data);
+        toast.success('Thank you! Your enquiry has been submitted.');
         setEnquiryData({
           first_name: '', last_name: '', mobile: '', email: '',
           service_type: '', solar_service: '', capacity: '', message: '', location: '', property_type: ''
         });
+        setErrors({});
         onSuccess?.();
         onClose();
-      } else {
-        console.error('❌ Failed to create lead:', result.error);
-        // Error is already handled by the API module with toast notification
       }
     } catch (error) {
-      console.error('💥 Unexpected error:', error);
+      console.error('Unexpected error:', error);
       toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const titleMap = {
-    residential: 'Residential Solar',
-    commercial: 'Commercial Solar',
-    industrial: 'Industrial Solar',
-  };
-
-  const descriptionMap = {
-    residential: 'For homes, apartments & villas',
-    commercial: 'For offices, shops & buildings',
-    industrial: 'For factories & large facilities',
-  };
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      {/* ensure the modal fits within viewport, stays centered and becomes scrollable if content is tall */}
-      <DialogContent className="max-w-2xl w-full mx-4 my-6 sm:my-12 max-h-[90vh] overflow-y-auto">
-         <DialogHeader>
-           <DialogTitle className="text-2xl">Get Your Free Quote</DialogTitle>
-         </DialogHeader>
-         
-         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* pad bottom so submit button is always visible when scrolling */}
-          <div className="pb-6">
-           {/* Personal Details */}
-           <div>
-             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-               <div className="w-8 h-8 bg-[#FFA500] text-white rounded-full flex items-center justify-center text-sm">1</div>
-               Personal Details
-             </h3>
-             <div className="grid sm:grid-cols-2 gap-4">
-               <div>
-                 <Label>First Name *</Label>
-                 <Input
-                   required
-                   value={enquiryData.first_name}
-                   onChange={(e) => setEnquiryData({ ...enquiryData, first_name: e.target.value })}
-                   placeholder="John or Mary Jane"
-                 />
-               </div>
-               <div>
-                 <Label>Last Name *</Label>
-                 <Input
-                   required
-                   value={enquiryData.last_name}
-                   onChange={(e) => setEnquiryData({ ...enquiryData, last_name: e.target.value })}
-                   placeholder="Doe or Van Der Berg"
-                 />
-               </div>
-               <div>
-                 <Label>Mobile *</Label>
-                 <Input
-                   type="tel"
-                   required
-                   value={enquiryData.mobile}
-                   onChange={(e) => setEnquiryData({ ...enquiryData, mobile: e.target.value })}
-                   placeholder="+91 98765 43210"
-                 />
-               </div>
-               <div>
-                 <Label>Email *</Label>
-                 <Input
-                   type="email"
-                   required
-                   value={enquiryData.email}
-                   onChange={(e) => setEnquiryData({ ...enquiryData, email: e.target.value })}
-                   placeholder="john@example.com"
-                 />
-               </div>
-             </div>
-           </div>
-         </div>
- 
-           {/* Installation Details */}
-           <div>
-             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-               <div className="w-8 h-8 bg-[#FFA500] text-white rounded-full flex items-center justify-center text-sm">2</div>
-               Installation Details
-             </h3>
-             <div className="grid sm:grid-cols-2 gap-4">
-               <div>
-                 <Label>Solar Service *</Label>
-                 <Select
-                   value={enquiryData.solar_service}
-                   onValueChange={(v) => {
-                     setEnquiryData({ 
-                       ...enquiryData, 
-                       solar_service: v,
-                       property_type: '' // Reset property type when solar service changes
-                     });
-                   }}
-                 >
-                   <SelectTrigger><SelectValue placeholder="Select solar service" /></SelectTrigger>
-                   <SelectContent>
-                     {solarServices.map((service) => (
-                       <SelectItem key={service.value} value={service.value}>{service.label}</SelectItem>
-                     ))}
-                   </SelectContent>
-                 </Select>
-               </div>
+      <DialogContent className="max-w-2xl w-full mx-4 my-6 sm:my-12 max-h-[90vh] overflow-y-auto rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold text-center sm:text-left">Get Your Free Quote</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="pb-6 space-y-8">
+
+            {/* 1. Personal Details */}
+            <div className="rounded-xl bg-gray-50 p-5">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#FFA500] text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                Personal Details
+              </h3>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {(['first_name', 'last_name'] as const).map((field) => (
+                  <div key={field}>
+                    <Label>{field === 'first_name' ? 'First Name' : 'Last Name'} *</Label>
+                    <Input
+                      value={enquiryData[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      placeholder={field === 'first_name' ? 'John or Mary Jane' : 'Doe or Van Der Berg'}
+                      className={`rounded-lg ${errors[field] ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    />
+                    {errors[field] && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors[field]}
+                      </p>
+                    )}
+                  </div>
+                ))}
+
                 <div>
-                 <Label>Property Type *</Label>
-                 <Select
-                   value={enquiryData.property_type}
-                   onValueChange={(v) => setEnquiryData({ ...enquiryData, property_type: v })}
-                   disabled={!enquiryData.solar_service}
-                 >
-                   <SelectTrigger>
-                     <SelectValue placeholder={
-                       !enquiryData.solar_service 
-                         ? "Select solar service first" 
-                         : "Select property type"
-                     } />
-                   </SelectTrigger>
-                   <SelectContent>
-                     {enquiryData.solar_service && propertyTypes[enquiryData.solar_service as keyof typeof propertyTypes]?.map((item) => (
-                       <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
-                     ))}
-                   </SelectContent>
-                 </Select>
-               </div>
-               <div>
-                 <Label>System Capacity *</Label>
-                 <Select
-                   value={enquiryData.capacity}
-                   onValueChange={(v) => setEnquiryData({ ...enquiryData, capacity: v })}
-                   disabled={!enquiryData.solar_service}
-                 >
-                   <SelectTrigger>
-                     <SelectValue placeholder={
-                       !enquiryData.solar_service 
-                         ? "Select solar service first" 
-                         : "Select capacity"
-                     } />
-                   </SelectTrigger>
-                   <SelectContent>
-                     {enquiryData.solar_service && capacities[enquiryData.solar_service as keyof typeof capacities]?.map((cap) => (
-                       <SelectItem key={cap} value={cap}>{cap}</SelectItem>
-                     ))}
-                   </SelectContent>
-                 </Select>
-               </div>
-               <div>
-                 <Label>Service Type *</Label>
-                 <Select
-                   value={enquiryData.service_type}
-                   onValueChange={(v) => setEnquiryData({ ...enquiryData, service_type: v })}
-                 >
-                   <SelectTrigger><SelectValue placeholder="Installation or Maintenance" /></SelectTrigger>
-                   <SelectContent>
-                     <SelectItem value="installation">Installation</SelectItem>
-                     <SelectItem value="maintenance">Maintenance</SelectItem>
-                   </SelectContent>
-                 </Select>
-               </div>
-             </div>
-           </div>
- 
-           {/* Location */}
-           <div>
-             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-               <div className="w-8 h-8 bg-[#FFA500] text-white rounded-full flex items-center justify-center text-sm">3</div>
-               Location Details
-             </h3>
-             <Input
-               required
-               placeholder="Full address with city & pin code"
-               value={enquiryData.location}
-               onChange={(e) => setEnquiryData({ ...enquiryData, location: e.target.value })}
-             />
-           </div>
- 
-           {/* Message */}
-           <div>
-             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-               <div className="w-8 h-8 bg-[#FFA500] text-white rounded-full flex items-center justify-center text-sm">4</div>
-               Additional Information
-             </h3>
-             <Textarea
-               rows={3}
-               placeholder="Tell us about your requirements, roof type, current bill, etc. (minimum 5 characters if provided)"
-               value={enquiryData.message}
-               onChange={(e) => setEnquiryData({ ...enquiryData, message: e.target.value })}
-             />
-           </div>
- 
-           <Button type="submit" size="lg" className="w-full" disabled={loading}>
-             {loading ? 'Submitting...' : 'Submit Request'} <ArrowRight className="ml-2" />
-           </Button>
-         </form>
-       </DialogContent>
-     </Dialog>
-   );
- }
+                  <Label>Mobile *</Label>
+                  <Input
+                    type="tel"
+                    value={enquiryData.mobile}
+                    onChange={(e) => handleInputChange('mobile', e.target.value)}
+                    placeholder="+91 98765 43210"
+                    maxLength={10}
+                    className={`rounded-lg ${errors.mobile ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  />
+                  {errors.mobile && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.mobile}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label>Email *</Label>
+                  <Input
+                    type="email"
+                    value={enquiryData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder="john@example.com"
+                    className={`rounded-lg ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.email}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Installation Details */}
+            <div className="rounded-xl bg-gray-50 p-5">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#FFA500] text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                Installation Details
+              </h3>
+              <div className="grid sm:grid-cols-2 gap-4">
+
+                <div>
+                  <Label>Solar Service *</Label>
+                  <Select
+                    value={enquiryData.solar_service}
+                    onValueChange={(v) => {
+                      setEnquiryData({ ...enquiryData, solar_service: v, property_type: '', capacity: '' });
+                      setErrors(prev => ({ ...prev, solar_service: undefined, property_type: undefined, capacity: undefined }));
+                    }}
+                  >
+                    <SelectTrigger className={`rounded-lg ${errors.solar_service ? 'border-red-500' : ''}`}>
+                      <SelectValue placeholder="Select solar service" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {solarServices.map((service) => (
+                        <SelectItem key={service.value} value={service.value}>{service.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.solar_service && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.solar_service}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label>Property Type *</Label>
+                  <Select
+                    value={enquiryData.property_type}
+                    onValueChange={(v) => handleInputChange('property_type', v)}
+                    disabled={!enquiryData.solar_service}
+                  >
+                    <SelectTrigger className={`rounded-lg ${errors.property_type ? 'border-red-500' : ''}`}>
+                      <SelectValue placeholder={!enquiryData.solar_service ? "Select solar service first" : "Select property type"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {enquiryData.solar_service && propertyTypes[enquiryData.solar_service as keyof typeof propertyTypes]?.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.property_type && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.property_type}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label>System Capacity *</Label>
+                  <Select
+                    value={enquiryData.capacity}
+                    onValueChange={(v) => handleInputChange('capacity', v)}
+                    disabled={!enquiryData.solar_service}
+                  >
+                    <SelectTrigger className={`rounded-lg ${errors.capacity ? 'border-red-500' : ''}`}>
+                      <SelectValue placeholder={!enquiryData.solar_service ? "Select solar service first" : "Select capacity"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {enquiryData.solar_service && capacities[enquiryData.solar_service as keyof typeof capacities]?.map((cap) => (
+                        <SelectItem key={cap} value={cap}>{cap}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.capacity && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.capacity}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label>Service Type *</Label>
+                  <Select
+                    value={enquiryData.service_type}
+                    onValueChange={(v) => handleInputChange('service_type', v)}
+                  >
+                    <SelectTrigger className={`rounded-lg ${errors.service_type ? 'border-red-500' : ''}`}>
+                      <SelectValue placeholder="Installation or Maintenance" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="installation">Installation</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.service_type && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.service_type}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Location */}
+            <div className="rounded-xl bg-gray-50 p-5">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#FFA500] text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                Location Details
+              </h3>
+              <Input
+                placeholder="Full address with city & pin code (min 10 chars)"
+                value={enquiryData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                className={`rounded-lg ${errors.location ? 'border-red-500 focus:ring-red-500' : ''}`}
+              />
+              {errors.location && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {errors.location}
+                </p>
+              )}
+            </div>
+
+            {/* 4. Message */}
+            <div className="rounded-xl bg-gray-50 p-5">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#FFA500] text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
+                Additional Information (Optional)
+              </h3>
+              <Textarea
+                rows={3}
+                placeholder="Roof type, current bill, special needs... (min 5 chars if provided)"
+                value={enquiryData.message}
+                onChange={(e) => handleInputChange('message', e.target.value)}
+                className={`rounded-lg ${errors.message ? 'border-red-500 focus:ring-red-500' : ''}`}
+              />
+              {errors.message && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {errors.message}
+                </p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full rounded-xl text-lg font-medium bg-[#FFA500] hover:bg-orange-600"
+              disabled={loading}
+            >
+              {loading ? 'Submitting...' : 'Submit Request'} <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

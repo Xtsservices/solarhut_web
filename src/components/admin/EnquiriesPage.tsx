@@ -559,8 +559,8 @@ export function EnquiriesPage() {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-gray-900 mb-1 sm:mb-2">Enquiries</h1>
-          <p className="text-gray-600 text-sm sm:text-base">Manage all customer enquiries</p>
+          <h1 className="text-gray-900 mb-1 sm:mb-2">Leads</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Manage all customer leads</p>
         </div>
       </div>
 

@@ -450,9 +450,8 @@ export function EnquiriesPage() {
   };
 
   const filteredEnquiries = enquiries.filter((enquiry: any) => {
-    // If user is admin, show all leads. Otherwise, only show leads assigned to current user.
-    const isAdmin = user?.role === 'Admin' || user?.roles?.includes('Admin');
-    if (!isAdmin && enquiry.assigned_to !== userId) return false;
+    // Only show leads assigned to current user
+    if (enquiry.assigned_to !== userId) return false;
 
     const name = getFullName(enquiry);
     const phone = enquiry.mobile || enquiry.phone || enquiry.contact || '';

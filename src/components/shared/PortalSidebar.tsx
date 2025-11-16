@@ -37,21 +37,24 @@ interface PortalSidebarProps {
   onMobileClose?: () => void;
 }
 
+
+
+
 const adminMenuItems: MenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'enquiries', label: 'Leads', icon: FileText },
-  { id: 'employees', label: 'Employees', icon: Users },
-  { id: 'packages', label: 'Packages', icon: Package },
-  { id: 'payments', label: 'Payments', icon: IndianRupee },
-  { id: 'job-requests', label: 'Contacts', icon: Handshake },
-  { id: 'work-progress', label: 'Work Progress', icon: TrendingUp },
-  { id: 'masters', label: 'Masters', icon: Shield },
-  { id: 'locations', label: 'Locations', icon: MapPin },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'settings', label: 'Settings', icon: Settings },
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'jobs', label: 'Jobs', icon: Briefcase },
-  { id: 'mytasks', label: 'My Tasks', icon: ListChecks },
+  { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'Leads', label: 'Leads', icon: FileText },
+  { id: 'Employees', label: 'Employees', icon: Users },
+  { id: 'Packages', label: 'Packages', icon: Package },
+  { id: 'Payments', label: 'Payments', icon: IndianRupee },
+  { id: 'Contacts', label: 'Contacts', icon: Handshake },
+  { id: 'Work_Progress', label: 'Work Progress', icon: TrendingUp },
+  { id: 'Masters', label: 'Masters', icon: Shield },
+  { id: 'Locations', label: 'Locations', icon: MapPin },
+  { id: 'Notifications', label: 'Notifications', icon: Bell },
+  { id: 'Settings', label: 'Settings', icon: Settings },
+  { id: 'Profile', label: 'Profile', icon: User },
+  { id: 'Jobs', label: 'Jobs', icon: Briefcase },
+  { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
 ];
 
 const salesMenuItems: MenuItem[] = [
@@ -79,11 +82,19 @@ export function PortalSidebar({
   console.log('Current User in Sidebar:', user);
   const permissions = user?.permissions || [];
   let menuItems = [];
-  if (role === 'admin') {
+  console.log("permissions",permissions)
+  if (role === 'admin' && permissions?.length>0) {
 
-    const allowedFeatures = permissions.map((p: any) => (p || '').toLowerCase());
-    menuItems = adminMenuItems.filter(item => allowedFeatures.includes(item.label.toLowerCase()));
-     console.log('em ledhu bro:', allowedFeatures);
+    // const allowedFeatures = permissions?.map((p: any) => (p || '')?.toLowerCase())
+    // console.log("allowedFeatures",allowedFeatures)
+    // menuItems = adminMenuItems?.filter(item => permissions?.includes(item.id.toLowerCase()));
+    const allowedFeatures = permissions.map(p => p.feature_name);
+
+menuItems = adminMenuItems.filter(item =>
+  allowedFeatures.includes(item.id) || allowedFeatures.includes(item.label)
+);
+
+
   } else if (role === 'sales') {
     menuItems = salesMenuItems;
   } else {

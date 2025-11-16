@@ -2,7 +2,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
 // Base API URL
-const API_BASE_URL = "http://172.16.4.126:3200/api";
+const API_BASE_URL = "http://172.16.4.132:3200/api";
 
 // const API_BASE_URL = "http://172.16.4.120:3100/api";
 

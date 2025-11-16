@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -38,6 +38,7 @@ import {
 } from '../ui/select';
 import { Plus, Pencil, Trash2, MapPin, Globe, Map, MapPinned } from 'lucide-react';
 import { toast } from 'sonner';
+import { createCountry, CreateCountryRequest, getAllCountries, deleteCountry, createState, CreateStateRequest, getAllStates, deleteState, createDistrict, CreateDistrictRequest, getAllDistricts } from '../../api/api';
 
 interface Country {
   id: string;
@@ -66,9 +67,8 @@ interface District {
 
 // Initial mock data
 const initialCountries: Country[] = [
-  { id: '1', country_code: 'IN', name: 'India', currency_format: '₹', created_date: '2025-01-10' },
+  { id: '1', country_code: 'IN', name: 'India', currency_format: '₹', created_date: '2025-11-14' },
 ];
-
 const initialStates: State[] = [
   { id: '1', country_id: '1', state_code: 'TN', name: 'Tamil Nadu', type: 'State', created_date: '2025-01-10' },
   { id: '2', country_id: '1', state_code: 'MH', name: 'Maharashtra', type: 'State', created_date: '2025-01-10' },
@@ -151,6 +151,65 @@ export function LocationsPage() {
   const [districtToDelete, setDistrictToDelete] = useState<string | null>(null);
   const [districtSearchQuery, setDistrictSearchQuery] = useState('');
 
+  // Fetch countries from API on mount
+  useEffect(() => {
+    let mounted = true;
+    const fetchCountries = async () => {
+      const res = await getAllCountries();
+      if (!mounted) return;
+      if (res.ok && res.data) {
+        // Ensure IDs are strings and map to local Country shape
+        const mapped = res.data.map((c) => ({
+          id: String(c.id),
+          country_code: c.country_code,
+          name: c.name,
+          currency_format: c.currency_format,
+          created_date: c.created_at ? new Date(c.created_at).toISOString().split('T')[0] : (c as any).created_date || new Date().toISOString().split('T')[0],
+        }));
+        setCountries(mapped);
+      }
+    };
+    fetchCountries();
+    // also fetch states
+    const fetchStates = async () => {
+      const res = await getAllStates();
+      if (!mounted) return;
+      if (res.ok && res.data) {
+        const mappedStates: State[] = res.data.map((s) => ({
+          id: String(s.id),
+          country_id: String(s.country_id),
+          state_code: s.state_code,
+          name: s.name,
+          type: s.type,
+          created_date: s.created_at ? new Date(s.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        }));
+        setStates(mappedStates);
+      }
+    };
+    fetchStates();
+
+    // fetch districts
+    const fetchDistricts = async () => {
+      const res = await getAllDistricts();
+      if (!mounted) return;
+      if (res.ok && res.data) {
+        const mappedDistricts: District[] = res.data.map((d) => ({
+          id: String(d.id),
+          state_id: String(d.state_id),
+          district_code: d.district_code,
+          name: d.name,
+          created_date: d.created_at ? new Date(d.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        }));
+        setDistricts(mappedDistricts);
+      }
+    };
+
+    fetchDistricts();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Filter functions
   const filteredCountries = countries.filter(
     (country) =>
@@ -213,44 +272,68 @@ export function LocationsPage() {
     return isValid;
   };
 
-  const handleSaveCountry = () => {
+  const handleSaveCountry = async () => {
     if (!validateCountryForm()) return;
 
-    if (editingCountry) {
-      setCountries(
-        countries.map((c) =>
-          c.id === editingCountry.id
-            ? {
-                ...c,
-                country_code: countryFormData.country_code,
-                name: countryFormData.name,
-                currency_format: countryFormData.currency_format,
-              }
-            : c
-        )
-      );
-      toast.success('Country updated successfully');
-    } else {
-      const newCountry: Country = {
-        id: Date.now().toString(),
-        country_code: countryFormData.country_code,
-        name: countryFormData.name,
-        currency_format: countryFormData.currency_format,
-        created_date: new Date().toISOString().split('T')[0],
-      };
-      setCountries([...countries, newCountry]);
-      toast.success('Country added successfully');
-    }
+    const payload: CreateCountryRequest = {
+      country_code: countryFormData.country_code.toUpperCase().trim(),
+      name: countryFormData.name.trim(),
+      currency_format: countryFormData.currency_format.trim(),
+    };
 
-    setIsCountryDialogOpen(false);
-    setCountryFormData({ country_code: '', name: '', currency_format: '' });
-    setEditingCountry(null);
+    try {
+      // Close dialog early – gives instant feedback
+      setIsCountryDialogOpen(false);
+
+      const result = await createCountry(payload);
+
+      if (result.ok && result.data) {
+        // API may return either the created Country directly or a wrapper { success, message, data }
+        const resp: any = result.data;
+        const created = resp.data ?? resp; // prefer wrapped data if present
+
+        const createdAt = created.created_at || created.created_date || new Date().toISOString();
+
+        const newCountry: Country = {
+          id: String(created.id),
+          country_code: created.country_code,
+          name: created.name,
+          currency_format: created.currency_format,
+          created_date: new Date(createdAt).toISOString().split('T')[0],
+        };
+
+        // Add to local UI state
+        setCountries((prev) => [...prev, newCountry]);
+
+        toast.success(resp.message || 'Country added successfully!');
+      } else {
+        toast.error(result.error || 'Failed to add country');
+      }
+    } catch (err) {
+      console.error('Country creation error:', err);
+      toast.error('Network error – please try again.');
+    } finally {
+      // Reset form regardless of success/failure
+      setCountryFormData({ country_code: '', name: '', currency_format: '' });
+      setEditingCountry(null);
+    }
   };
 
-  const handleDeleteCountry = (id: string) => {
-    setCountries(countries.filter((c) => c.id !== id));
-    toast.success('Country deleted successfully');
-    setCountryToDelete(null);
+  const handleDeleteCountry = async (id: string) => {
+    try {
+      const res = await deleteCountry(id);
+      if (res.ok) {
+        setCountries((prev) => prev.filter((c) => c.id !== id));
+        toast.success('Country deleted successfully');
+      } else {
+        toast.error(res.error || 'Failed to delete country');
+      }
+    } catch (err) {
+      console.error('Delete country error:', err);
+      toast.error('Network error while deleting country');
+    } finally {
+      setCountryToDelete(null);
+    }
   };
 
   // State handlers
@@ -303,44 +386,76 @@ export function LocationsPage() {
 
   const handleSaveState = () => {
     if (!validateStateForm()) return;
+    (async () => {
+      if (editingState) {
+        setStates(
+          states.map((s) =>
+            s.id === editingState.id
+              ? {
+                  ...s,
+                  country_id: stateFormData.country_id,
+                  state_code: stateFormData.state_code,
+                  name: stateFormData.name,
+                  type: stateFormData.type,
+                }
+              : s
+          )
+        );
+        toast.success('State updated successfully');
+      } else {
+        // Call API to create state
+        const payload: CreateStateRequest = {
+          country_id: stateFormData.country_id,
+          state_code: stateFormData.state_code,
+          name: stateFormData.name,
+          type: stateFormData.type,
+        };
 
-    if (editingState) {
-      setStates(
-        states.map((s) =>
-          s.id === editingState.id
-            ? {
-                ...s,
-                country_id: stateFormData.country_id,
-                state_code: stateFormData.state_code,
-                name: stateFormData.name,
-                type: stateFormData.type,
-              }
-            : s
-        )
-      );
-      toast.success('State updated successfully');
-    } else {
-      const newState: State = {
-        id: Date.now().toString(),
-        country_id: stateFormData.country_id,
-        state_code: stateFormData.state_code,
-        name: stateFormData.name,
-        type: stateFormData.type,
-        created_date: new Date().toISOString().split('T')[0],
-      };
-      setStates([...states, newState]);
-      toast.success('State added successfully');
-    }
+        try {
+          setIsStateDialogOpen(false);
+          const res = await createState(payload);
+          if (res.ok && res.data) {
+            const created = res.data.data ?? res.data;
+            const newState: State = {
+              id: String(created.id),
+              country_id: String(created.country_id),
+              state_code: created.state_code,
+              name: created.name,
+              type: created.type,
+              created_date: created.created_at ? new Date(created.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            };
+            setStates((prev) => [...prev, newState]);
+            toast.success(res.data.message || 'State added successfully');
+          } else {
+            toast.error(res.error || 'Failed to add state');
+          }
+        } catch (err) {
+          console.error('Create state error:', err);
+          toast.error('Network error – please try again.');
+        }
+      }
 
-    setIsStateDialogOpen(false);
-    setStateFormData({ country_id: '', state_code: '', name: '', type: '' });
-    setEditingState(null);
+      setIsStateDialogOpen(false);
+      setStateFormData({ country_id: '', state_code: '', name: '', type: '' });
+      setEditingState(null);
+    })();
   };
 
-  const handleDeleteState = (id: string) => {
-    setStates(states.filter((s) => s.id !== id));
-    toast.success('State deleted successfully');
-    setStateToDelete(null);
+  const handleDeleteState = async (id: string) => {
+    try {
+      const res = await deleteState(id);
+      if (res.ok) {
+        setStates((prev) => prev.filter((s) => s.id !== id));
+        toast.success('State deleted successfully');
+      } else {
+        toast.error(res.error || 'Failed to delete state');
+      }
+    } catch (err) {
+      console.error('Delete state error:', err);
+      toast.error('Network error while deleting state');
+    } finally {
+      setStateToDelete(null);
+    }
   };
 
   // District handlers
@@ -388,35 +503,55 @@ export function LocationsPage() {
   const handleSaveDistrict = () => {
     if (!validateDistrictForm()) return;
 
-    if (editingDistrict) {
-      setDistricts(
-        districts.map((d) =>
-          d.id === editingDistrict.id
-            ? {
-                ...d,
-                state_id: districtFormData.state_id,
-                district_code: districtFormData.district_code,
-                name: districtFormData.name,
-              }
-            : d
-        )
-      );
-      toast.success('District updated successfully');
-    } else {
-      const newDistrict: District = {
-        id: Date.now().toString(),
-        state_id: districtFormData.state_id,
-        district_code: districtFormData.district_code,
-        name: districtFormData.name,
-        created_date: new Date().toISOString().split('T')[0],
-      };
-      setDistricts([...districts, newDistrict]);
-      toast.success('District added successfully');
-    }
+    (async () => {
+      if (editingDistrict) {
+        setDistricts(
+          districts.map((d) =>
+            d.id === editingDistrict.id
+              ? {
+                  ...d,
+                  state_id: districtFormData.state_id,
+                  district_code: districtFormData.district_code,
+                  name: districtFormData.name,
+                }
+              : d
+          )
+        );
+        toast.success('District updated successfully');
+      } else {
+        const payload: CreateDistrictRequest = {
+          state_id: districtFormData.state_id,
+          district_code: districtFormData.district_code,
+          name: districtFormData.name,
+        };
 
-    setIsDistrictDialogOpen(false);
-    setDistrictFormData({ state_id: '', district_code: '', name: '' });
-    setEditingDistrict(null);
+        try {
+          setIsDistrictDialogOpen(false);
+          const res = await createDistrict(payload);
+          if (res.ok && res.data) {
+            const created = (res.data as any).data ?? res.data;
+            const newDistrict: District = {
+              id: String(created.id),
+              state_id: String(created.state_id),
+              district_code: created.district_code,
+              name: created.name,
+              created_date: created.created_at ? new Date(created.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            };
+            setDistricts((prev) => [...prev, newDistrict]);
+            toast.success((res.data as any).message || 'District added successfully');
+          } else {
+            toast.error(res.error || 'Failed to add district');
+          }
+        } catch (err) {
+          console.error('Create district error:', err);
+          toast.error('Network error – please try again.');
+        }
+      }
+
+      setIsDistrictDialogOpen(false);
+      setDistrictFormData({ state_id: '', district_code: '', name: '' });
+      setEditingDistrict(null);
+    })();
   };
 
   const handleDeleteDistrict = (id: string) => {
@@ -446,7 +581,7 @@ export function LocationsPage() {
       </div>
 
       {/* Summary Stats */}
-      <div
+      {/* <div
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -509,7 +644,7 @@ export function LocationsPage() {
             {countries.length + states.length + districts.length}
           </p>
         </div>
-      </div>
+      </div> */}
 
       <Card>
         <CardHeader>

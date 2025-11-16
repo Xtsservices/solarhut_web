@@ -431,6 +431,211 @@ export const uploadFile = async (
   );
 };
 
+
+// ===========================================
+// LOCATION ENDPOINTS
+// ===========================================
+
+export interface Country {
+  id: string;
+  country_code: string;
+  name: string;
+  currency_format: string;
+  created_at?: string;
+  status?: string;
+  creator_name?: string;
+}
+
+export interface CreateCountryRequest {
+  country_code: string;
+  name: string;
+  currency_format: string;
+}
+
+export interface CreateCountryResponse {
+  success: boolean;
+  message: string;
+  data: Country;
+  transaction_status: string;
+}
+
+/**
+ * Create a new country
+ */
+export const createCountry = async (
+  data: CreateCountryRequest,
+  cancelToken?: CancelToken
+): Promise<ApiResponse<Country>> => {
+  return makeRequest(
+    () => api.post<CreateCountryResponse>('/api/countries/create', data, { cancelToken }),
+    'Country added successfully!'
+  );
+};
+
+export const deleteCountry = async (
+  id: string,
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  // Try common delete patterns: /api/countries/delete/:id
+  return makeRequest(() => api.delete(`/api/countries/delete/${id}`, { cancelToken }), 'Country deleted successfully!');
+};
+
+export const deleteState = async (
+  id: string,
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  // Common delete pattern: /api/states/delete/:id
+  return makeRequest(() => api.delete(`/api/states/delete/${id}`, { cancelToken }), 'State deleted successfully!');
+};
+
+// State types
+export interface StateItem {
+  id: string | number;
+  country_id: string | number;
+  state_code: string;
+  name: string;
+  type: string;
+  created_at?: string;
+}
+
+export interface CreateStateRequest {
+  country_id: number | string;
+  state_code: string;
+  name: string;
+  type: string;
+}
+
+export interface CreateStateResponse {
+  success: boolean;
+  message: string;
+  data: StateItem;
+}
+
+/**
+ * Create a new state
+ */
+export const createState = async (
+  data: CreateStateRequest,
+  cancelToken?: CancelToken
+): Promise<ApiResponse<CreateStateResponse>> => {
+  return makeRequest(() => api.post<CreateStateResponse>('/api/states/create', data, { cancelToken }), 'State added successfully!');
+};
+
+// District types
+export interface DistrictItem {
+  id: string | number;
+  state_id: string | number;
+  district_code: string;
+  name: string;
+  created_at?: string;
+}
+
+export interface CreateDistrictRequest {
+  state_id: number | string;
+  district_code: string;
+  name: string;
+}
+
+export interface CreateDistrictResponse {
+  success: boolean;
+  message: string;
+  data: DistrictItem;
+}
+
+/**
+ * Create a new district
+ */
+export const createDistrict = async (
+  data: CreateDistrictRequest,
+  cancelToken?: CancelToken
+): Promise<ApiResponse<CreateDistrictResponse>> => {
+  return makeRequest(() => api.post<CreateDistrictResponse>('/api/districts/create', data, { cancelToken }), 'District added successfully!');
+};
+
+/**
+ * Get all districts
+ */
+export const getAllDistricts = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse<DistrictItem[]>> => {
+  try {
+    const response = await api.get<{ success: boolean; data: DistrictItem[] }>('/api/districts/allDistricts', { cancelToken });
+    return {
+      ok: true,
+      data: response.data.data,
+      error: null,
+    };
+  } catch (error: any) {
+    console.error('💥 getAllDistricts error:', error);
+    let errorMessage = 'Failed to fetch districts';
+    if (error.response?.data?.message) errorMessage = error.response.data.message;
+    else if (error.message) errorMessage = error.message;
+    toast.error(errorMessage);
+    return {
+      ok: false,
+      data: null,
+      error: errorMessage,
+    };
+  }
+};
+
+/**
+ * Get all countries
+ */
+export const getAllCountries = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse<Country[]>> => {
+  try {
+    const response = await api.get<{ success: boolean; data: Country[] }>('/api/countries/allCountries', { cancelToken });
+    return {
+      ok: true,
+      data: response.data.data,
+      error: null,
+    };
+  } catch (error: any) {
+    console.error('💥 getAllCountries error:', error);
+    let errorMessage = 'Failed to fetch countries';
+    if (error.response?.data?.message) errorMessage = error.response.data.message;
+    else if (error.message) errorMessage = error.message;
+    toast.error(errorMessage);
+    return {
+      ok: false,
+      data: null,
+      error: errorMessage,
+    };
+  }
+};
+
+/**
+ * Get all states
+ */
+export const getAllStates = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse<StateItem[]>> => {
+  try {
+    const response = await api.get<{ success: boolean; data: StateItem[] }>('/api/states/allStates', { cancelToken });
+    return {
+      ok: true,
+      data: response.data.data,
+      error: null,
+    };
+  } catch (error: any) {
+    console.error('💥 getAllStates error:', error);
+    let errorMessage = 'Failed to fetch states';
+    if (error.response?.data?.message) errorMessage = error.response.data.message;
+    else if (error.message) errorMessage = error.message;
+    toast.error(errorMessage);
+    return {
+      ok: false,
+      data: null,
+      error: errorMessage,
+    };
+  }
+};
+
+
+
+
 // ===========================================
 // EXPORT API INSTANCE FOR CUSTOM CALLS
 // ===========================================

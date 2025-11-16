@@ -24,12 +24,19 @@ import { toast } from 'sonner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-
 interface ContactPageProps {
   onNavigate?: (page: string) => void;
 }
 
 type ContactType = 'general' | 'job' | 'supplier';
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+  position?: string;
+  message?: string;
+}
 
 export function ContactPage({ onNavigate }: ContactPageProps) {
   const [selectedType, setSelectedType] = useState<ContactType | null>('job');
@@ -49,31 +56,77 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
     yearsInBusiness: '',
   });
 
+  const [errors, setErrors] = useState<FormErrors>({});
   const [showThankYou, setShowThankYou] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Validation Functions
+  const validateName = (name: string): string | undefined => {
+    if (!name.trim()) return 'Full name is required';
+    if (name.trim().length < 2) return 'Name must be at least 2 characters';
+    return undefined;
+  };
+
+  const validateEmail = (email: string): string | undefined => {
+    if (!email) return 'Email is required';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return 'Please enter a valid email address';
+    return undefined;
+  };
+
+  const validatePhone = (phone: string): string | undefined => {
+    if (!phone) return 'Phone number is required';
+    const cleanPhone = phone.replace(/\D/g, '');
+    const indianMobileRegex = /^[6-9]\d{9}$/;
+    if (!indianMobileRegex.test(cleanPhone)) {
+      return 'Please enter a valid 10-digit Indian mobile number';
+    }
+    return undefined;
+  };
+
+  const validatePosition = (position: string): string | undefined => {
+    if (!position) return 'Please select the purpose of contact';
+    return undefined;
+  };
+
+  const validateMessage = (message: string): string | undefined => {
+    if (message && message.trim().length > 0 && message.trim().length < 10) {
+      return 'Message must be at least 10 characters if provided';
+    }
+    return undefined;
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    newErrors.name = validateName(formData.name);
+    newErrors.email = validateEmail(formData.email);
+    newErrors.phone = validatePhone(formData.phone);
+    newErrors.position = validatePosition(formData.position);
+    newErrors.message = validateMessage(formData.message);
+
+    setErrors(newErrors);
+
+    // Return true only if no errors
+    return !Object.values(newErrors).some(error => error !== undefined);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Run validation
+    if (!validateForm()) {
+      toast.error('Please fix the errors in the form');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Validate required fields
-      if (!formData.name || !formData.email || !formData.phone || !formData.position) {
-        toast.error('Please fill all required fields');
-        return;
-      }
-
-      // Use the reason from form position field, or determine from selected type
+      // Use the reason from form position field
       let reason = formData.position || 'General Enquiry';
-      if (selectedType === 'job' && !formData.position) {
-        reason = 'Job Opportunity';
-      } else if (selectedType === 'supplier' && !formData.position) {
-        reason = 'Supplier Partnership';
-      } else if (formData.solutionType) {
-        reason = `Solar Solution - ${formData.solutionType}`;
-      }
 
-      // Prepare the message based on contact type
+      // Prepare the message
       let message = formData.message;
       if (selectedType === 'job') {
         message = `Position: ${formData.position}\nExperience: ${formData.experience}\n\n${formData.message}`;
@@ -82,15 +135,15 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
       }
 
       const payload = {
-        full_name: formData.name,
-        email: formData.email,
-        mobile: formData.phone,
+        full_name: formData.name.trim(),
+        email: formData.email.trim(),
+        mobile: formData.phone.replace(/\D/g, ''), // Send clean number
         reason: reason,
-        message: message
+        message: message.trim()
       };
 
-      console.log('🚀 Submitting contact form:', payload);
-      console.log('📡 API Endpoint:', `${API_BASE_URL}/api/contacts`);
+      console.log('Submitting contact form:', payload);
+      console.log('API Endpoint:', `${API_BASE_URL}/api/contacts`);
 
 
       const response = await fetch(`${API_BASE_URL}/api/contacts`, {
@@ -101,31 +154,33 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
         body: JSON.stringify(payload),
       });
 
-      console.log('📡 Response status:', response.status);
+      console.log('Response status:', response.status);
 
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ API Response:', result);
+        console.log('API Response:', result);
         
         if (result.success) {
           toast.success('Your request has been submitted successfully! Our team will contact you within 24 hours.');
           setShowThankYou(true);
+          setErrors({}); // Clear errors on success
         } else {
           toast.error(result.message || 'Failed to submit request');
         }
       } else {
         const errorText = await response.text();
-        console.error('❌ API Error:', errorText);
+        console.error('API Error:', errorText);
         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
     } catch (error) {
       console.error('Error submitting contact form:', error);
       
-      // Fallback to offline mode - still show success to user
+      // Fallback offline mode - show success even if API fails
       console.warn('API not available, working in offline mode');
       toast.success('Your request has been submitted successfully! Our team will contact you within 24 hours. (offline mode)');
       setShowThankYou(true);
+      setErrors({});
     } finally {
       setIsSubmitting(false);
     }
@@ -227,7 +282,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
         </h3>
         
         <p className="text-gray-600 mb-4">
-          Your solar quote request has been submitted successfully. Our team will contact you within 24 hours.
+          Your job application has been submitted successfully. Our HR team will contact you within 24 hours.
         </p>
         
         <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
@@ -235,15 +290,15 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
           <div className="space-y-2 text-sm text-left">
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 bg-[#FFA500] text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">1</div>
-              <span className="text-gray-700">Expert consultation call</span>
+              <span className="text-gray-700">HR team will review your profile</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 bg-[#FFA500] text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">2</div>
-              <span className="text-gray-700">Free site assessment</span>
+              <span className="text-gray-700">Shortlisted candidates get a call</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 bg-[#FFA500] text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">3</div>
-              <span className="text-gray-700">Custom solar proposal</span>
+              <span className="text-gray-700">Interview & onboarding</span>
             </div>
           </div>
         </div>
@@ -254,6 +309,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
               setShowThankYou(false);
               setSelectedType(null);
               setIsSubmitting(false);
+              setErrors({});
               setFormData({ 
                 name: '', 
                 email: '', 
@@ -272,7 +328,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
             className="bg-[#FFA500] hover:bg-[#FF8C00] text-white w-full"
           >
             <ArrowRight className="w-4 h-4 mr-2" />
-            Submit Another Request
+            Submit Another Application
           </Button>
           <Button 
             onClick={handleReturnHome}
@@ -388,7 +444,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
               <Card className="border-0 shadow-xl">
                 <CardHeader>
                   <CardTitle className="text-xl sm:text-2xl flex items-center">
-                    <MessageSquare className="w-5 h-5 text-[#FFA500] mr-2" />
+                    <Briefcase className="w-5 h-5 text-[#FFA500] mr-2" />
                     Job Application Form
                   </CardTitle>
                 </CardHeader>
@@ -401,10 +457,14 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                           id="name"
                           type="text"
                           value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, name: e.target.value });
+                            if (errors.name) setErrors({ ...errors, name: validateName(e.target.value) });
+                          }}
                           placeholder="Enter your full name"
-                          required
+                          className={errors.name ? 'border-red-500' : ''}
                         />
+                        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                       </div>
                       <div>
                         <Label htmlFor="phone">Phone Number *</Label>
@@ -412,10 +472,14 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                           id="phone"
                           type="tel"
                           value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, phone: e.target.value });
+                            if (errors.phone) setErrors({ ...errors, phone: validatePhone(e.target.value) });
+                          }}
                           placeholder="+91 XXXXX XXXXX"
-                          required
+                          className={errors.phone ? 'border-red-500' : ''}
                         />
+                        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                       </div>
                     </div>
                     
@@ -425,16 +489,26 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                         id="email"
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value });
+                          if (errors.email) setErrors({ ...errors, email: validateEmail(e.target.value) });
+                        }}
                         placeholder="your.email@example.com"
-                        required
+                        className={errors.email ? 'border-red-500' : ''}
                       />
+                      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                     </div>
 
                     <div>
                       <Label htmlFor="position">Purpose of Contact *</Label>
-                      <Select value={formData.position} onValueChange={(value) => setFormData({ ...formData, position: value })}>
-                        <SelectTrigger>
+                      <Select 
+                        value={formData.position} 
+                        onValueChange={(value) => {
+                          setFormData({ ...formData, position: value });
+                          if (errors.position) setErrors({ ...errors, position: undefined });
+                        }}
+                      >
+                        <SelectTrigger className={errors.position ? 'border-red-500' : ''}>
                           <SelectValue placeholder="Select purpose" />
                         </SelectTrigger>
                         <SelectContent>
@@ -442,6 +516,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                           <SelectItem value="Supplier Partnership">Supplier Partnership</SelectItem>
                         </SelectContent>
                       </Select>
+                      {errors.position && <p className="text-red-500 text-xs mt-1">{errors.position}</p>}
                     </div>
 
                     <div>
@@ -449,11 +524,15 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                       <Textarea
                         id="message"
                         value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        placeholder="Tell us about your experience and qualifications..."
-                        className="resize-vertical"
+                        onChange={(e) => {
+                          setFormData({ ...formData, message: e.target.value });
+                          if (errors.message) setErrors({ ...errors, message: validateMessage(e.target.value) });
+                        }}
+                        placeholder="Tell us about your experience, skills, and why you'd be a great fit..."
+                        className={`resize-vertical ${errors.message ? 'border-red-500' : ''}`}
                         rows={4}
                       />
+                      {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
                     </div>
 
                     <Button 

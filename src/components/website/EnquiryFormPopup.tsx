@@ -168,8 +168,71 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateAll()) {
-      toast.error('Please fix the errors below.');
+    // Validate required fields
+    if (!enquiryData.first_name || !enquiryData.last_name || !enquiryData.mobile || !enquiryData.email) {
+      toast.error('Please fill all personal details.');
+      return;
+    }
+
+    // Validate first name format - Allow spaces in UI, will be removed for API
+    const nameRegex = /^[A-Za-z\s]{2,50}$/;
+    if (!nameRegex.test(enquiryData.first_name.trim())) {
+      toast.error('First name must contain only alphabets and spaces, and be between 2-50 characters.');
+      return;
+    }
+
+    if (!nameRegex.test(enquiryData.last_name.trim())) {
+      toast.error('Last name must contain only alphabets and spaces, and be between 2-50 characters.');
+      return;
+    }
+
+    // Check if names without spaces meet API requirements (2-50 characters)
+    const firstNameNoSpaces = enquiryData.first_name.replace(/\s+/g, '');
+    const lastNameNoSpaces = enquiryData.last_name.replace(/\s+/g, '');
+    
+    if (firstNameNoSpaces.length < 2 || firstNameNoSpaces.length > 50) {
+      toast.error('First name (without spaces) must be between 2-50 characters.');
+      return;
+    }
+    
+    if (lastNameNoSpaces.length < 2 || lastNameNoSpaces.length > 50) {
+      toast.error('Last name (without spaces) must be between 2-50 characters.');
+      return;
+    }
+
+    // Validate mobile number format
+    const mobileRegex = /^[6-9]\d{9}$/;
+    if (!mobileRegex.test(enquiryData.mobile)) {
+      toast.error('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    // Improved email validation
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!emailRegex.test(enquiryData.email.trim())) {
+      toast.error('Please enter a valid email address (e.g., user@example.com).');
+      return;
+    }
+    // Disallow consecutive dots and leading/trailing dots in local part
+    const localPart = enquiryData.email.split('@')[0];
+    if (/^\.|\.$|\.\./.test(localPart)) {
+      toast.error('Email local part cannot start/end with a dot or have consecutive dots.');
+      return;
+    }
+
+    if (!enquiryData.service_type || !enquiryData.solar_service || !enquiryData.capacity || !enquiryData.property_type) {
+      toast.error('Please fill all installation details.');
+      return;
+    }
+
+    if (!enquiryData.location) {
+      toast.error('Please provide your location.');
+      return;
+    }
+
+    // Validate message length (API requires at least 5 characters)
+    if (enquiryData.message && enquiryData.message.trim().length < 5) {
+      toast.error('Message must be at least 5 characters long.');
       return;
     }
 
@@ -203,6 +266,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
 
     try {
       const result = await createLead(payload);
+
       if (result.ok) {
         toast.success('Thank you! Your enquiry has been submitted.');
         setEnquiryData({
@@ -212,6 +276,26 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
         setErrors({});
         onSuccess?.();
         onClose();
+      } else {
+        // Try to parse error as object if possible
+        let errorObj: any = {};
+        if (typeof result.error === 'string') {
+          try {
+            errorObj = JSON.parse(result.error);
+          } catch {
+            errorObj = {};
+          }
+        } else if (typeof result.error === 'object') {
+          errorObj = result.error;
+        }
+        if (errorObj.errors && Array.isArray(errorObj.errors)) {
+          const emailError = errorObj.errors.find((err: any) => err.field === 'email');
+          if (emailError) {
+            toast.error(emailError.message);
+            return;
+          }
+        }
+        toast.error(errorObj.message || result.error || 'Failed to create lead.');
       }
     } catch (error) {
       console.error('Unexpected error:', error);

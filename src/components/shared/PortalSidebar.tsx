@@ -20,6 +20,7 @@ import {
   import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '../ui/sheet';
+import { useSelector } from 'react-redux';
 
 interface MenuItem {
   id: string;
@@ -71,10 +72,20 @@ export function PortalSidebar({
   isMobileOpen = false,
   onMobileClose
 }: PortalSidebarProps) {
-  const menuItems = 
-    role === 'admin' ? adminMenuItems : 
-    role === 'sales' ? salesMenuItems : 
-    fieldMenuItems;
+  const user = useSelector((state: any) => state.currentUserData);
+  console.log('Current User in Sidebar:', user);
+  const permissions = user?.permissions || [];
+  let menuItems = [];
+  if (role === 'admin') {
+
+    const allowedFeatures = permissions.map((p: any) => (p || '').toLowerCase());
+    menuItems = adminMenuItems.filter(item => allowedFeatures.includes(item.label.toLowerCase()));
+     console.log('em ledhu bro:', allowedFeatures);
+  } else if (role === 'sales') {
+    menuItems = salesMenuItems;
+  } else {
+    menuItems = fieldMenuItems;
+  }
 
     const navigate = useNavigate();
     const handleNavigate = (page: string) => {

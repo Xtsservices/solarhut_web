@@ -18,7 +18,7 @@ export function ProfilePage({ role }: ProfilePageProps) {
   };
 
   const [profile, setProfile] = useState({
-    name: role === 'admin' ? 'Admin User' : role === 'sales' ? 'Rahul Verma' : 'Manoj Kumar',
+    name: role === 'admin' ? '' : role === 'sales' ? 'Rahul Verma' : 'Manoj Kumar',
     email:
       role === 'admin'
         ? 'admin@solarhut.com'

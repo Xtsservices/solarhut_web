@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+  import { useState, useEffect } from 'react';
+  import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -115,6 +115,8 @@ export default function MastersPage() {
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   const [features, setFeatures] = useState<Feature[]>([]);
+  // Sidebar features for Add Feature dropdown
+  const [sidebarFeatures, setSidebarFeatures] = useState<string[]>([]);
   // Pagination state for Roles (must be after roles state)
   const [rolesPage, setRolesPage] = useState(1);
   const rolesPerPage = 10;
@@ -189,9 +191,99 @@ export default function MastersPage() {
     }
   };
 
+  // Fetch sidebar features for Add Feature dropdown
+  const fetchSidebarFeatures = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/features/allfeatures`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error('Failed to fetch sidebar features');
+      const result = await response.json();
+      let data = Array.isArray(result.data) ? result.data : [];
+      setSidebarFeatures(data);
+    } catch (err) {
+      toast.error('Error loading sidebar features');
+      setSidebarFeatures([]);
+    }
+  };
+
+  // Fetch permissions from API
+  const fetchPermissions = async () => {
+    const token = localStorage.getItem('authToken');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/permissions`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch permissions');
+      const result = await response.json();
+      let data = Array.isArray(result) ? result : result.data;
+      if (!Array.isArray(data) && result.permissions) data = result.permissions;
+      // Normalize backend permissions to local Permission type
+      const mappedPermissions = (data || []).map((p: any, idx: number) => ({
+        id: p.id?.toString() || p._id?.toString() || (idx + 1).toString(),
+        role_id: p.role_id?.toString() || '',
+        feature_id: p.feature_id?.toString() || '',
+        create: p.permission === 'create' ? p.status === 'Active' : false,
+        read: p.permission === 'read' ? p.status === 'Active' : false,
+        edit: p.permission === 'edit' ? p.status === 'Active' : false,
+        delete: p.permission === 'delete' ? p.status === 'Active' : false,
+        created_date: p.created_at || '',
+      }));
+      setPermissions(mappedPermissions);
+    } catch (err) {
+      toast.error('Error loading permissions');
+      setPermissions([]);
+    }
+  };
+
+  // Fetch permissions by feature id (with token)
+  const fetchPermissionsByFeatureId = async (featureId: string) => {
+    const token = localStorage.getItem('authToken');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/permissions/feature/${featureId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch permissions for feature');
+      const result = await response.json();
+      let data = Array.isArray(result.data) ? result.data : [];
+      // Normalize backend permissions to local Permission type
+      const mappedPermissions = (data || []).map((p: any, idx: number) => ({
+        id: p.id?.toString() || p._id?.toString() || (idx + 1).toString(),
+        role_id: p.role_id?.toString() || '',
+        feature_id: p.feature_id?.toString() || '',
+        create: p.permission === 'create' ? p.status === 'Active' : false,
+        read: p.permission === 'read' ? p.status === 'Active' : false,
+        edit: p.permission === 'edit' ? p.status === 'Active' : false,
+        delete: p.permission === 'delete' ? p.status === 'Active' : false,
+        created_date: p.created_at || '',
+        // Optionally add extra fields from API response
+        role_name: p.role_name,
+        feature_name: p.feature_name,
+        creator_name: p.creator_name,
+      }));
+      setPermissions(mappedPermissions);
+      return mappedPermissions;
+    } catch (err) {
+      toast.error('Error loading permissions for feature');
+      setPermissions([]);
+      return [];
+    }
+  };
+
   useEffect(() => {
     fetchRoles();
     fetchFeatures();
+    fetchPermissions();
+    fetchSidebarFeatures();
   }, []);
 
   const [isFeatureDialogOpen, setIsFeatureDialogOpen] = useState(false);
@@ -267,14 +359,26 @@ export default function MastersPage() {
 
   const handleDeleteRole = async (id: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/roles/${id}`, {
+      // Find role_name by id
+      const role = roles.find((r) => r.id === id);
+      const roleName = role?.role_name;
+      if (!roleName) {
+        toast.error('Role name not found');
+        setRoleToDelete(null);
+        return;
+      }
+      const response = await fetch(`${API_BASE_URL}/api/roles/${encodeURIComponent(roleName)}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
-      if (!response.ok) throw new Error('Failed to delete role');
-      toast.success('Role deleted successfully');
-      fetchRoles();
-      setPermissions(permissions.filter((p) => p.role_id !== id));
+      const result = await response.json();
+      if (result.success) {
+        toast.success(result.message || 'Role deleted successfully');
+        fetchRoles();
+        setPermissions(permissions.filter((p) => p.role_id !== id));
+      } else {
+        toast.error(result.message || 'Failed to delete role');
+      }
     } catch (err) {
       toast.error('Error deleting role');
     } finally {
@@ -416,55 +520,43 @@ export default function MastersPage() {
       return;
     }
 
-    const existingPermission = permissions.find(
-      (p) => p.role_id === selectedRoleId && p.feature_id === selectedFeatureId
-    );
+    const selectedPermissions = Object.entries(permissionChecks)
+      .filter(([key, value]) => value)
+      .map(([key]) => key);
 
-    // Check if at least one permission is selected
-    const hasAnyPermission = Object.values(permissionChecks).some((v) => v);
-
-    if (existingPermission) {
-      if (hasAnyPermission) {
-        // Update existing permission
-        setPermissions(
-          permissions.map((p) =>
-            p.id === existingPermission.id
-              ? {
-                  ...p,
-                  create: permissionChecks.create,
-                  read: permissionChecks.read,
-                  edit: permissionChecks.edit,
-                  delete: permissionChecks.delete,
-                }
-              : p
-          )
-        );
-        toast.success('Permission updated successfully');
-      } else {
-        // Delete if no permissions selected
-        setPermissions(permissions.filter((p) => p.id !== existingPermission.id));
-        toast.info('Permission removed');
-      }
-    } else {
-      if (hasAnyPermission) {
-        // Create new permission
-        const newPermission: Permission = {
-          id: Date.now().toString(),
-          role_id: selectedRoleId,
-          feature_id: selectedFeatureId,
-          create: permissionChecks.create,
-          read: permissionChecks.read,
-          edit: permissionChecks.edit,
-          delete: permissionChecks.delete,
-          created_date: new Date().toISOString().split('T')[0],
-        };
-        setPermissions([...permissions, newPermission]);
-        toast.success('Permission added successfully');
-      } else {
-        toast.error('Please select at least one permission');
-        return;
-      }
+    if (selectedPermissions.length === 0) {
+      toast.error('Please select at least one permission');
+      return;
     }
+
+    const token = localStorage.getItem('authToken');
+    const payload = {
+      role_id: selectedRoleId,
+      feature_id: selectedFeatureId,
+      permissions: selectedPermissions,
+    };
+
+    fetch(`${API_BASE_URL}/api/permissions/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(async (response) => {
+        const result = await response.json();
+        if (result.success) {
+          toast.success(result.message || 'Permissions created successfully');
+          // Optionally, fetch permissions from backend here
+          fetchPermissions();
+        } else {
+          toast.error(result.message || 'Failed to create permissions');
+        }
+      })
+      .catch(() => {
+        toast.error('Error creating permissions');
+      });
 
     // Reset form
     setSelectedRoleId('');
@@ -490,31 +582,89 @@ export default function MastersPage() {
 
   const handleSavePermissionEdit = () => {
     if (!editingPermission) return;
-
-    setPermissions(
-      permissions.map((p) =>
-        p.id === editingPermission.id
-          ? {
-              ...p,
-              create: permissionChecks.create,
-              read: permissionChecks.read,
-              edit: permissionChecks.edit,
-              delete: permissionChecks.delete,
+    const token = localStorage.getItem('authToken');
+    // Determine which permissions changed
+    const changedPermissions = [];
+    if (permissionChecks.create !== editingPermission.create) changedPermissions.push('create');
+    if (permissionChecks.read !== editingPermission.read) changedPermissions.push('read');
+    if (permissionChecks.edit !== editingPermission.edit) changedPermissions.push('edit');
+    if (permissionChecks.delete !== editingPermission.delete) changedPermissions.push('delete');
+    // For each changed permission, send PUT request
+    Promise.all(
+      changedPermissions.map((perm) => {
+        const isActive = (permissionChecks as Record<string, boolean>)[perm];
+        return fetch(`${API_BASE_URL}/api/permissions/${editingPermission.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ status: isActive ? 'Active' : 'Inactive', permission: perm }),
+        })
+          .then((res) => res.json())
+          .then((result) => {
+            if (!result.success) {
+              toast.error(result.message || `Failed to update ${perm} permission`);
             }
-          : p
-      )
-    );
-
-    toast.success('Permission updated successfully');
-    setIsPermissionDialogOpen(false);
-    setEditingPermission(null);
-    setPermissionChecks({ create: false, read: false, edit: false, delete: false });
+            return result;
+          });
+      })
+    ).then(() => {
+      toast.success('Permission updated successfully');
+      // Optionally, fetch permissions from backend here
+      fetchPermissions();
+      setIsPermissionDialogOpen(false);
+      setEditingPermission(null);
+      setPermissionChecks({ create: false, read: false, edit: false, delete: false });
+    });
   };
 
   const handleDeletePermission = (id: string) => {
-    setPermissions(permissions.filter((p) => p.id !== id));
-    toast.success('Permission deleted successfully');
+    const token = localStorage.getItem('authToken');
+    fetch(`${API_BASE_URL}/api/permissions/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+    })
+      .then(async (response) => {
+        const result = await response.json();
+        if (result.success) {
+          toast.success(result.message || 'Permission deleted successfully');
+          setPermissions(permissions.filter((p) => p.id !== id));
+        } else {
+          toast.error(result.message || 'Failed to delete permission');
+        }
+      })
+      .catch(() => {
+        toast.error('Error deleting permission');
+      });
     setPermissionToDelete(null);
+
+    // Bulk delete role-feature permissions
+    const handleBulkDeleteRoleFeaturePermissions = (roleId: string, featureId: string) => {
+      const token = localStorage.getItem('authToken');
+      fetch(`${API_BASE_URL}/api/permissions/role/${roleId}/feature/${featureId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      })
+        .then(async (response) => {
+          const result = await response.json();
+          if (result.success) {
+            toast.success(result.message || 'Role-feature permissions deleted');
+            setPermissions(permissions.filter((p) => !(p.role_id === roleId && p.feature_id === featureId)));
+          } else {
+            toast.error(result.message || 'Failed to delete role-feature permissions');
+          }
+        })
+        .catch(() => {
+          toast.error('Error deleting role-feature permissions');
+        });
+    };
   };
 
   const getRoleName = (roleId: string) => {
@@ -857,7 +1007,7 @@ export default function MastersPage() {
                 </div>
               </div>
 
-              {/* Permissions Table */}
+              {/* Permissions Table with Pagination */}
               <div style={{ marginTop: '1.5rem' }}>
                 <h3 style={{ fontSize: '0.875rem', marginBottom: '0.75rem', color: '#374151' }}>
                   Permissions List
@@ -877,61 +1027,113 @@ export default function MastersPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {permissions.map((permission, index) => (
-                        <TableRow key={permission.id}>
-                          <TableCell style={{ textAlign: 'center' }}>{index + 1}</TableCell>
-                          <TableCell style={{ textAlign: 'center' }}>{getRoleName(permission.role_id)}</TableCell>
-                          <TableCell style={{ textAlign: 'center' }}>{getFeatureName(permission.feature_id)}</TableCell>
-                          <TableCell style={{ textAlign: 'center' }}>
-                            {permission.create ? (
-                              <Check style={{ height: '1rem', width: '1rem', color: '#16A34A', margin: '0 auto' }} />
-                            ) : (
-                              <X style={{ height: '1rem', width: '1rem', color: '#DC2626', margin: '0 auto' }} />
-                            )}
-                          </TableCell>
-                          <TableCell style={{ textAlign: 'center' }}>
-                            {permission.read ? (
-                              <Check style={{ height: '1rem', width: '1rem', color: '#16A34A', margin: '0 auto' }} />
-                            ) : (
-                              <X style={{ height: '1rem', width: '1rem', color: '#DC2626', margin: '0 auto' }} />
-                            )}
-                          </TableCell>
-                          <TableCell style={{ textAlign: 'center' }}>
-                            {permission.edit ? (
-                              <Check style={{ height: '1rem', width: '1rem', color: '#16A34A', margin: '0 auto' }} />
-                            ) : (
-                              <X style={{ height: '1rem', width: '1rem', color: '#DC2626', margin: '0 auto' }} />
-                            )}
-                          </TableCell>
-                          <TableCell style={{ textAlign: 'center' }}>
-                            {permission.delete ? (
-                              <Check style={{ height: '1rem', width: '1rem', color: '#16A34A', margin: '0 auto' }} />
-                            ) : (
-                              <X style={{ height: '1rem', width: '1rem', color: '#DC2626', margin: '0 auto' }} />
-                            )}
-                          </TableCell>
-                          <TableCell style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditPermission(permission)}
-                                style={{ padding: 0, height: '2rem', width: '2rem' }}
-                              >
-                                <Pencil style={{ height: '1rem', width: '1rem', color: '#2563EB' }} />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setPermissionToDelete(permission.id)}
-                                style={{ padding: 0, height: '2rem', width: '2rem' }}
-                              >
-                                <Trash2 style={{ height: '1rem', width: '1rem', color: '#DC2626' }} />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {(() => {
+                        const permissionsPerPage = 10;
+                        const [permissionsPage, setPermissionsPage] = useState(1);
+                        const totalPermissionsPages = Math.ceil(permissions.length / permissionsPerPage);
+                        const paginatedPermissions = permissions.slice((permissionsPage - 1) * permissionsPerPage, permissionsPage * permissionsPerPage);
+                        return (
+                          <>
+                            {paginatedPermissions.map((permission, index) => (
+                              <TableRow key={permission.id}>
+                                <TableCell style={{ textAlign: 'center' }}>{(permissionsPage - 1) * permissionsPerPage + index + 1}</TableCell>
+                                <TableCell style={{ textAlign: 'center' }}>{getRoleName(permission.role_id)}</TableCell>
+                                <TableCell style={{ textAlign: 'center' }}>{getFeatureName(permission.feature_id)}</TableCell>
+                                <TableCell style={{ textAlign: 'center' }}>
+                                  {permission.create ? (
+                                    <Check style={{ height: '1rem', width: '1rem', color: '#16A34A', margin: '0 auto' }} />
+                                  ) : (
+                                    <X style={{ height: '1rem', width: '1rem', color: '#DC2626', margin: '0 auto' }} />
+                                  )}
+                                </TableCell>
+                                <TableCell style={{ textAlign: 'center' }}>
+                                  {permission.read ? (
+                                    <Check style={{ height: '1rem', width: '1rem', color: '#16A34A', margin: '0 auto' }} />
+                                  ) : (
+                                    <X style={{ height: '1rem', width: '1rem', color: '#DC2626', margin: '0 auto' }} />
+                                  )}
+                                </TableCell>
+                                <TableCell style={{ textAlign: 'center' }}>
+                                  {permission.edit ? (
+                                    <Check style={{ height: '1rem', width: '1rem', color: '#16A34A', margin: '0 auto' }} />
+                                  ) : (
+                                    <X style={{ height: '1rem', width: '1rem', color: '#DC2626', margin: '0 auto' }} />
+                                  )}
+                                </TableCell>
+                                <TableCell style={{ textAlign: 'center' }}>
+                                  {permission.delete ? (
+                                    <Check style={{ height: '1rem', width: '1rem', color: '#16A34A', margin: '0 auto' }} />
+                                  ) : (
+                                    <X style={{ height: '1rem', width: '1rem', color: '#DC2626', margin: '0 auto' }} />
+                                  )}
+                                </TableCell>
+                                <TableCell style={{ textAlign: 'center' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditPermission(permission)}
+                                      style={{ padding: 0, height: '2rem', width: '2rem' }}
+                                    >
+                                      <Pencil style={{ height: '1rem', width: '1rem', color: '#2563EB' }} />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setPermissionToDelete(permission.id)}
+                                      style={{ padding: 0, height: '2rem', width: '2rem' }}
+                                    >
+                                      <Trash2 style={{ height: '1rem', width: '1rem', color: '#DC2626' }} />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {/* Pagination Controls */}
+                            <tr>
+                              <td colSpan={8} style={{ padding: '0.5rem 0' }}>
+                                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                  <span style={{ color: '#6B7280', fontSize: '0.875rem' }}>
+                                    {permissions.length === 0
+                                      ? 'Showing 0 entries'
+                                      : `Showing ${(permissionsPage - 1) * permissionsPerPage + 1} to ${Math.min(permissionsPage * permissionsPerPage, permissions.length)} of ${permissions.length} entries`}
+                                  </span>
+                                  {permissions.length > permissionsPerPage && (
+                                    <div style={{ display: 'inline-flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={permissionsPage === 1}
+                                        onClick={() => setPermissionsPage(permissionsPage - 1)}
+                                      >
+                                        Previous
+                                      </Button>
+                                      {Array.from({ length: totalPermissionsPages }, (_, i) => (
+                                        <Button
+                                          key={i + 1}
+                                          variant={permissionsPage === i + 1 ? 'default' : 'outline'}
+                                          size="sm"
+                                          onClick={() => setPermissionsPage(i + 1)}
+                                        >
+                                          {i + 1}
+                                        </Button>
+                                      ))}
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={permissionsPage === totalPermissionsPages}
+                                        onClick={() => setPermissionsPage(permissionsPage + 1)}
+                                      >
+                                        Next
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          </>
+                        );
+                      })()}
                     </TableBody>
                   </Table>
                 </div>
@@ -991,24 +1193,32 @@ export default function MastersPage() {
             <DialogDescription>
               {editingFeature
                 ? 'Update the feature name below.'
-                : 'Enter a name for the new feature (e.g., Payments, Contacts).'}
+                : 'Select a feature from the sidebar features list.'}
             </DialogDescription>
           </DialogHeader>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem 0' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <Label htmlFor="feature_name">
-                Feature Name <span style={{ color: '#EF4444' }}>*</span>
+                Feature <span style={{ color: '#EF4444' }}>*</span>
               </Label>
-              <Input
-                id="feature_name"
+              <Select
                 value={featureFormData.feature_name}
-                onChange={(e) => {
-                  setFeatureFormData({ feature_name: e.target.value });
+                onValueChange={(value) => {
+                  setFeatureFormData({ feature_name: value });
                   setFeatureFormErrors({ feature_name: '' });
                 }}
-                placeholder="Enter feature name (e.g., Payments, Contacts)"
-                style={featureFormErrors.feature_name ? { borderColor: '#EF4444' } : {}}
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Feature" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sidebarFeatures.map((feature) => (
+                    <SelectItem key={feature} value={feature}>
+                      {feature}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {featureFormErrors.feature_name && (
                 <p style={{ fontSize: '0.875rem', color: '#EF4444', margin: 0 }}>
                   {featureFormErrors.feature_name}

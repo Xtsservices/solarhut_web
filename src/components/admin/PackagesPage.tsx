@@ -100,7 +100,7 @@ export function PackagesPage() {
       monthly_generation: formData.monthlyGeneration,
       features: featuresArray.join(', '),
       status: 'Active',
-      recommended: formData.recommended,
+      // recommended removed for backend validation
     };
 
     try {
@@ -205,11 +205,11 @@ export function PackagesPage() {
                 <p className="text-gray-600 text-sm sm:text-base">Manage packages displayed on the website</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleReset} className="gap-2">
+                {/* <Button variant="outline" onClick={handleReset} className="gap-2">
                   <RefreshCw className="h-4 w-4" />
                   <span className="hidden sm:inline">Reset to Defaults</span>
                   <span className="sm:hidden">Reset</span>
-                </Button>
+                </Button> */}
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-[#FFA500] hover:bg-[#FF8C00] gap-2">
@@ -300,7 +300,7 @@ export function PackagesPage() {
                         />
                         <p className="text-xs text-gray-500 mt-1">Enter each feature on a new line</p>
                       </div>
-
+{/* 
                       <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
                         <Switch
                           id="recommended"
@@ -310,7 +310,7 @@ export function PackagesPage() {
                         <Label htmlFor="recommended" className="text-xs sm:text-sm cursor-pointer">
                           Mark as "Most Popular" / Recommended
                         </Label>
-                      </div>
+                      </div> */}
 
                       <div className="flex gap-2 pt-2">
                         <Button 

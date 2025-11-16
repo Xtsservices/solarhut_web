@@ -216,7 +216,7 @@ console.log("loginuser", user);
             <Routes>
               {/* Admin Routes */}
               {auth.role === 'admin' && <>
-                <Route path="/dashboard" element={<AdminDashboard />} />
+                <Route path="/Dashboard" element={<AdminDashboard />} />
                 <Route path="/enquiries" element={<EnquiriesPage />} />
                 <Route path="/employees" element={<EmployeesPage />} />
                 <Route path="/packages" element={<PackagesPage />} />

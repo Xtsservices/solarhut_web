@@ -51,6 +51,8 @@ import LoginPage from './components/shared/LoginPage';
 import { useDispatch, useSelector } from 'react-redux';
 import { apiCurrentUserData } from './api';
 import { LocationsPage } from './components/admin/LocationsPage';
+import { JobsPage } from './components/admin/JobsPage';
+import { MyTasks } from './components/admin/MyTasks';
 
 interface RootState {
   currentUserData: any;
@@ -226,6 +228,9 @@ console.log("loginuser", user);
                 <Route path="/notifications" element={<NotificationsPage role={auth.role} />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/profile" element={<ProfilePage role={auth.role} />} />
+                <Route path="/jobs" element={<JobsPage />} />
+                <Route path="/mytasks" element={<MyTasks />} />
+
                 <Route path="*" element={<AdminDashboard />} />
               </>}
               {/* Sales Routes */}

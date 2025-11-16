@@ -15,7 +15,8 @@ import {
   X,
   Package,
   MapPin,
-  Handshake
+  Handshake,
+  ListChecks,
 } from 'lucide-react';
   import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
@@ -49,6 +50,8 @@ const adminMenuItems: MenuItem[] = [
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'profile', label: 'Profile', icon: User },
+  { id: 'jobs', label: 'Jobs', icon: Briefcase },
+  { id: 'mytasks', label: 'My Tasks', icon: ListChecks },
 ];
 
 const salesMenuItems: MenuItem[] = [

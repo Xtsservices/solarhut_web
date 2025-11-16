@@ -7,8 +7,11 @@ const initialData = {
   myCartItems: 0,
   checkoutTotalBalance: 0,
 };
-
-function Reducer(state = initialData, action) {
+interface Action {
+  type: string;
+  payload?: any;
+}
+function Reducer(state = initialData, action: Action) {
   switch (action.type) {
     case "currentUserData":
       return { ...state, currentUserData: action.payload };

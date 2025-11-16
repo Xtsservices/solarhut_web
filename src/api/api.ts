@@ -53,6 +53,7 @@ export interface OTPRequest {
 }
 
 export interface AuthResponse {
+  employee: any;
   success: boolean;
   message: string;
   token?: string;
@@ -280,7 +281,8 @@ export const getUsers = async (
 export const apiCurrentUserData = async (
   cancelToken?: CancelToken
 ): Promise<ApiResponse<User[]>> => {
-  return makeRequest(() => api.get<User[]>('/api/user/getcurrentuser', { cancelToken }));
+  http://localhost:3200/api/auth/my-profile
+  return makeRequest(() => api.get<User[]>('/api/auth/my-profile', { cancelToken }));
 };
 
 export const getUsersByRole = async (

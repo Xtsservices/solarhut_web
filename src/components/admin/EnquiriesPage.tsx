@@ -15,6 +15,7 @@ import { Eye, UserPlus, Search, ChevronDown, ChevronUp, Calendar as CalendarIcon
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '../ui/utils';
+import { useSelector } from 'react-redux';
 // import { API_BASE_URL } from '../website/ip';
 // Add this type declaration at the top of your file (or in a global .d.ts file)
 interface ImportMetaEnv {
@@ -53,7 +54,9 @@ export function EnquiriesPage() {
   const [newEmployeeRole, setNewEmployeeRole] = useState('Sales Person');
   const [isCreatingEmployee, setIsCreatingEmployee] = useState(false);
   const itemsPerPage = 10;
-
+ const user = useSelector((state: any) => state.currentUserData);
+ const userId = user?.id ||  '';
+ console.log('Current User in EnquiriesPage:', user);
   // Fetch leads from API
   const fetchLeads = async () => {
     try {
@@ -447,33 +450,33 @@ export function EnquiriesPage() {
   };
 
   const filteredEnquiries = enquiries.filter((enquiry: any) => {
-    console.log('🔍 Filtering enquiry:', enquiry);
-    
+    // If user is admin, show all leads. Otherwise, only show leads assigned to current user.
+    const isAdmin = user?.role === 'Admin' || user?.roles?.includes('Admin');
+    if (!isAdmin && enquiry.assigned_to !== userId) return false;
+
     const name = getFullName(enquiry);
     const phone = enquiry.mobile || enquiry.phone || enquiry.contact || '';
     const id = (enquiry.id || enquiry.lead_id || '').toString();
-    
+
     const matchesSearch = searchTerm === '' || 
       name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       phone.includes(searchTerm) ||
       id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-  const status = (enquiry.status || 'new').toLowerCase();
-  const matchesStatus = statusFilter === 'all' || status === statusFilter.toLowerCase();
-    
+
+    const status = (enquiry.status || 'new').toLowerCase();
+    const matchesStatus = statusFilter === 'all' || status === statusFilter.toLowerCase();
+
     const serviceType = (enquiry.service_type || enquiry.serviceType || enquiry.services_type || enquiry.type || '').toLowerCase();
     const matchesServiceType = serviceTypeFilter === 'all' || 
       serviceType === serviceTypeFilter ||
       (serviceTypeFilter === 'maintenance' && (serviceType === 'maintenance' || serviceType === 'repair' || serviceType === 'service')) ||
       (serviceTypeFilter === 'installation' && (serviceType === 'installation' || serviceType === 'install' || serviceType === 'setup' || serviceType === 'new'));
-    
+
     const createdDate = enquiry.createdAt || enquiry.created_at || enquiry.date_created;
     const matchesDate = !dateFilter || !createdDate ||
       new Date(createdDate).toDateString() === dateFilter.toDateString();
-    
+
     const result = matchesSearch && matchesStatus && matchesServiceType && matchesDate;
-    console.log('🔍 Filter result:', { matchesSearch, matchesStatus, matchesServiceType, matchesDate, result });
-    
     return result;
   });
 
@@ -639,65 +642,56 @@ export function EnquiriesPage() {
 
       <Card className="hidden md:block">
         <CardHeader className="p-4 sm:p-5 md:p-6">
-          <CardTitle className="text-base sm:text-lg">All Enquiries ({filteredEnquiries.length})</CardTitle>
+          <CardTitle className="text-base sm:text-lg">All Leads ({filteredEnquiries.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0 sm:p-6">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs sm:text-sm text-center">ID</TableHead>
-                  <TableHead className="text-xs sm:text-sm text-center">Name</TableHead>
-                  <TableHead className="text-xs sm:text-sm text-center">Mobile</TableHead>
-                  <TableHead className="text-xs sm:text-sm text-center">Service Type</TableHead>
-                  <TableHead className="text-xs sm:text-sm text-center">KV</TableHead>
-                  <TableHead className="text-xs sm:text-sm text-center">Status</TableHead>
-                  <TableHead className="text-xs sm:text-sm text-center">Date</TableHead>
-                  <TableHead className="text-xs sm:text-sm text-center">Actions</TableHead>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="text-xs sm:text-sm text-left px-3 py-2 font-semibold">ID</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-left px-3 py-2 font-semibold">Name</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-left px-3 py-2 font-semibold">Mobile</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-left px-3 py-2 font-semibold">Service Type</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-left px-3 py-2 font-semibold">KW</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-left px-3 py-2 font-semibold">Status</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-left px-3 py-2 font-semibold">Date</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-left px-3 py-2 font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedEnquiries.map((enquiry: any, index: number) => (
-                  <TableRow key={enquiry.id || enquiry.lead_id || (startIndex + index)}>
-                    <TableCell className="text-xs sm:text-sm text-center">
-                      {enquiry.id || enquiry.lead_id || `#${startIndex + index + 1}`}
+                  <TableRow key={enquiry.id || enquiry.lead_id || (startIndex + index)} className="align-middle">
+                    <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">{enquiry.id || enquiry.lead_id || `#${startIndex + index + 1}`}</TableCell>
+                    <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">{getFullName(enquiry)}</TableCell>
+                    <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">{enquiry.mobile || enquiry.phone || enquiry.contact || 'N/A'}</TableCell>
+                    <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">{getServiceType(enquiry)}</TableCell>
+                    <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">{enquiry.kv || enquiry.system_size || enquiry.capacity || 'N/A'}</TableCell>
+                    <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">
+                      <div className="flex items-center h-full">{getStatusBadge(enquiry.status || 'new')}</div>
                     </TableCell>
-                    <TableCell className="text-xs sm:text-sm text-center">
-                      {getFullName(enquiry)}
-                    </TableCell>
-                    <TableCell className="text-xs sm:text-sm text-center">
-                      {enquiry.mobile || enquiry.phone || enquiry.contact || 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-xs sm:text-sm text-center">
-                      {getServiceType(enquiry)}
-                    </TableCell>
-                    <TableCell className="text-xs sm:text-sm text-center">
-                      {enquiry.kv || enquiry.system_size || enquiry.capacity || 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-xs sm:text-sm text-center">
-                      {getStatusBadge(enquiry.status || 'new')}
-                    </TableCell>
-                    <TableCell className="text-xs sm:text-sm text-center">
-                      {enquiry.createdAt || enquiry.created_at || enquiry.date_created 
-                        ? new Date(enquiry.createdAt || enquiry.created_at || enquiry.date_created).toLocaleDateString()
-                        : 'N/A'
-                      }
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => {
-                          console.log('👁️ Viewing enquiry:', enquiry);
-                          setSelectedEnquiry(enquiry);
-                          setViewDialogOpen(true);
-                          setShowAssignForm(false);
-                          setSelectedSalesPerson('');
-                          setSelectedRole('');
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                    <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">{enquiry.createdAt || enquiry.created_at || enquiry.date_created 
+                      ? new Date(enquiry.createdAt || enquiry.created_at || enquiry.date_created).toLocaleDateString()
+                      : 'N/A'
+                    }</TableCell>
+                    <TableCell className="text-left px-3 py-2 whitespace-nowrap align-middle">
+                      <div className="flex items-center justify-start h-full">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="flex items-center justify-center"
+                          onClick={() => {
+                            console.log('👁️ Viewing enquiry:', enquiry);
+                            setSelectedEnquiry(enquiry);
+                            setViewDialogOpen(true);
+                            setShowAssignForm(false);
+                            setSelectedSalesPerson('');
+                            setSelectedRole('');
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

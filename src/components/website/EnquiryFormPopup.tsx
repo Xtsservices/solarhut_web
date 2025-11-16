@@ -125,10 +125,16 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: EnquiryFormProps)
       return;
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(enquiryData.email)) {
-      toast.error('Please enter a valid email address.');
+    // Improved email validation
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!emailRegex.test(enquiryData.email.trim())) {
+      toast.error('Please enter a valid email address (e.g., user@example.com).');
+      return;
+    }
+    // Disallow consecutive dots and leading/trailing dots in local part
+    const localPart = enquiryData.email.split('@')[0];
+    if (/^\.|\.$|\.\./.test(localPart)) {
+      toast.error('Email local part cannot start/end with a dot or have consecutive dots.');
       return;
     }
 
@@ -183,7 +189,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: EnquiryFormProps)
     try {
       // Use the centralized API module
       const result = await createLead(payload);
-      
+
       if (result.ok) {
         console.log('✅ Lead created successfully:', result.data);
         setEnquiryData({
@@ -193,8 +199,25 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: EnquiryFormProps)
         onSuccess?.();
         onClose();
       } else {
-        console.error('❌ Failed to create lead:', result.error);
-        // Error is already handled by the API module with toast notification
+        // Try to parse error as object if possible
+        let errorObj: any = {};
+        if (typeof result.error === 'string') {
+          try {
+            errorObj = JSON.parse(result.error);
+          } catch {
+            errorObj = {};
+          }
+        } else if (typeof result.error === 'object') {
+          errorObj = result.error;
+        }
+        if (errorObj.errors && Array.isArray(errorObj.errors)) {
+          const emailError = errorObj.errors.find((err: any) => err.field === 'email');
+          if (emailError) {
+            toast.error(emailError.message);
+            return;
+          }
+        }
+        toast.error(errorObj.message || result.error || 'Failed to create lead.');
       }
     } catch (error) {
       console.error('💥 Unexpected error:', error);

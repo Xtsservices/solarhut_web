@@ -64,6 +64,9 @@ type AuthState = {
 
 function AppContent() {
   const user = useSelector((state: RootState) => state.currentUserData);
+console.log("loginuser", user);
+
+
   const location = useLocation();
   const background = location.state?.background;
   const token = localStorage.getItem("authToken");
@@ -85,17 +88,18 @@ function AppContent() {
    const getCurrentUserData = async () => {
     try {
 
-      console.log("Fetching user data from API");
       
       const response = await apiCurrentUserData();
+      console.log("Fetching user data from API", response);
+
 
       const userData = response.data || response;
-      console.log("userDatafrom app.jsx", userData)
+      console.log("userDatafrom app.jsx", userData.data)
 
-      if (userData) {
+      if (userData.data) {
         dispatch({
           type: "currentUserData",
-          payload: userData,
+          payload: userData.data?.employee,
         });
        
 
@@ -183,7 +187,6 @@ function AppContent() {
   if (auth.role === 'guest' && window.location.pathname === '/login') {
     return <LoginPage onLogin={handleLogin} />;
   }
-
   // Portal Pages (Admin/Sales/Field)
   if (auth.role !== 'guest') {
     return (
@@ -191,7 +194,7 @@ function AppContent() {
         {/* Header */}
         <PortalHeader
           role={auth.role}
-          userName={auth.role === 'admin' ? 'Admin User' : auth.role === 'sales' ? 'Rahul Verma' : 'Manoj Kumar'}
+          userName={user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 'User'}
           notificationCount={5}
           onNotificationsClick={() => navigate('/notifications')}
           onProfileClick={() => navigate('/profile')}

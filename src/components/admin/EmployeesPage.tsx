@@ -287,6 +287,7 @@ export function EmployeesPage() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('all');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('All');
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -1288,26 +1289,22 @@ export function EmployeesPage() {
   const handleEdit = (employee: any, role: string) => {
     console.log('🔧 Edit button clicked for employee:', employee);
     console.log('🔧 Employee role:', role);
-    
     try {
-      // Convert role name to role names array for roles
-      const roleNames = employee.roles || [role];
-      console.log('🔧 Setting form data for employee:', employee.id);
-
-      setFormData({
-        first_name: employee.first_name || '',
-        last_name: employee.last_name || '',
-        email: employee.email || '',
-        mobile: employee.mobile || '',
-        address: employee.address || '',
-        roles: Array.isArray(roleNames) ? roleNames : [roleNames],
-        joining_date: employee.joining_date || '',
-      });
-      setEditingId(employee.id);
+      // Defensive: Ensure all fields are present and fallback to empty string
+      const safeEmployee = {
+        first_name: employee.first_name ?? '',
+        last_name: employee.last_name ?? '',
+        email: employee.email ?? '',
+        mobile: employee.mobile ?? '',
+        address: employee.address ?? '',
+        roles: Array.isArray(employee.roles) ? employee.roles : [role],
+        joining_date: employee.joining_date ?? '',
+      };
+      setFormData(safeEmployee);
+      setEditingId(employee.id ?? null);
       setEditMode(true);
       setDialogOpen(true);
-      
-      console.log('✅ Edit dialog state set successfully');
+      console.log('✅ Edit dialog state set successfully', safeEmployee);
     } catch (error) {
       console.error('💥 Error in handleEdit:', error);
       toast.error('Error opening edit dialog');
@@ -1632,11 +1629,9 @@ export function EmployeesPage() {
     }
   };
 
-
-
   const handleView = (employee: any, role: string) => {
     setSelectedEmployee({ ...employee, role });
-    setViewingDetails(true);
+    setDetailsDialogOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -1811,274 +1806,157 @@ export function EmployeesPage() {
           </Dialog>
 
           {/* Create New Employee Button */}
-          <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Create New Employee
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="p-6 max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader className="space-y-2">
-                <DialogTitle className="text-xl">{editMode ? 'Edit Employee' : 'Add New Employee'}</DialogTitle>
-                <DialogDescription className="text-sm text-gray-600">
-                  {editMode ? 'Update the employee details' : 'Fill in the employee information below. First name auto-capitalizes as you type and you can enter full names like "lalitha krishna".'}
-                </DialogDescription>
-              </DialogHeader>
-              
-              {/* Debug info for troubleshooting */}
-              {editMode && (
-                <div className="bg-blue-50 p-2 rounded text-xs text-blue-700 mb-2 mt-4">
-                  <span>Editing: {formData.first_name} {formData.last_name} (ID: {editingId})</span>
-                </div>
-              )}
-              
-              <div className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">First Name <span style={{color:'#FF0000'}}>*</span></Label>
-                    <Input
-                      value={formData.first_name}
-                      onChange={(e) => handleFieldChange('first_name', e.target.value)}
-                      onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('first_name', e.target.value) }))}
-                      placeholder="Enter first name "
-                      className={`mt-1 ${validationErrors.first_name ? 'border-[#FF0000]' : ''}`}
-                    />
-                    {validationErrors.first_name && (
-                      <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.first_name}</p>
-                    )}
-                    {!validationErrors.first_name && formData.first_name.includes(' ') && !formData.last_name && (
-                      <p className="text-blue-600 text-xs mt-1">💡 Will auto-split when submitted</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Last Name <span style={{color:'#FF0000'}}>*</span></Label>
-                    <Input
-                      value={formData.last_name}
-                      onChange={(e) => handleFieldChange('last_name', e.target.value)}
-                      onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('last_name', e.target.value) }))}
-                      placeholder="Enter last name "
-                      className={`mt-1 ${validationErrors.last_name ? 'border-[#FF0000]' : ''}`}
-                    />
-                    {validationErrors.last_name && (
-                      <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.last_name}</p>
-                    )}
-                  </div>
-                </div>
+         {/* Create New Employee Button */}
+        {/* Create New Employee Button */}
+<Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
+  <DialogTrigger asChild>
+    <Button 
+      className="w-full sm:w-auto"
+      onClick={() => {
+        setEditMode(false);
+        setEditingId(null);
+        setFormData({
+          first_name: '',
+          last_name: '',
+          email: '',
+          mobile: '',
+          address: '',
+          joining_date: new Date().toISOString().split('T')[0],
+          roles: [],
+        });
+        setValidationErrors({});
+      }}
+    >
+      <UserPlus className="h-4 w-4 mr-2" />
+      Create New Employee
+    </Button>
+  </DialogTrigger>
 
-                <div>
-                  <Label className="text-sm font-medium">Email <span style={{color:'#FF0000'}}>*</span></Label>
-                  <Input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleFieldChange('email', e.target.value)}
-                    onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('email', e.target.value) }))}
-                    placeholder="Enter email address"
-                    className={`mt-1 ${validationErrors.email ? 'border-[#FF0000]' : ''}`}
-                  />
-                  {validationErrors.email && (
-                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.email}</p>
-                  )}
-                </div>
+  <DialogContent className="p-6 max-w-lg max-h-[90vh] overflow-y-auto">
+    <DialogHeader>
+      <DialogTitle>{editMode ? 'Edit Employee' : 'Add Employee'}</DialogTitle>
+    </DialogHeader>
 
-                <div>
-                  <Label className="text-sm font-medium">Mobile <span style={{color:'#FF0000'}}>*</span></Label>
-                  <Input
-                    type="tel"
-                    value={formData.mobile}
-                    onChange={(e) => handleFieldChange('mobile', e.target.value)}
-                    onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('mobile', e.target.value) }))}
-                    placeholder="Enter mobile number "
-                    className={`mt-1 ${validationErrors.mobile ? 'border-[#FF0000]' : ''}`}
-                  />
-                  {validationErrors.mobile && (
-                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.mobile}</p>
-                  )}
-                </div>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleAdd();
+      }}
+      className="space-y-4"
+    >
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>First Name</Label>
+          <Input
+            value={formData.first_name}
+            onChange={e => handleFieldChange('first_name', e.target.value)}
+            required
+          />
+          {validationErrors.first_name && (
+            <div className="text-xs text-red-500 mt-1">{validationErrors.first_name}</div>
+          )}
+        </div>
 
-                <div>
-                  <Label className="text-sm font-medium">Address</Label>
-                  <Input
-                    value={formData.address}
-                    onChange={(e) => handleFieldChange('address', e.target.value)}
-                    onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('address', e.target.value) }))}
-                    placeholder="Enter address"
-                    className={`mt-1 ${validationErrors.address ? 'border-[#FF0000]' : ''}`}
-                  />
-                  {validationErrors.address && (
-                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.address}</p>
-                  )}
-                </div>
+        <div>
+          <Label>Last Name</Label>
+          <Input
+            value={formData.last_name}
+            onChange={e => handleFieldChange('last_name', e.target.value)}
+            required
+          />
+          {validationErrors.last_name && (
+            <div className="text-xs text-red-500 mt-1">{validationErrors.last_name}</div>
+          )}
+        </div>
 
-                <div>
-                  <Label className="text-sm font-medium">Joining Date <span style={{color:'#FF0000'}}>*</span></Label>
-                  <Input
-                    type="date"
-                    value={formData.joining_date}
-                    onChange={(e) => handleFieldChange('joining_date', e.target.value)}
-                    onBlur={e => setValidationErrors(prev => ({ ...prev, ...validateField('joining_date', e.target.value) }))}
-                    className={`mt-1 ${validationErrors.joining_date ? 'border-[#FF0000]' : ''}`}
-                    min={new Date().toISOString().split('T')[0]} // Today's date - no past dates allowed
-                    max={(() => {
-                      const thirtyDaysFromNow = new Date();
-                      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-                      return thirtyDaysFromNow.toISOString().split('T')[0];
-                    })()}
-                  />
-                  {validationErrors.joining_date && (
-                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.joining_date}</p>
-                  )}
-                </div>
+        <div>
+          <Label>Email</Label>
+          <Input
+            type="email"
+            value={formData.email}
+            onChange={e => handleFieldChange('email', e.target.value)}
+            required
+          />
+          {validationErrors.email && (
+            <div className="text-xs text-red-500 mt-1">{validationErrors.email}</div>
+          )}
+        </div>
 
-                <div>
-                  <Label className="text-sm font-medium">Roles <span style={{color:'#FF0000'}}>*</span></Label>
-                  {editMode ? (
-                    <div className="mt-1 p-3 bg-gray-50 border rounded-md">
-                      <div className="flex flex-wrap gap-1">
-                        {formData.roles.map((role) => (
-                          <Badge key={role} variant="secondary" className="text-xs">
-                            {role}
-                          </Badge>
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">Roles cannot be changed when editing</p>
-                    </div>
-                  ) : (
-                    <div className="mt-1">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={`w-full flex justify-between items-center text-left font-normal ${
-                              formData.roles.length === 0 ? 'text-muted-foreground' : ''
-                            } ${validationErrors.roles ? 'border-[#FF0000]' : ''}`}
-                            style={{width: '100%'}}
-                          >
-                            <span className="flex flex-wrap gap-1 w-full">
-                              {formData.roles.length === 0
-                                ? 'Select roles...'
-                                : <>{formData.roles.slice(0, 2).map((role) => (
-                                    <Badge key={role} variant="secondary" className="text-xs">{role}</Badge>
-                                  ))}
-                                  {formData.roles.length > 2 && (
-                                    <Badge variant="outline" className="text-xs">+{formData.roles.length - 2} more</Badge>
-                                  )}
-                                </>}
-                            </span>
-                            <span className="flex flex-1 justify-end">
-                              <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                            </span>
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0" align="start">
-                          <div className="p-2 w-full" style={{width: '100%', minWidth: '100%', maxWidth: '100%'}}>
-                            <p className="text-sm font-medium mb-2 w-full" style={{width: '100%'}}>Select roles:</p>
-                            {roles.length === 0 ? (
-                              <p className="text-sm text-gray-500 p-2">No roles available</p>
-                            ) : (
-                              <div className="space-y-1 max-h-48 overflow-y-auto">
-                                {roles.map((role) => (
-                                  <div 
-                                    key={role} 
-                                    className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                    onClick={() => {
-                                      const isSelected = formData.roles.includes(role);
-                                      const updatedRoles = isSelected
-                                        ? formData.roles.filter((r) => r !== role)
-                                        : [...formData.roles, role];
-                                      setFormData({ ...formData, roles: updatedRoles });
-                                      // Clear roles validation error if at least one role is selected
-                                      if (updatedRoles.length > 0 && validationErrors.roles) {
-                                        setValidationErrors(prev => {
-                                          const updated = { ...prev };
-                                          delete updated.roles;
-                                          return updated;
-                                        });
-                                      }
-                                    }}
-                                  >
-                                    <span className={`text-lg ${
-                                      formData.roles.includes(role) 
-                                        ? 'text-green-600' 
-                                        : 'text-transparent'
-                                    }`}>
-                                      ✓
-                                    </span>
-                                    <Label
-                                      className="text-sm font-normal cursor-pointer flex-1"
-                                    >
-                                      {role}
-                                    </Label>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                     
-                      {formData.roles.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-xs text-gray-500 mb-1">Selected roles:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {formData.roles.map((role) => (
-                              <Badge
-                                key={role}
-                                variant="secondary"
-                                className="text-xs flex items-center gap-1"
-                              >
-                                {role}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const updatedRoles = formData.roles.filter((r) => r !== role);
-                                    setFormData({ ...formData, roles: updatedRoles });
-                                  }}
-                                  className="hover:bg-gray-300 rounded-full p-0.5"
-                                >
-                                  ×
-                                </button>
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {validationErrors.roles && (
-                    <p style={{color:'#FF0000',fontSize:12}} className="mt-1">{validationErrors.roles}</p>
-                  )}
-                </div>
+        <div>
+          <Label>Mobile</Label>
+          <Input
+            value={formData.mobile}
+            onChange={e => handleFieldChange('mobile', e.target.value)}
+            required
+          />
+          {validationErrors.mobile && (
+            <div className="text-xs text-red-500 mt-1">{validationErrors.mobile}</div>
+          )}
+        </div>
 
-                {/* <div>
-                <Label className="text-sm font-medium">Department</Label>
-                <Input
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  placeholder="Enter department"
-                  className="mt-1"
-                />
-              </div> */}
+        <div className="col-span-2">
+          <Label>Address</Label>
+          <Input
+            value={formData.address}
+            onChange={e => handleFieldChange('address', e.target.value)}
+            required
+          />
+          {validationErrors.address && (
+            <div className="text-xs text-red-500 mt-1">{validationErrors.address}</div>
+          )}
+        </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" onClick={() => setDialogOpen(false)} className="flex-1">
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleAdd} 
-                    className="flex-1"
-                    disabled={Object.keys(validationErrors).length > 0 || !formData.first_name || !formData.last_name || !formData.email || !formData.mobile || !formData.joining_date || !formData.roles.length}
-                  >
-                    {editMode ? 'Update Employee' : 'Submit'}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+        <div>
+          <Label>Joining Date</Label>
+          <Input
+            type="date"
+            value={formData.joining_date}
+            onChange={e => handleFieldChange('joining_date', e.target.value)}
+            required
+          />
+          {validationErrors.joining_date && (
+            <div className="text-xs text-red-500 mt-1">{validationErrors.joining_date}</div>
+          )}
+        </div>
+
+        <div>
+          <Label>Roles</Label>
+          <Select
+            value={formData.roles[0] ?? ''}
+            onValueChange={(value) => setFormData({ ...formData, roles: [value] })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            <SelectContent>
+              {roles.map(role => (
+                <SelectItem key={role} value={role}>{role}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {validationErrors.roles && (
+            <div className="text-xs text-red-500 mt-1">{validationErrors.roles}</div>
+          )}
         </div>
       </div>
 
-      <div className="grid md:grid-cols-4 gap-6 mb-6">
+      <div className="flex justify-end gap-2 mt-6">
+        <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+          Cancel
+        </Button>
+        <Button type="submit">
+          {editMode ? 'Update Employee' : 'Add Employee'}
+        </Button>
+      </div>
+    </form>
+  </DialogContent>
+</Dialog>
+
+        </div>
+      </div>
+
+      {/* <div className="grid md:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
             <p className="text-gray-600 text-sm mb-1">Total Employees</p>
@@ -2105,7 +1983,7 @@ export function EmployeesPage() {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       <div className="space-y-6">
         {/* Role Selection Dropdown and Manage Roles Button */}
@@ -2156,7 +2034,7 @@ export function EmployeesPage() {
               );
               
               if (selectedRole) {
-                const roleEmployees = getEmployeesByRole(selectedRole);
+                const roleEmployees = getEmployeesByRole(selectedRole ?? "");
                 return (
                   <EmployeeTable 
                     employees={roleEmployees} 
@@ -2178,6 +2056,30 @@ export function EmployeesPage() {
           )}
         </div>
       </div>
+
+      {/* Employee Details Dialog */}
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Employee Details</DialogTitle>
+          </DialogHeader>
+          {selectedEmployee ? (
+            <div className="space-y-3">
+              <div className="flex flex-col gap-1">
+                <span className="font-semibold text-lg text-gray-900">{selectedEmployee.first_name} {selectedEmployee.last_name}</span>
+                <span className="text-sm text-gray-600">{selectedEmployee.email}</span>
+                <span className="text-sm text-gray-600">Mobile: {selectedEmployee.mobile}</span>
+                <span className="text-sm text-gray-600">Role: {Array.isArray(selectedEmployee.roles) ? selectedEmployee.roles.join(', ') : selectedEmployee.role}</span>
+                <span className="text-sm text-gray-600">Joining Date: {selectedEmployee.joining_date ? new Date(selectedEmployee.joining_date).toLocaleDateString() : 'N/A'}</span>
+                <span className="text-sm text-gray-600">Status: {selectedEmployee.status}</span>
+                <span className="text-sm text-gray-600">Address: {selectedEmployee.address}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-gray-500">No employee selected.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

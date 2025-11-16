@@ -22,7 +22,7 @@ import { MapSection } from "./MapSection";
 import { toast } from 'sonner';
 // import { API_BASE_URL } from './ip';
 
-const API_BASE_URL = import.meta.env.API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
 interface ContactPageProps {
@@ -91,6 +91,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
 
       console.log('🚀 Submitting contact form:', payload);
       console.log('📡 API Endpoint:', `${API_BASE_URL}/api/contacts`);
+
 
       const response = await fetch(`${API_BASE_URL}/api/contacts`, {
         method: 'POST',

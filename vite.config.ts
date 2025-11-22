@@ -57,5 +57,6 @@
     server: {
       port: 3000,
       open: true,
+      allowedHosts: ['solarhutsolutions.in', 'www.solarhutsolutions.in'],
     },
   });

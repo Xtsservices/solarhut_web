@@ -1,6 +1,6 @@
 import { Button } from '../ui/button';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { CheckCircle, Sun, Shield, Award, Facebook, Twitter, Instagram, Linkedin, Youtube, Phone, ArrowUp, Share2, X } from 'lucide-react';
+import { CheckCircle, Sun, Shield, Award, Facebook, X, Instagram, Linkedin, Youtube, Phone, ArrowUp, Share2 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { Badge } from '../ui/badge';
 import { useState, useEffect } from 'react';
@@ -38,11 +38,33 @@ export function Hero({ onNavigate }: HeroProps) {
   ];
 
   const socialLinks = [
-    { icon: Facebook, color: "#1877F2", href: "https://facebook.com" },
-    { icon: Twitter, color: "#000000", href: "https://x.com/SOLAR_HUT-Twitter " },
-    { icon: Instagram, color: "#e4409aff", href: "https://www.instagram.com/solarhutsolutions?igsh=MW1icG1yeGoycWV3Mg%3D%3D&utm_source=qr" },
-    { icon: Linkedin, color: "#0A66C2", href: "https://www.linkedin.com/company/solar-hut-solutions " },
-    { icon: Youtube, color: "#FF0000", href: "#https://www.youtube.com/@SOLARHUT-q7o " }
+    { icon: Facebook, color: "#1877F2", href: "https://www.facebook.com/profile.php?id=61583439000135#" },
+    {
+      icon: (props: any) => (
+        <img
+          src="https://pbs.twimg.com/profile_images/1683364393323577345/uUWH_TiG_400x400.jpg"
+          alt="X Profile"
+          style={{ width: '20px', height: '20px', borderRadius: '50%' }}
+          {...props}
+        />
+      ),
+      color: "#000000",
+      href: "https://x.com/SOLAR_HUT"
+    },
+    {
+      icon: (props: any) => (
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png"
+          alt="Instagram Profile"
+          style={{ width: '60px', height: '40px', borderRadius: '50%' }}
+          {...props}
+        />
+      ),
+      color: undefined,
+      href: "https://www.instagram.com/solarhutsolutions?igsh=MW1icG1yeGoycWV3Mg&utm_source=qr"
+    },
+    { icon: Linkedin, color: "#0A66C2", href: "https://www.linkedin.com/company/solar-hut-solutions" },
+    { icon: Youtube, color: "#FF0000", href: "https://www.youtube.com/@SOLARHUT-q7o" }
   ];
 
   const contactLinks = [

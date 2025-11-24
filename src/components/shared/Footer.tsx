@@ -4,7 +4,7 @@ import {
   Mail, 
   Facebook,
   Youtube, 
-  Twitter, 
+  X, 
   Instagram, 
   Linkedin 
 } from "lucide-react";
@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import logoImage from '../../assets/SolarHutLOGO1.png';
 // @ts-ignore: Vite/Figma virtual asset provided at build time
 import logoImage1 from '../../assets/MetadevLogo.png';
+import XLogo from '../../assets/X.png';
 
 
 
@@ -61,11 +62,11 @@ export function Footer({ onNavigate }: FooterProps) {
   };
 
   const socialLinks = [
-    { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
-    { icon: Twitter, href: "https://x.com/SOLAR_HUT-Twitter ", label: "Twitter" },
-    { icon: Instagram, href: "https://www.instagram.com/solarhutsolutions?igsh=MW1icG1yeGoycWV3Mg%3D%3D&utm_source=qr", label: "Instagram" },
+    { icon: Facebook, href: "https://www.facebook.com/profile.php?id=61583439000135#", label: "Facebook" },
+    { icon: (props: React.ComponentProps<'img'>) => <img src={XLogo} alt="X" className="w-6 h-6" {...props} />, href: "https://x.com/SOLAR_HUT", label: "X" },
+    { icon: Instagram, href: "https://www.instagram.com/solarhutsolutions?igsh=MW1icG1yeGoycWV3Mg&utm_source=qr", label: "Instagram" },
     { icon: Linkedin, href: "https://www.linkedin.com/company/solar-hut-solutions", label: "LinkedIn" },
-    { icon: Youtube, href: "https://www.youtube.com/@SOLARHUT-q7o ", label: "YouTube" }
+    { icon: Youtube, href: "https://www.youtube.com/@SOLARHUT-q7o", label: "YouTube" }
   ];
 
   return (

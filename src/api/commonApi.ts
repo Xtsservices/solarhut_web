@@ -1,8 +1,8 @@
 // api.ts
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-
+const RAW_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // Base API URL
-const API_BASE_URL = "http://172.16.4.132:3200/api";
+const API_BASE_URL = `${RAW_API_BASE_URL}/api`;
 
 // const API_BASE_URL = "http://172.16.4.120:3100/api";
 

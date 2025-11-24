@@ -1,6 +1,6 @@
 // Centralized API utility for all backend calls
 export async function fetchPackages(token?: string) {
-  const res = await fetch('http://172.16.4.132:3200/api/packages', {
+  const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/packages`, {
     headers: {
       'Authorization': token ? `Bearer ${token}` : '',
     },

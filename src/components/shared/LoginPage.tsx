@@ -119,8 +119,8 @@ export default function LoginPage({ onLogin }: { onLogin: (mobile: string, otp: 
                 className="h-24 sm:h-24 w-auto object-contain"
               />
             </div>
-            <h1 className="text-gray-900 mb-2">Portal Login</h1>
-            <p className="text-gray-600">{otpSent ? 'Enter OTP sent to your mobile' : 'Login with mobile number'}</p>
+            <h1 className="text-gray-900 mb-2">Login</h1>
+            <p className="text-gray-600">{otpSent ? 'Enter OTP sent to your mobile' : ''}</p>
           </div>
 
           {!otpSent ? (

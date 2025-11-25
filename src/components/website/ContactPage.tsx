@@ -62,17 +62,31 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
 
   // Validation Functions
   const validateName = (name: string): string | undefined => {
-    if (!name.trim()) return 'Full name is required';
-    if (name.trim().length < 2) return 'Name must be at least 2 characters';
-    return undefined;
-  };
+  if (!name.trim()) return "Full name is required";
+
+  if (name.trim().length < 2)
+    return "Name must be at least 2 characters";
+
+  // ❌ Block numbers & special characters
+  const nameRegex = /^[A-Za-z ]+$/;
+  if (!nameRegex.test(name.trim()))
+    return "Name can contain only letters and spaces";
+
+  return undefined;
+};
 
   const validateEmail = (email: string): string | undefined => {
-    if (!email) return 'Email is required';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return 'Please enter a valid email address';
-    return undefined;
-  };
+  if (!email.trim()) return "Email is required";
+
+  // Accept ONLY real domain endings (com, in, net, org, co, etc.)
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in|co|net|org|edu|gov|biz|info|io|ai|tech|app)$/i;
+
+  if (!emailRegex.test(email)) {
+    return "Please enter a valid email address";
+  }
+
+  return undefined;
+};
 
   const validatePhone = (phone: string): string | undefined => {
     if (!phone) return 'Phone number is required';
@@ -462,9 +476,9 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                             if (errors.name) setErrors({ ...errors, name: validateName(e.target.value) });
                           }}
                           placeholder="Enter your full name"
-                          className={errors.name ? 'border-red-500' : ''}
+                          className={`mt-2 ${errors.name ? "border-red-500" : ""}`}
                         />
-                        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                        {errors.name && <p className="text-red-600 text-xs mt-1" style={{ color: '#dc2626' }}>{errors.name}</p>}
                       </div>
                       <div>
                         <Label htmlFor="phone">Phone Number *</Label>
@@ -476,10 +490,10 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                             setFormData({ ...formData, phone: e.target.value });
                             if (errors.phone) setErrors({ ...errors, phone: validatePhone(e.target.value) });
                           }}
-                          placeholder="+91 XXXXX XXXXX"
-                          className={errors.phone ? 'border-red-500' : ''}
+                          placeholder="Enter your 10-digit mobile number"
+                          className={`mt-2 ${errors.phone ? "border-red-500" : ""}`}
                         />
-                        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                        {errors.phone && <p className="text-red-600 text-xs mt-1" style={{ color: '#dc2626' }}>{errors.phone}</p>}
                       </div>
                     </div>
                     
@@ -493,10 +507,10 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                           setFormData({ ...formData, email: e.target.value });
                           if (errors.email) setErrors({ ...errors, email: validateEmail(e.target.value) });
                         }}
-                        placeholder="your.email@example.com"
-                        className={errors.email ? 'border-red-500' : ''}
+                        placeholder="Enter your email address"
+                        className={`mt-2 ${errors.email ? "border-red-500" : ""}`}
                       />
-                      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                      {errors.email && <p className="text-red-600 text-xs mt-1" style={{ color: '#dc2626' }}>{errors.email}</p>}
                     </div>
 
                     <div>
@@ -508,15 +522,15 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                           if (errors.position) setErrors({ ...errors, position: undefined });
                         }}
                       >
-                        <SelectTrigger className={errors.position ? 'border-red-500' : ''}>
-                          <SelectValue placeholder="Select purpose" />
+                        <SelectTrigger className={`mt-2 ${errors.position ? "border-red-500" : ""}`}>
+                          <SelectValue placeholder="Select purpose of contact" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Job Opportunity">Job Opportunity</SelectItem>
                           <SelectItem value="Supplier Partnership">Supplier Partnership</SelectItem>
                         </SelectContent>
                       </Select>
-                      {errors.position && <p className="text-red-500 text-xs mt-1">{errors.position}</p>}
+                      {errors.position && <p className="text-red-600 text-xs mt-1" style={{ color: '#dc2626' }}>{errors.position}</p>}
                     </div>
 
                     <div>
@@ -528,11 +542,11 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
                           setFormData({ ...formData, message: e.target.value });
                           if (errors.message) setErrors({ ...errors, message: validateMessage(e.target.value) });
                         }}
-                        placeholder="Tell us about your experience, skills, and why you'd be a great fit..."
-                        className={`resize-vertical ${errors.message ? 'border-red-500' : ''}`}
+                        placeholder="Briefly describe your experience or query (min 10 characters)"
+                        className={`mt-2 resize-vertical ${errors.message ? "border-red-500" : ""}`}
                         rows={4}
                       />
-                      {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
+                      {errors.message && <p className="text-red-600 text-xs mt-1" style={{ color: '#dc2626' }}>{errors.message}</p>}
                     </div>
 
                     <Button 

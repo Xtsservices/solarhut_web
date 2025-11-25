@@ -222,6 +222,7 @@ console.log("loginuser", user);
                 <Route path="/packages" element={<PackagesPage />} />
                 <Route path="/payments" element={<PaymentsPage />} />
                 <Route path="/job-requests" element={<JobRequestsPage />} />
+                <Route path="/contacts" element={<JobRequestsPage />} />
                 <Route path="/work-progress" element={<WorkProgressPage />} />
                 <Route path="/masters" element={<MastersPage />} />
                 <Route path="/locations" element={<LocationsPage />} />

@@ -466,10 +466,25 @@ export const createCountry = async (
   data: CreateCountryRequest,
   cancelToken?: CancelToken
 ): Promise<ApiResponse<Country>> => {
-  return makeRequest(
-    () => api.post<CreateCountryResponse>('/api/countries/create', data, { cancelToken }),
-    'Country added successfully!'
-  );
+  try {
+    const response = await api.post<CreateCountryResponse>('/api/countries/create', data, { cancelToken });
+    return {
+      ok: response.data.success,
+      data: response.data.data,
+      error: response.data.success ? null : response.data.message,
+    };
+  } catch (error: any) {
+    console.error('💥 createCountry error:', error);
+    let errorMessage = 'Failed to create country';
+    if (error.response?.data?.message) errorMessage = error.response.data.message;
+    else if (error.message) errorMessage = error.message;
+    toast.error(errorMessage);
+    return {
+      ok: false,
+      data: null,
+      error: errorMessage,
+    };
+  }
 };
 
 export const deleteCountry = async (

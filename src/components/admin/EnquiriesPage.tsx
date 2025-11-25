@@ -450,8 +450,8 @@ export function EnquiriesPage() {
   };
 
   const filteredEnquiries = enquiries.filter((enquiry: any) => {
-    // Only show leads assigned to current user
-    if (enquiry.assigned_to !== userId) return false;
+    // Admin should see all leads, not just assigned ones
+    // Remove the assigned_to filter for admin view
 
     const name = getFullName(enquiry);
     const phone = enquiry.mobile || enquiry.phone || enquiry.contact || '';

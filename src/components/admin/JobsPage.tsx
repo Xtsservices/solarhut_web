@@ -41,9 +41,6 @@ import { apiGet, apiPost } from "../../api/commonApi";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// -------------------------------------------------
-// Types
-// -------------------------------------------------
 type Job = {
   id: number;
   customer: {
@@ -109,9 +106,6 @@ interface JobStats {
   completion_rate: number;
 }
 
-// -------------------------------------------------
-// Component
-// -------------------------------------------------
 export function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -625,15 +619,7 @@ const fetchJobs = async (page = currentPage) => {
               <Plus className="h-4 w-4 mr-2" /> Add Job
             </Button>
           </DialogTrigger>
-          <DialogContent
-            style={{
-              width: "75vw",
-              maxWidth: "75vw",
-              minWidth: "75vw",
-              maxHeight: "90vh",
-              overflowY: "auto",
-              margin: "0 auto",
-            }}
+          <DialogContent className="w-[95vw] max-w-[95vw] sm:w-[85vw] sm:max-w-[85vw] md:w-[75vw] md:max-w-[75vw] lg:w-[70vw] lg:max-w-[70vw] max-h-[90vh] overflow-y-auto"
           >
             <DialogHeader>
               <DialogTitle className="text-xl">Create New Job</DialogTitle>
@@ -644,9 +630,9 @@ const fetchJobs = async (page = currentPage) => {
 
             <div className="space-y-6 py-4">
               {/* Customer Section */}
-              <div className="space-y-4 p-5 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-lg text-gray-800">Customer Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-4 p-3 sm:p-5 border rounded-lg bg-gray-50">
+                <h3 className="font-semibold text-base sm:text-lg text-gray-800">Customer Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div>
                     <Label>
                       First Name <span className="text-red-500">*</span>
@@ -756,9 +742,9 @@ const fetchJobs = async (page = currentPage) => {
               </div>
 
               {/* Location Section */}
-              <div className="space-y-4 p-5 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-lg text-gray-800">Location Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-4 p-3 sm:p-5 border rounded-lg bg-gray-50">
+                <h3 className="font-semibold text-base sm:text-lg text-gray-800">Location Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div>
                     <Label>Location Type</Label>
                     <Select
@@ -928,9 +914,9 @@ const fetchJobs = async (page = currentPage) => {
               </div>
 
               {/* Job Details */}
-              <div className="space-y-4 p-5 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-lg text-gray-800">Job Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-4 p-3 sm:p-5 border rounded-lg bg-gray-50">
+                <h3 className="font-semibold text-base sm:text-lg text-gray-800">Job Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div>
                     <Label>Service Type</Label>
                     <Select
@@ -1021,7 +1007,7 @@ const fetchJobs = async (page = currentPage) => {
                       <p className="text-red-500 text-xs mt-1">{validationErrors.scheduled_date}</p>
                     )}
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="sm:col-span-2 lg:col-span-2">
                     <Label>
                       Description <span className="text-red-500">*</span>
                     </Label>
@@ -1036,7 +1022,7 @@ const fetchJobs = async (page = currentPage) => {
                       <p className="text-red-500 text-xs mt-1">{validationErrors.job_description}</p>
                     )}
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="sm:col-span-2 lg:col-span-2">
                     <Label>Special Instructions</Label>
                     <Textarea
                       placeholder="e.g., Customer prefers morning slot"
@@ -1066,15 +1052,7 @@ const fetchJobs = async (page = currentPage) => {
 
       {/* Assign Employee Modal */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent
-          style={{
-            width: "45vw",
-            maxWidth: "45vw",
-            minWidth: "45vw",
-            maxHeight: "90vh",
-            overflowY: "auto",
-            margin: "0 auto",
-          }}
+        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-[80vw] sm:max-w-[80vw] md:w-[60vw] md:max-w-[60vw] lg:w-[45vw] lg:max-w-[45vw] max-h-[90vh] overflow-y-auto"
         >
           <DialogHeader>
             <DialogTitle>Assign Job to Employee</DialogTitle>
@@ -1121,23 +1099,23 @@ const fetchJobs = async (page = currentPage) => {
       </Dialog>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-gray-600">Total Jobs</p>
-            <p className="text-2xl font-bold">{stats?.total_jobs || 0}</p>
+          <CardContent className="p-4 sm:p-6 text-center sm:text-left">
+            <p className="text-xs sm:text-sm text-gray-600">Total Jobs</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats?.total_jobs || 0}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-gray-600">Active Jobs</p>
-            <p className="text-2xl font-bold">{stats?.active_jobs || 0}</p>
+          <CardContent className="p-4 sm:p-6 text-center sm:text-left">
+            <p className="text-xs sm:text-sm text-gray-600">Active Jobs</p>
+            <p className="text-xl sm:text-2xl font-bold text-blue-600">{stats?.active_jobs || 0}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-gray-600">Closed Jobs</p>
-            <p className="text-2xl font-bold">{stats?.closed_jobs || 0}</p>
+          <CardContent className="p-4 sm:p-6 text-center sm:text-left">
+            <p className="text-xs sm:text-sm text-gray-600">Closed Jobs</p>
+            <p className="text-xl sm:text-2xl font-bold text-green-600">{stats?.closed_jobs || 0}</p>
           </CardContent>
         </Card>
       </div>
@@ -1147,12 +1125,114 @@ const fetchJobs = async (page = currentPage) => {
         <CardHeader>
           <CardTitle>All Jobs</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-6">
           {isLoading ? (
             <div className="text-center py-8">Loading jobs...</div>
           ) : (
             <>
-              <Table>
+              {/* Mobile Card List View */}
+              <div className="block md:hidden">
+                {jobs.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 px-4">
+                    No jobs found
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-200">
+                    {jobs.map((job) => (
+                      <div key={job.id} className="p-4 hover:bg-gray-50 transition-colors">
+                        {/* Job Header */}
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-bold text-blue-600">#{job.id}</span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-sm text-gray-900">
+                                {job.customer.first_name} {job.customer.last_name}
+                              </p>
+                              <p className="text-xs text-gray-500">{job.customer.mobile}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end space-y-1">
+                            {getStatusBadge(job.status)}
+                            <Badge
+                              variant={
+                                job.job_priority === "High"
+                                  ? "destructive"
+                                  : job.job_priority === "Medium"
+                                  ? "secondary"
+                                  : "outline"
+                              }
+                              className="text-xs"
+                            >
+                              {job.job_priority}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {/* Job Details */}
+                        <div className="space-y-2 mb-3">
+                          <div className="flex justify-between">
+                            <div>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">Service</p>
+                              <p className="text-sm font-medium text-gray-900">{job.solar_service}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">Cost</p>
+                              <p className="text-sm font-bold text-green-600">
+                                ₹{job.estimated_cost?.toLocaleString("en-IN") || "-"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between">
+                            <div>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
+                              <p className="text-sm text-gray-900">{job.location.city}, {job.location.pincode}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">Date</p>
+                              <p className="text-sm text-gray-900">
+                                {new Date(job.scheduled_date).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between">
+                            <div>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">Package</p>
+                              <p className="text-sm text-gray-900">{job.package_name || '-'}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">Capacity</p>
+                              <p className="text-sm text-gray-900">{job.capacity || '-'}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        {job.status === "Created" && (
+                          <div className="pt-3 border-t border-gray-100">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openAssignModal(job.id)}
+                              className="w-full text-xs h-8"
+                            >
+                              <UserCheck className="h-3 w-3 mr-2" />
+                              Assign to Employee
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
@@ -1234,16 +1314,17 @@ const fetchJobs = async (page = currentPage) => {
                   )}
                 </TableBody>
               </Table>
+              </div>
 
              {/* PAGINATION */}
 {totalJobs > jobsPerPage && (
-  <div className="flex items-center justify-between mt-4">
-    <p className="text-sm text-gray-500">
+  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-4 sm:px-0">
+    <p className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
       Showing {(currentPage - 1) * jobsPerPage + 1} to{" "}
       {Math.min(currentPage * jobsPerPage, totalJobs)} of {totalJobs}
     </p>
 
-    <div className="flex gap-1">
+    <div className="flex gap-1 flex-wrap justify-center">
       <Button
         variant="outline"
         size="sm"

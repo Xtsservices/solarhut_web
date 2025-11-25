@@ -89,81 +89,95 @@ export function PaymentsPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-gray-900 mb-2">Payments</h1>
-        <p className="text-gray-600">Track and manage payment status</p>
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">Payments</h1>
+        <p className="text-sm sm:text-base text-gray-600">Track and manage payment status</p>
       </div>
 
       
-      <div className="grid md:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-6">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm mb-1">Total Paid</p>
-                <p className="text-gray-900">₹{(totalPaid / 100000).toFixed(2)}L</p>
+                <p className="text-gray-600 text-xs sm:text-sm mb-1">Total Paid</p>
+                <p className="text-lg sm:text-xl text-gray-900">₹{(totalPaid / 100000).toFixed(2)}L</p>
               </div>
-              <div className="h-12 w-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-green-50 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm mb-1">Total Pending</p>
-                <p className="text-gray-900">₹{(totalPending / 100000).toFixed(2)}L</p>
+                <p className="text-gray-600 text-xs sm:text-sm mb-1">Total Pending</p>
+                <p className="text-lg sm:text-xl text-gray-900">₹{(totalPending / 100000).toFixed(2)}L</p>
               </div>
-              <div className="h-12 w-12 bg-orange-50 rounded-lg flex items-center justify-center">
-                <Clock className="h-6 w-6 text-orange-600" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-orange-50 rounded-lg flex items-center justify-center">
+                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <p className="text-gray-600 text-sm mb-1">Paid Count</p>
-            <p className="text-gray-900">
-              {payments.filter((p) => p.paymentStatus === 'paid').length}
-            </p>
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-xs sm:text-sm mb-1">Paid Count</p>
+                <p className="text-lg sm:text-xl text-gray-900">
+                  {payments.filter((p) => p.paymentStatus === 'paid').length}
+                </p>
+              </div>
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-green-50 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <p className="text-gray-600 text-sm mb-1">Pending Count</p>
-            <p className="text-gray-900">
-              {payments.filter((p) => p.paymentStatus === 'pending').length}
-            </p>
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-xs sm:text-sm mb-1">Pending Count</p>
+                <p className="text-lg sm:text-xl text-gray-900">
+                  {payments.filter((p) => p.paymentStatus === 'pending').length}
+                </p>
+              </div>
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-orange-50 rounded-lg flex items-center justify-center">
+                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       
-      <div className="mb-6">
-        <div className="flex items-end gap-4 justify-end">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 sm:gap-4 sm:justify-end">
           
-          <div className="flex-none w-64">
+          <div className="w-full sm:flex-none sm:w-64">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search by ID, name, mobile..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-sm sm:text-base"
               />
             </div>
           </div>
 
           
-          <div className="flex-none w-48">
+          <div className="w-full sm:flex-none sm:w-48">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm sm:text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -177,63 +191,123 @@ export function PaymentsPage() {
       </div>
 
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment Records ({filteredPayments.length})</CardTitle>
+      {/* Desktop Table */}
+      <Card className="hidden lg:block">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Payment Records ({filteredPayments.length})</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Enquiry ID</TableHead>
-                <TableHead>Client Name</TableHead>
-                <TableHead>Mobile</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Work Date</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPayments.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell>{payment.id}</TableCell>
-                  <TableCell>{payment.fullName}</TableCell>
-                  <TableCell>{payment.mobile}</TableCell>
-                  <TableCell>
-                    ₹{payment.quotationAmount?.toLocaleString()}
-                  </TableCell>
-                  <TableCell>{getPaymentBadge(payment.paymentStatus)}</TableCell>
-                  <TableCell>
-                    {payment.workDate
-                      ? new Date(payment.workDate).toLocaleDateString()
-                      : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleViewPayment(payment)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+        <CardContent className="p-0 sm:p-4">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs sm:text-sm">Enquiry ID</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Client Name</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Mobile</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Amount</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Work Date</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredPayments.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell className="text-xs sm:text-sm">{payment.id}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">{payment.fullName}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">{payment.mobile}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">
+                      ₹{payment.quotationAmount?.toLocaleString()}
+                    </TableCell>
+                    <TableCell>{getPaymentBadge(payment.paymentStatus)}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">
+                      {payment.workDate
+                        ? new Date(payment.workDate).toLocaleDateString()
+                        : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleViewPayment(payment)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
+      {/* Mobile Cards */}
+      <div className="lg:hidden space-y-3">
+        <div className="mb-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Payment Records ({filteredPayments.length})</h2>
+        </div>
+        {filteredPayments.map((payment) => (
+          <Card key={payment.id}>
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{payment.fullName}</p>
+                    <p className="text-xs text-gray-500">ID: {payment.id}</p>
+                  </div>
+                  {getPaymentBadge(payment.paymentStatus)}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <p className="text-gray-500 mb-1">Mobile</p>
+                    <p className="text-gray-900">{payment.mobile}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 mb-1">Amount</p>
+                    <p className="text-gray-900 font-medium">₹{payment.quotationAmount?.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 mb-1">Work Date</p>
+                    <p className="text-gray-900">
+                      {payment.workDate
+                        ? new Date(payment.workDate).toLocaleDateString()
+                        : 'Not scheduled'}
+                    </p>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewPayment(payment)}
+                      className="text-xs"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      View
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {filteredPayments.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-gray-500">No payments found matching your criteria.</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
       
       <Dialog open={viewDialogOpen} onOpenChange={handleDialogClose}>
-  <DialogContent
-    className="w-full max-w-[95vw] sm:max-w-lg md:max-w-xl lg:max-w-2xl h-[90vh] max-h-[90vh] overflow-y-auto p-2 sm:p-4 rounded-xl"
-    style={{ boxSizing: 'border-box' }}
-  >
-          <DialogHeader>
-            <DialogTitle>Payment Details</DialogTitle>
-            <DialogDescription>Complete information about the payment</DialogDescription>
+        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-[90vw] sm:max-w-2xl h-[90vh] max-h-[90vh] overflow-y-auto p-3 sm:p-6">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-lg sm:text-xl">Payment Details</DialogTitle>
+            <DialogDescription className="text-sm sm:text-base">Complete information about the payment</DialogDescription>
           </DialogHeader>
 
           {selectedPayment && (
@@ -304,47 +378,47 @@ export function PaymentsPage() {
 
               
               <div>
-                <h3 className="text-gray-900 mb-4">Customer Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Customer Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <Label className="text-gray-600">Enquiry ID</Label>
-                    <p className="text-gray-900 mt-1">{selectedPayment.id}</p>
+                    <Label className="text-xs sm:text-sm text-gray-600">Enquiry ID</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.id}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Full Name</Label>
-                    <p className="text-gray-900 mt-1">{selectedPayment.fullName}</p>
+                    <Label className="text-xs sm:text-sm text-gray-600">Full Name</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.fullName}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Mobile Number</Label>
-                    <p className="text-gray-900 mt-1">{selectedPayment.mobile}</p>
+                    <Label className="text-xs sm:text-sm text-gray-600">Mobile Number</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.mobile}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Email</Label>
-                    <p className="text-gray-900 mt-1">{selectedPayment.email}</p>
+                    <Label className="text-xs sm:text-sm text-gray-600">Email</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.email}</p>
                   </div>
-                  <div className="col-span-2">
-                    <Label className="text-gray-600">Address</Label>
-                    <p className="text-gray-900 mt-1">{selectedPayment.address}</p>
+                  <div className="sm:col-span-2">
+                    <Label className="text-xs sm:text-sm text-gray-600">Address</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.address}</p>
                   </div>
                 </div>
               </div>
 
               
               <div>
-                <h3 className="text-gray-900 mb-4">Payment Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Payment Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <Label className="text-gray-600">Quotation Amount</Label>
+                    <Label className="text-xs sm:text-sm text-gray-600">Quotation Amount</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <IndianRupee className="h-4 w-4 text-gray-600" />
-                      <p className="text-gray-900">
+                      <p className="text-sm sm:text-base text-gray-900 font-medium">
                         {selectedPayment.quotationAmount?.toLocaleString()}
                       </p>
                     </div>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Payment Status</Label>
-                    <p className="text-gray-900 mt-1 capitalize">
+                    <Label className="text-xs sm:text-sm text-gray-600">Payment Status</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1 capitalize">
                       {selectedPayment.paymentStatus || 'Pending'}
                     </p>
                   </div>
@@ -353,11 +427,11 @@ export function PaymentsPage() {
 
               
               <div>
-                <h3 className="text-gray-900 mb-4">Work Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Work Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <Label className="text-gray-600">Work Date</Label>
-                    <p className="text-gray-900 mt-1">
+                    <Label className="text-xs sm:text-sm text-gray-600">Work Date</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">
                       {selectedPayment.workDate
                         ? new Date(selectedPayment.workDate).toLocaleDateString('en-IN', {
                             day: 'numeric',
@@ -368,23 +442,23 @@ export function PaymentsPage() {
                     </p>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Work Time</Label>
-                    <p className="text-gray-900 mt-1">
+                    <Label className="text-xs sm:text-sm text-gray-600">Work Time</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">
                       {selectedPayment.workTime || 'Not scheduled'}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Status</Label>
-                    <p className="text-gray-900 mt-1 capitalize">{selectedPayment.status}</p>
+                    <Label className="text-xs sm:text-sm text-gray-600">Status</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1 capitalize">{selectedPayment.status}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Type</Label>
-                    <p className="text-gray-900 mt-1">{selectedPayment.installationType}</p>
+                    <Label className="text-xs sm:text-sm text-gray-600">Type</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.installationType}</p>
                   </div>
                   {selectedPayment.remarks && (
-                    <div className="col-span-2">
-                      <Label className="text-gray-600">Remarks</Label>
-                      <p className="text-gray-900 mt-1">{selectedPayment.remarks}</p>
+                    <div className="sm:col-span-2">
+                      <Label className="text-xs sm:text-sm text-gray-600">Remarks</Label>
+                      <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.remarks}</p>
                     </div>
                   )}
                 </div>

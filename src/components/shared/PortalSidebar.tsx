@@ -37,9 +37,6 @@ interface PortalSidebarProps {
   onMobileClose?: () => void;
 }
 
-
-
-
 const adminMenuItems: MenuItem[] = [
   { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'Leads', label: 'Leads', icon: FileText },
@@ -49,26 +46,27 @@ const adminMenuItems: MenuItem[] = [
   { id: 'Contacts', label: 'Contacts', icon: Handshake },
   { id: 'Work_Progress', label: 'Work Progress', icon: TrendingUp },
   { id: 'Masters', label: 'Masters', icon: Shield },
+   { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
   { id: 'Locations', label: 'Locations', icon: MapPin },
+  { id: 'Jobs', label: 'Jobs', icon: Briefcase },
   { id: 'Notifications', label: 'Notifications', icon: Bell },
   { id: 'Settings', label: 'Settings', icon: Settings },
   { id: 'Profile', label: 'Profile', icon: User },
-  { id: 'Jobs', label: 'Jobs', icon: Briefcase },
-  { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
+ 
 ];
 
 const salesMenuItems: MenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'assigned-enquiries', label: 'Assigned Enquiries', icon: FileText },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'Assigned Enquiries', label: 'Assigned Enquiries', icon: FileText },
+  { id: 'Notifications', label: 'Notifications', icon: Bell },
+  { id: 'Profile', label: 'Profile', icon: User },
 ];
 
 const fieldMenuItems: MenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'assigned-jobs', label: 'Assigned Jobs', icon: ClipboardCheck },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'Assigned Jobs', label: 'Assigned Jobs', icon: ClipboardCheck },
+  { id: 'Notifications', label: 'Notifications', icon: Bell },
+  { id: 'Profile', label: 'Profile', icon: User },
 ];
 
 export function PortalSidebar({ 
@@ -82,19 +80,11 @@ export function PortalSidebar({
   console.log('Current User in Sidebar:', user);
   const permissions = user?.permissions || [];
   let menuItems = [];
-  console.log("permissions",permissions)
-  if (role === 'admin' && permissions?.length>0) {
+  if (role === 'admin') {
 
-    // const allowedFeatures = permissions?.map((p: any) => (p || '')?.toLowerCase())
-    // console.log("allowedFeatures",allowedFeatures)
-    // menuItems = adminMenuItems?.filter(item => permissions?.includes(item.id.toLowerCase()));
-    const allowedFeatures = permissions.map(p => p.feature_name);
-
-menuItems = adminMenuItems.filter(item =>
-  allowedFeatures.includes(item.id) || allowedFeatures.includes(item.label)
-);
-
-
+    const allowedFeatures = permissions.map((p: any) => (p || '').toLowerCase());
+    menuItems = adminMenuItems.filter(item => allowedFeatures.includes(item.id.toLowerCase()));
+     
   } else if (role === 'sales') {
     menuItems = salesMenuItems;
   } else {
@@ -128,7 +118,19 @@ menuItems = adminMenuItems.filter(item =>
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => handleNavigate(item.id === 'masters' ? 'masters' : item.id)}
+                  onClick={() => {
+                    if (item.id === 'Leads') {
+                      handleNavigate('enquiries');
+                    } else if (item.id === 'masters') {
+                      handleNavigate('masters');
+                    } else if (item.id === 'Contacts') {
+                      handleNavigate('contacts');
+                    } else if (item.id === 'Work_Progress') {
+                      handleNavigate('work-progress');
+                    } else {
+                      handleNavigate(item.id);
+                    }
+                  }}
                   className={cn(
                     'w-full flex items-center gap-2 sm:gap-3 px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-colors',
                     isActive

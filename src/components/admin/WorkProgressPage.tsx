@@ -50,24 +50,24 @@ export function WorkProgressPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-gray-900 mb-2">Work Progress</h1>
+    <div className="p-4 md:p-8">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Work Progress</h1>
         <p className="text-gray-600">Track complete workflow from enquiry to completion</p>
       </div>
 
       {/* Search */}
       <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="max-w-md">
-            <Label>Search by ID or Name</Label>
-            <div className="relative">
+        <CardContent className="p-4 md:p-6">
+          <div className="w-full max-w-md">
+            <Label className="text-sm font-medium">Search by ID or Name</Label>
+            <div className="relative mt-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 w-full"
               />
             </div>
           </div>
@@ -78,32 +78,89 @@ export function WorkProgressPage() {
       <div className="space-y-4">
         {filteredData.map((item) => (
           <Card key={item.id}>
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="space-y-4">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-900">{item.id}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-semibold text-gray-900">{item.id}</span>
                       {getStatusBadge(item.status)}
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {item.fullName} • {item.mobile}
+                    <p className="text-sm text-gray-600 truncate">
+                      {item.fullName}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {item.mobile}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left sm:text-right flex-shrink-0">
                     <p className="text-sm text-gray-600">System Size</p>
-                    <p className="text-gray-900">{item.kv}</p>
+                    <p className="font-semibold text-gray-900">{item.kv}</p>
                   </div>
                 </div>
 
                 {/* Timeline */}
                 <div className="relative">
-                  <div className="flex items-center gap-2">
+                  {/* Mobile Timeline - Vertical */}
+                  <div className="block md:hidden space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-3 h-3 rounded-full bg-blue-500 mt-2"></div>
+                      <div className="flex-1">
+                        <div className={`p-3 rounded-lg ${getStatusColor(item.status)}`}>
+                          <p className="text-sm font-medium">Enquiry Received</p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {item.salesPersonId && (
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-3 h-3 rounded-full bg-orange-500 mt-2"></div>
+                        <div className="flex-1">
+                          <div className={`p-3 rounded-lg ${getStatusColor(item.status)}`}>
+                            <p className="text-sm font-medium">Sales Assigned</p>
+                            <p className="text-xs text-gray-600 mt-1">{item.salesPersonName}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {item.fieldExecutiveId && (
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-3 h-3 rounded-full bg-purple-500 mt-2"></div>
+                        <div className="flex-1">
+                          <div className={`p-3 rounded-lg ${getStatusColor(item.status)}`}>
+                            <p className="text-sm font-medium">Field Assigned</p>
+                            <p className="text-xs text-gray-600 mt-1">{item.fieldExecutiveName}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {item.status === 'completed' && (
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-3 h-3 rounded-full bg-green-500 mt-2"></div>
+                        <div className="flex-1">
+                          <div className="p-3 rounded-lg bg-green-200">
+                            <p className="text-sm font-medium">Completed</p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              {item.paymentStatus === 'paid' ? 'Paid' : 'Pending Payment'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Desktop Timeline - Horizontal */}
+                  <div className="hidden md:flex items-center gap-2">
                     {/* Enquiry */}
                     <div className="flex-1">
                       <div className={`p-3 rounded-lg ${getStatusColor(item.status)}`}>
-                        <p className="text-sm">Enquiry Received</p>
+                        <p className="text-sm font-medium">Enquiry Received</p>
                         <p className="text-xs text-gray-600 mt-1">
                           {new Date(item.createdAt).toLocaleDateString()}
                         </p>
@@ -119,8 +176,8 @@ export function WorkProgressPage() {
                           item.salesPersonId ? getStatusColor(item.status) : 'bg-gray-100'
                         }`}
                       >
-                        <p className="text-sm">Sales Assigned</p>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-sm font-medium">Sales Assigned</p>
+                        <p className="text-xs text-gray-600 mt-1 truncate">
                           {item.salesPersonName}
                         </p>
                       </div>
@@ -135,8 +192,8 @@ export function WorkProgressPage() {
                           item.fieldExecutiveId ? getStatusColor(item.status) : 'bg-gray-100'
                         }`}
                       >
-                        <p className="text-sm">Field Assigned</p>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-sm font-medium">Field Assigned</p>
+                        <p className="text-xs text-gray-600 mt-1 truncate">
                           {item.fieldExecutiveName}
                         </p>
                       </div>
@@ -151,7 +208,7 @@ export function WorkProgressPage() {
                           item.status === 'completed' ? 'bg-green-200' : 'bg-gray-100'
                         }`}
                       >
-                        <p className="text-sm">Completed</p>
+                        <p className="text-sm font-medium">Completed</p>
                         <p className="text-xs text-gray-600 mt-1">
                           {item.status === 'completed'
                             ? item.paymentStatus === 'paid'
@@ -165,36 +222,41 @@ export function WorkProgressPage() {
                 </div>
 
                 {/* Additional Info */}
-                {item.quotationAmount && (
-                  <div className="pt-4 border-t flex items-center justify-between text-sm">
-                    <div>
-                      <span className="text-gray-600">Quotation: </span>
-                      <span className="text-gray-900">
-                        ₹{item.quotationAmount.toLocaleString()}
-                      </span>
+                {(item.quotationAmount || item.workDate || item.paymentStatus) && (
+                  <div className="pt-4 border-t">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                      {item.quotationAmount && (
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                          <span className="text-gray-600 font-medium">Quotation:</span>
+                          <span className="text-gray-900 font-semibold">
+                            ₹{item.quotationAmount.toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                      {item.workDate && (
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                          <span className="text-gray-600 font-medium">Work Date:</span>
+                          <span className="text-gray-900">
+                            {new Date(item.workDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      {item.paymentStatus && (
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                          <span className="text-gray-600 font-medium">Payment:</span>
+                          <Badge
+                            variant="outline"
+                            className={
+                              item.paymentStatus === 'paid'
+                                ? 'bg-green-50 text-green-700 border-green-200'
+                                : 'bg-orange-50 text-orange-700 border-orange-200'
+                            }
+                          >
+                            {item.paymentStatus}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
-                    {item.workDate && (
-                      <div>
-                        <span className="text-gray-600">Work Date: </span>
-                        <span className="text-gray-900">
-                          {new Date(item.workDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
-                    {item.paymentStatus && (
-                      <div>
-                        <span className="text-gray-600">Payment: </span>
-                        <Badge
-                          className={
-                            item.paymentStatus === 'paid'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-orange-100 text-orange-700'
-                          }
-                        >
-                          {item.paymentStatus}
-                        </Badge>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

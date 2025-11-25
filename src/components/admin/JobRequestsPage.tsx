@@ -534,53 +534,55 @@ export function JobRequestsPage() {
             <CardHeader>
               <CardTitle>Job Partnership Requests</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Mobile</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedJobRequests.map((request: any) => (
-                    <TableRow key={request.id || request.contact_id}>
-                      <TableCell>{request.id || request.contact_id || 'N/A'}</TableCell>
-                      <TableCell>{getFullName(request)}</TableCell>
-                      <TableCell>{getContactNumber(request)}</TableCell>
-                      <TableCell>{getEmail(request)}</TableCell>
-                      <TableCell>{getStatusBadge(request.status || 'new')}</TableCell>
-                      <TableCell>{getCreatedDate(request)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={async () => {
-                                  const contactId = request.id || request.contact_id;
-                                  if (contactId) {
-                                    // Fetch detailed contact info using individual API
-                                    const detailedContact = await fetchContactById(contactId.toString());
-                                    if (detailedContact?.success && detailedContact.data) {
-                                      setSelectedRequest(detailedContact.data);
+            <CardContent className="p-0 sm:p-6">
+              {/* Desktop Table Layout */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Mobile</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedJobRequests.map((request: any) => (
+                      <TableRow key={request.id || request.contact_id}>
+                        <TableCell>{request.id || request.contact_id || 'N/A'}</TableCell>
+                        <TableCell>{getFullName(request)}</TableCell>
+                        <TableCell>{getContactNumber(request)}</TableCell>
+                        <TableCell>{getEmail(request)}</TableCell>
+                        <TableCell>{getStatusBadge(request.status || 'new')}</TableCell>
+                        <TableCell>{getCreatedDate(request)}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={async () => {
+                                    const contactId = request.id || request.contact_id;
+                                    if (contactId) {
+                                      // Fetch detailed contact info using individual API
+                                      const detailedContact = await fetchContactById(contactId.toString());
+                                      if (detailedContact?.success && detailedContact.data) {
+                                        setSelectedRequest(detailedContact.data);
+                                      } else {
+                                        setSelectedRequest(request);
+                                      }
                                     } else {
                                       setSelectedRequest(request);
                                     }
-                                  } else {
-                                    setSelectedRequest(request);
-                                  }
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
                             <DialogContent className="max-w-2xl">
                               <DialogHeader>
                                 <DialogTitle>Job Request Details</DialogTitle>
@@ -657,12 +659,142 @@ export function JobRequestsPage() {
                       </TableCell>
                     </TableRow>
                   )}
-                </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card Layout */}
+              <div className="md:hidden space-y-3 p-4">
+                {paginatedJobRequests.map((request: any) => (
+                  <Card key={request.id || request.contact_id} className="overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-500 mb-1">ID: {request.id || request.contact_id || 'N/A'}</p>
+                            <p className="font-medium text-sm truncate">{getFullName(request)}</p>
+                            <p className="text-xs text-gray-600 truncate">{getEmail(request)}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            {getStatusBadge(request.status || 'new')}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t">
+                          <div>
+                            <p className="text-gray-500 mb-1">Mobile</p>
+                            <p className="text-gray-900 font-medium">{getContactNumber(request)}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 mb-1">Date</p>
+                            <p className="text-gray-900 font-medium">{getCreatedDate(request)}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-2 border-t">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 text-xs"
+                                onClick={async () => {
+                                  const contactId = request.id || request.contact_id;
+                                  if (contactId) {
+                                    const detailedContact = await fetchContactById(contactId.toString());
+                                    if (detailedContact?.success && detailedContact.data) {
+                                      setSelectedRequest(detailedContact.data);
+                                    } else {
+                                      setSelectedRequest(request);
+                                    }
+                                  } else {
+                                    setSelectedRequest(request);
+                                  }
+                                }}
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Job Request Details</DialogTitle>
+                                <DialogDescription>View detailed information about this job request</DialogDescription>
+                              </DialogHeader>
+                              {selectedRequest && (
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                      <Label>Request ID</Label>
+                                      <p className="text-gray-900">{selectedRequest.id || selectedRequest.contact_id || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <Label>Status</Label>
+                                      <div>{getStatusBadge(selectedRequest.status || 'new')}</div>
+                                    </div>
+                                    <div>
+                                      <Label>Company/Name</Label>
+                                      <p className="text-gray-900">{getFullName(selectedRequest)}</p>
+                                    </div>
+                                    <div>
+                                      <Label>Mobile</Label>
+                                      <p className="text-gray-900">{getContactNumber(selectedRequest)}</p>
+                                    </div>
+                                    <div>
+                                      <Label>Email</Label>
+                                      <p className="text-gray-900">{getEmail(selectedRequest)}</p>
+                                    </div>
+                                    <div className="col-span-full">
+                                      <Label>Experience & Requirements</Label>
+                                      <p className="text-gray-900">{getMessage(selectedRequest)}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="outline" className="flex-1 text-xs text-red-600">
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                Delete
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete this job request.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteJobRequest(request.id || request.contact_id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                {jobRequests.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No job requests found. Check your API connection or contact data.</p>
+                  </div>
+                )}
+              </div>
               
-              {/* Job Requests Pagination Controls */}
+              {/* Desktop Pagination Controls */}
               {jobRequests.length > itemsPerPage && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+                <div className="hidden md:flex items-center justify-between gap-4 p-4 border-t">
                   <div className="text-sm text-gray-700">
                     Showing {jobStartIndex + 1} to {Math.min(jobEndIndex, jobRequests.length)} of {jobRequests.length} job requests
                   </div>

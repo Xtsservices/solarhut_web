@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { TabsList, TabsTrigger } from '../ui/tabs';
 import { Checkbox } from '../ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { UserPlus, Edit, Trash2, Eye, Settings, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Eye, Settings, ChevronDown, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { AssignedEnquiries } from '../sales/AssignedEnquiries';
 import { AssignedJobs } from '../field/AssignedJobs';
@@ -288,6 +288,8 @@ export function EmployeesPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('All');
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<{id: string, name: string, role: string} | null>(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -843,73 +845,154 @@ export function EmployeesPage() {
             </div>
           )}
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Mobile</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Joining Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentEmployees.length === 0 ? (
+        <CardContent className="p-0 sm:p-6">
+          {/* Desktop Table Layout */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                    <p>No employees found for the selected criteria.</p>
-                  </TableCell>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Mobile</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Joining Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ) : (
-                currentEmployees.map((emp) => (
-                  <TableRow key={emp.id}>
-                    <TableCell>{emp.id}</TableCell>
-                    <TableCell>{emp.first_name} {emp.last_name}</TableCell>
-                    <TableCell>{emp.email}</TableCell>
-                    <TableCell>{emp.mobile}</TableCell>
-                    <TableCell>
-                      <Badge className="bg-blue-100 text-blue-700">{emp.role}</Badge>
-                    </TableCell>
-                    <TableCell>{emp.joining_date ? new Date(emp.joining_date).toLocaleDateString() : 'N/A'}</TableCell>
-                    <TableCell>{getStatusBadge(emp.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleView(emp, emp.role)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(emp, emp.role)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(emp.id, emp.role)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {currentEmployees.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      <p>No employees found for the selected criteria.</p>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  currentEmployees.map((emp) => (
+                    <TableRow key={emp.id}>
+                      <TableCell>{emp.id}</TableCell>
+                      <TableCell>{emp.first_name} {emp.last_name}</TableCell>
+                      <TableCell>{emp.email}</TableCell>
+                      <TableCell>{emp.mobile}</TableCell>
+                      <TableCell>
+                        <Badge className="bg-blue-100 text-blue-700">{emp.role}</Badge>
+                      </TableCell>
+                      <TableCell>{emp.joining_date ? new Date(emp.joining_date).toLocaleDateString('en-GB') : 'N/A'}</TableCell>
+                      <TableCell>{getStatusBadge(emp.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleView(emp, emp.role)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(emp, emp.role)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(emp.id, emp.role)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Card Layout */}
+          <div className="md:hidden space-y-3 p-4">
+            {currentEmployees.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No employees found for the selected criteria.</p>
+              </div>
+            ) : (
+              currentEmployees.map((emp) => (
+                <Card key={emp.id} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-500 mb-1">ID: {emp.id}</p>
+                          <p className="font-medium text-sm truncate">
+                            {emp.first_name} {emp.last_name}
+                          </p>
+                          <p className="text-xs text-gray-600 truncate">{emp.email}</p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <Badge className="bg-blue-100 text-blue-700 text-xs">
+                            {emp.role}
+                          </Badge>
+                          <div className="mt-1">
+                            {getStatusBadge(emp.status)}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t">
+                        <div>
+                          <p className="text-gray-500 mb-1">Mobile</p>
+                          <p className="text-gray-900 font-medium">{emp.mobile}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 mb-1">Joining Date</p>
+                          <p className="text-gray-900 font-medium">
+                            {emp.joining_date ? new Date(emp.joining_date).toLocaleDateString('en-GB') : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-2 border-t">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-xs"
+                          onClick={() => handleView(emp, emp.role)}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-xs"
+                          onClick={() => handleEdit(emp, emp.role)}
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-xs text-red-600"
+                          onClick={() => handleDelete(emp.id, emp.role)}
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
           
-          {/* Pagination Controls */}
+          {/* Desktop Pagination Controls */}
           {tableEmployees.length > employeesPerPage && (
-            <div className="flex items-center justify-between mt-4">
+            <div className="hidden md:flex items-center justify-between mt-4 px-6 pb-4">
               <div className="text-sm text-gray-500">
                 Showing {startIndex + 1} to {Math.min(endIndex, tableEmployees.length)} of {tableEmployees.length} entries
               </div>
@@ -955,6 +1038,44 @@ export function EmployeesPage() {
                 </Button>
               </div>
             </div>
+          )}
+
+          {/* Mobile Pagination Controls */}
+          {tableEmployees.length > employeesPerPage && (
+            <Card className="md:hidden mx-4 mb-4">
+              <CardContent className="p-3">
+                <div className="flex flex-col items-center space-y-3">
+                  <div className="text-xs text-gray-600 text-center">
+                    Showing {startIndex + 1} to {Math.min(endIndex, tableEmployees.length)} of {tableEmployees.length} entries
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePrevious}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Prev
+                    </Button>
+                    
+                    <span className="text-sm font-medium px-3">
+                      {currentPage} / {totalPages}
+                    </span>
+                    
+                    <Button
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleNext}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </CardContent>
       </Card>
@@ -1193,8 +1314,6 @@ export function EmployeesPage() {
             email: formData.email,
             mobile: formData.mobile,
             address: formData.address,
-            roles: formData.roles,
-            joining_date: formData.joining_date,
           }),
         });
 
@@ -1245,7 +1364,8 @@ export function EmployeesPage() {
 
         if (!response.ok) {
           const errorData = await response.text();
-          console.error('❌ Employee creation failed:', errorData);
+          console.log('❌ Employee creation failed:', errorData);
+          toast.error(errorData?.errors || 'Failed to create employee. Please check your input.');
           
           try {
             const parsedError = JSON.parse(errorData);
@@ -1311,9 +1431,21 @@ export function EmployeesPage() {
     }
   };
 
-  const handleDelete = async (id: string, role: string) => {
+  const handleDelete = (id: string, role: string) => {
+    // Find the employee to get their name for the confirmation dialog
+    const employee = employees.find(emp => emp.id === id);
+    const employeeName = employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown Employee';
+    
+    // Set employee data for confirmation dialog
+    setEmployeeToDelete({ id, name: employeeName, role });
+    setDeleteConfirmDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!employeeToDelete) return;
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/api/employees/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/employees/${employeeToDelete.id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -1326,7 +1458,7 @@ export function EmployeesPage() {
 
       if (result.success) {
         // Remove from local state
-        setEmployees(employees.filter((emp) => emp.id !== id));
+        setEmployees(employees.filter((emp) => emp.id !== employeeToDelete.id));
         toast.success('Employee removed successfully');
       } else {
         toast.error(result.message || 'Failed to delete employee');
@@ -1334,7 +1466,16 @@ export function EmployeesPage() {
     } catch (error) {
       console.error('Error deleting employee:', error);
       toast.error('Failed to delete employee. Please try again.');
+    } finally {
+      // Close confirmation dialog and reset state
+      setDeleteConfirmDialogOpen(false);
+      setEmployeeToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmDialogOpen(false);
+    setEmployeeToDelete(null);
   };
 
   const handleDialogChange = (open: boolean) => {
@@ -1746,7 +1887,7 @@ export function EmployeesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-gray-900 mb-1 sm:mb-2">Employees</h1>
-          <p className="text-gray-600 text-sm sm:text-base">Manage your sales and field teams</p>
+          <p className="text-gray-600 text-sm sm:text-base">Manage your employees</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           {/* Create Role Button */}
@@ -1805,8 +1946,7 @@ export function EmployeesPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Create New Employee Button */}
-         {/* Create New Employee Button */}
+          
         {/* Create New Employee Button */}
 <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
   <DialogTrigger asChild>
@@ -1832,7 +1972,7 @@ export function EmployeesPage() {
     </Button>
   </DialogTrigger>
 
-  <DialogContent className="p-6 max-w-lg max-h-[90vh] overflow-y-auto">
+  <DialogContent className="p-6 max-w-lg max-h-[90vh] ">
     <DialogHeader>
       <DialogTitle>{editMode ? 'Edit Employee' : 'Add Employee'}</DialogTitle>
     </DialogHeader>
@@ -1842,106 +1982,131 @@ export function EmployeesPage() {
         e.preventDefault();
         handleAdd();
       }}
-      className="space-y-4"
+      className="space-y-5"
     >
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-6">
         <div>
-          <Label>First Name</Label>
+          <Label className="mb-2 block text-black">
+            First Name <span style={{ color: '#FF0000' }}>*</span>
+          </Label>
           <Input
             value={formData.first_name}
             onChange={e => handleFieldChange('first_name', e.target.value)}
             required
+            className="mb-1 border-black ring-0 text-black"
+            placeholder="Enter first name"
           />
           {validationErrors.first_name && (
-            <div className="text-xs text-red-500 mt-1">{validationErrors.first_name}</div>
+            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.first_name}</div>
           )}
         </div>
 
         <div>
-          <Label>Last Name</Label>
+          <Label className="mb-2 block text-black">
+            Last Name <span style={{ color: '#FF0000' }}>*</span>
+          </Label>
           <Input
             value={formData.last_name}
             onChange={e => handleFieldChange('last_name', e.target.value)}
             required
+            className="mb-1 border-black ring-0 text-black"
+            placeholder="Enter last name"
           />
           {validationErrors.last_name && (
-            <div className="text-xs text-red-500 mt-1">{validationErrors.last_name}</div>
+            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.last_name}</div>
           )}
         </div>
 
         <div>
-          <Label>Email</Label>
+          <Label className="mb-2 block text-black">
+            Email <span style={{ color: '#FF0000' }}>*</span>
+          </Label>
           <Input
             type="email"
             value={formData.email}
             onChange={e => handleFieldChange('email', e.target.value)}
             required
+            className="mb-1 border-black ring-0 text-black"
+            placeholder="Enter email address"
           />
           {validationErrors.email && (
-            <div className="text-xs text-red-500 mt-1">{validationErrors.email}</div>
+            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.email}</div>
           )}
         </div>
 
         <div>
-          <Label>Mobile</Label>
+          <Label className="mb-2 block text-black">
+            Mobile <span style={{ color: '#FF0000' }}>*</span>
+          </Label>
           <Input
             value={formData.mobile}
             onChange={e => handleFieldChange('mobile', e.target.value)}
             required
+            className="mb-1 border-black ring-0 text-black"
+            placeholder="Enter mobile number"
           />
           {validationErrors.mobile && (
-            <div className="text-xs text-red-500 mt-1">{validationErrors.mobile}</div>
+            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.mobile}</div>
           )}
         </div>
 
         <div className="col-span-2">
-          <Label>Address</Label>
+          <Label className="mb-2 block text-black">
+            Address <span style={{ color: '#FF0000' }}>*</span>
+          </Label>
           <Input
             value={formData.address}
             onChange={e => handleFieldChange('address', e.target.value)}
             required
+            className="mb-1 border-black ring-0 text-black"
+            placeholder="Enter address"
           />
           {validationErrors.address && (
-            <div className="text-xs text-red-500 mt-1">{validationErrors.address}</div>
+            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.address}</div>
           )}
         </div>
 
         <div>
-          <Label>Joining Date</Label>
+          <Label className="mb-2 block text-black">
+            Joining Date <span style={{ color: '#FF0000' }}>*</span>
+          </Label>
           <Input
             type="date"
             value={formData.joining_date}
             onChange={e => handleFieldChange('joining_date', e.target.value)}
             required
+            className="mb-1 border-black ring-0 text-black"
+            placeholder="Select joining date"
           />
           {validationErrors.joining_date && (
-            <div className="text-xs text-red-500 mt-1">{validationErrors.joining_date}</div>
+            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.joining_date}</div>
           )}
         </div>
 
         <div>
-          <Label>Roles</Label>
+          <Label className="mb-2 block text-black">
+            Roles <span style={{ color: '#FF0000' }}>*</span>
+          </Label>
           <Select
             value={formData.roles[0] ?? ''}
             onValueChange={(value) => setFormData({ ...formData, roles: [value] })}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select role" />
+            <SelectTrigger className="border-black ring-0 text-black">
+              <SelectValue placeholder="Select role" className="text-black" />
             </SelectTrigger>
             <SelectContent>
               {roles.map(role => (
-                <SelectItem key={role} value={role}>{role}</SelectItem>
+                <SelectItem key={role} value={role} className="text-black">{role}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-
           {validationErrors.roles && (
-            <div className="text-xs text-red-500 mt-1">{validationErrors.roles}</div>
+            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.roles}</div>
           )}
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 mt-6">
+      <div className="flex justify-end gap-2 mt-8">
         <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
           Cancel
         </Button>
@@ -1988,23 +2153,7 @@ export function EmployeesPage() {
       <div className="space-y-6">
         {/* Role Selection Dropdown and Manage Roles Button */}
         <div className="flex items-center gap-4">
-          <Label className="text-sm font-medium">Select View:</Label>
-          <Select value={activeTab} onValueChange={handleTabChange}>
-            <SelectTrigger className="w-64">
-              <SelectValue placeholder="Choose a view" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Employees ({employees.length})</SelectItem>
-              {getAllEmployeeRoles().map((role) => {
-                const roleEmployeeCount = getEmployeesByRole(role).length;
-                return (
-                  <SelectItem key={role} value={role.toLowerCase().replace(/\s+/g, '-')}>
-                    {role} ({roleEmployeeCount})
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+        
           
           {/* Manage Roles Button */}
           {/* <Button
@@ -2070,13 +2219,55 @@ export function EmployeesPage() {
                 <span className="text-sm text-gray-600">{selectedEmployee.email}</span>
                 <span className="text-sm text-gray-600">Mobile: {selectedEmployee.mobile}</span>
                 <span className="text-sm text-gray-600">Role: {Array.isArray(selectedEmployee.roles) ? selectedEmployee.roles.join(', ') : selectedEmployee.role}</span>
-                <span className="text-sm text-gray-600">Joining Date: {selectedEmployee.joining_date ? new Date(selectedEmployee.joining_date).toLocaleDateString() : 'N/A'}</span>
+                <span className="text-sm text-gray-600">Joining Date: {selectedEmployee.joining_date ? new Date(selectedEmployee.joining_date).toLocaleDateString('en-GB') : 'N/A'}</span>
                 <span className="text-sm text-gray-600">Status: {selectedEmployee.status}</span>
                 <span className="text-sm text-gray-600">Address: {selectedEmployee.address}</span>
               </div>
             </div>
           ) : (
             <div className="text-center text-gray-500">No employee selected.</div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmDialogOpen} onOpenChange={setDeleteConfirmDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Confirm Delete
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the employee from the system.
+            </DialogDescription>
+          </DialogHeader>
+          {employeeToDelete && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <p className="text-sm text-gray-600 mb-1">Employee to be deleted:</p>
+                <p className="font-semibold text-gray-900">{employeeToDelete.name}</p>
+                <p className="text-sm text-gray-600">Role: {employeeToDelete.role}</p>
+                <p className="text-sm text-gray-600">ID: {employeeToDelete.id}</p>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={cancelDelete}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={confirmDelete}
+                  className="flex-1"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Employee
+                </Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>

@@ -454,7 +454,7 @@ const fetchJobs = async (page = currentPage) => {
         break;
       case "scheduled_date":
         if (!value) errors.scheduled_date = "Date is required";
-        else if (new Date(value) < new Date().setHours(0, 0, 0, 0))
+        else if (new Date(value) < new Date(new Date().setHours(0, 0, 0, 0)))
           errors.scheduled_date = "Cannot be in the past";
         break;
       case "job_description":
@@ -621,24 +621,24 @@ const fetchJobs = async (page = currentPage) => {
           </DialogTrigger>
           <DialogContent className="w-[95vw] max-w-[95vw] sm:w-[85vw] sm:max-w-[85vw] md:w-[75vw] md:max-w-[75vw] lg:w-[70vw] lg:max-w-[70vw] max-h-[90vh] overflow-y-auto"
           >
-            <DialogHeader>
-              <DialogTitle className="text-xl">Create New Job</DialogTitle>
-              <DialogDescription>
+            <DialogHeader className="pb-6">
+              <DialogTitle className="text-xl mb-3">Create New Job</DialogTitle>
+              <DialogDescription className="text-base">
                 Enter complete job information including customer and location
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 py-4">
+            <div className="space-y-8 py-6">
               {/* Customer Section */}
-              <div className="space-y-4 p-3 sm:p-5 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-base sm:text-lg text-gray-800">Customer Details</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div>
-                    <Label>
-                      First Name <span className="text-red-500">*</span>
+              <div className="space-y-6 p-4 sm:p-6 border rounded-lg bg-gray-50">
+                <h3 className="font-semibold text-base sm:text-lg text-gray-800 mb-4">Customer Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      First Name <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Input
-                      placeholder="e.g., Rajesh"
+                      placeholder="Enter first name "
                       value={formData.customer.first_name}
                       onChange={(e) =>
                         handleFieldChange("customer", "first_name", e.target.value)
@@ -646,15 +646,15 @@ const fetchJobs = async (page = currentPage) => {
                       className={validationErrors.first_name ? "border-red-500" : ""}
                     />
                     {validationErrors.first_name && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.first_name}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.first_name}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>
-                      Last Name <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Last Name <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Input
-                      placeholder="e.g., Kumar"
+                      placeholder="Enter last name (e.g., Kumar)"
                       value={formData.customer.last_name}
                       onChange={(e) =>
                         handleFieldChange("customer", "last_name", e.target.value)
@@ -662,15 +662,15 @@ const fetchJobs = async (page = currentPage) => {
                       className={validationErrors.last_name ? "border-red-500" : ""}
                     />
                     {validationErrors.last_name && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.last_name}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.last_name}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>
-                      Mobile <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Mobile <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Input
-                      placeholder="e.g., 9876543210"
+                      placeholder="Enter 10-digit mobile number"
                       value={formData.customer.mobile}
                       onChange={(e) =>
                         handleFieldChange("customer", "mobile", e.target.value)
@@ -678,14 +678,14 @@ const fetchJobs = async (page = currentPage) => {
                       className={validationErrors.mobile ? "border-red-500" : ""}
                     />
                     {validationErrors.mobile && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.mobile}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.mobile}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>Email (Optional)</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Email (Optional)</Label>
                     <Input
                       type="email"
-                      placeholder="e.g., rajesh@example.com"
+                      placeholder="Enter email address"
                       value={formData.customer.email}
                       onChange={(e) =>
                         handleFieldChange("customer", "email", e.target.value)
@@ -693,12 +693,12 @@ const fetchJobs = async (page = currentPage) => {
                       className={validationErrors.email ? "border-red-500" : ""}
                     />
                     {validationErrors.email && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.email}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>
-                      Customer Type <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Customer Type <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Select
                       value={formData.customer.customer_type}
@@ -707,7 +707,7 @@ const fetchJobs = async (page = currentPage) => {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
+                        <SelectValue placeholder="Choose customer type" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Individual">Individual</SelectItem>
@@ -717,10 +717,10 @@ const fetchJobs = async (page = currentPage) => {
                     </Select>
                   </div>
                   {formData.customer.customer_type !== "Individual" && (
-                    <div>
-                      <Label>Company Name</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Company Name</Label>
                       <Input
-                        placeholder="e.g., ABC Solar Pvt Ltd"
+                        placeholder="Enter company name (e.g., ABC Solar Pvt Ltd)"
                         value={formData.customer.company_name}
                         onChange={(e) =>
                           handleFieldChange("customer", "company_name", e.target.value)
@@ -728,10 +728,10 @@ const fetchJobs = async (page = currentPage) => {
                       />
                     </div>
                   )}
-                  <div>
-                    <Label>Lead Source</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Lead Source</Label>
                     <Input
-                      placeholder="e.g., Website, Referral, Ad"
+                      placeholder="Enter lead source"
                       value={formData.customer.lead_source}
                       onChange={(e) =>
                         handleFieldChange("customer", "lead_source", e.target.value)
@@ -742,11 +742,11 @@ const fetchJobs = async (page = currentPage) => {
               </div>
 
               {/* Location Section */}
-              <div className="space-y-4 p-3 sm:p-5 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-base sm:text-lg text-gray-800">Location Details</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div>
-                    <Label>Location Type</Label>
+              <div className="space-y-6 p-4 sm:p-6 border rounded-lg bg-gray-50">
+                <h3 className="font-semibold text-base sm:text-lg text-gray-800 mb-4">Location Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Location Type</Label>
                     <Select
                       value={formData.location.location_type}
                       onValueChange={(v) =>
@@ -754,7 +754,7 @@ const fetchJobs = async (page = currentPage) => {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select location type" />
+                        <SelectValue placeholder="Choose location type" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Home">Home</SelectItem>
@@ -765,12 +765,12 @@ const fetchJobs = async (page = currentPage) => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>
-                      Address Line 1 <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Address Line 1 <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Input
-                      placeholder="e.g., Flat 101, Sunshine Apartments"
+                      placeholder="Enter complete address"
                       value={formData.location.address_line_1}
                       onChange={(e) =>
                         handleFieldChange("location", "address_line_1", e.target.value)
@@ -778,25 +778,25 @@ const fetchJobs = async (page = currentPage) => {
                       className={validationErrors.address_line_1 ? "border-red-500" : ""}
                     />
                     {validationErrors.address_line_1 && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.address_line_1}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.address_line_1}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>Address Line 2</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Address Line 2</Label>
                     <Input
-                      placeholder="e.g., Near City Mall"
+                      placeholder="Enter additional address details"
                       value={formData.location.address_line_2}
                       onChange={(e) =>
                         handleFieldChange("location", "address_line_2", e.target.value)
                       }
                     />
                   </div>
-                  <div>
-                    <Label>
-                      City <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      City <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Input
-                      placeholder="e.g., Mumbai"
+                      placeholder="Enter city name (e.g., Mumbai)"
                       value={formData.location.city}
                       onChange={(e) =>
                         handleFieldChange("location", "city", e.target.value)
@@ -804,12 +804,12 @@ const fetchJobs = async (page = currentPage) => {
                       className={validationErrors.city ? "border-red-500" : ""}
                     />
                     {validationErrors.city && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.city}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.city}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>
-                      Country <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Country <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Select
                       value={formData.location.country_id.toString()}
@@ -818,7 +818,7 @@ const fetchJobs = async (page = currentPage) => {
                       }
                     >
                       <SelectTrigger className={validationErrors.country_id ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Select country" />
+                        <SelectValue placeholder="Choose country" />
                       </SelectTrigger>
                       <SelectContent>
                         {countries.map((c) => (
@@ -829,12 +829,12 @@ const fetchJobs = async (page = currentPage) => {
                       </SelectContent>
                     </Select>
                     {validationErrors.country_id && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.country_id}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.country_id}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>
-                      State <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      State <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Select
                       value={formData.location.state_id.toString()}
@@ -844,7 +844,7 @@ const fetchJobs = async (page = currentPage) => {
                       }
                     >
                       <SelectTrigger className={validationErrors.state_id ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Select state" />
+                        <SelectValue placeholder="Choose state" />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredStates.map((s) => (
@@ -855,12 +855,12 @@ const fetchJobs = async (page = currentPage) => {
                       </SelectContent>
                     </Select>
                     {validationErrors.state_id && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.state_id}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.state_id}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>
-                      District <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      District <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Select
                       value={formData.location.district_id.toString()}
@@ -870,7 +870,7 @@ const fetchJobs = async (page = currentPage) => {
                       }
                     >
                       <SelectTrigger className={validationErrors.district_id ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Select district" />
+                        <SelectValue placeholder="Choose district" />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredDistricts.map((d) => (
@@ -881,15 +881,15 @@ const fetchJobs = async (page = currentPage) => {
                       </SelectContent>
                     </Select>
                     {validationErrors.district_id && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.district_id}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.district_id}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>
-                      Pincode <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Pincode <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Input
-                      placeholder="e.g., 400001"
+                      placeholder="Enter 6-digit pincode"
                       value={formData.location.pincode}
                       onChange={(e) =>
                         handleFieldChange("location", "pincode", e.target.value)
@@ -897,13 +897,13 @@ const fetchJobs = async (page = currentPage) => {
                       className={validationErrors.pincode ? "border-red-500" : ""}
                     />
                     {validationErrors.pincode && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.pincode}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.pincode}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>Landmark</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Landmark</Label>
                     <Input
-                      placeholder="e.g., Opposite HDFC Bank"
+                      placeholder="Enter nearby landmark"
                       value={formData.location.landmark}
                       onChange={(e) =>
                         handleFieldChange("location", "landmark", e.target.value)
@@ -914,17 +914,17 @@ const fetchJobs = async (page = currentPage) => {
               </div>
 
               {/* Job Details */}
-              <div className="space-y-4 p-3 sm:p-5 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-base sm:text-lg text-gray-800">Job Details</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div>
-                    <Label>Service Type</Label>
+              <div className="space-y-6 p-4 sm:p-6 border rounded-lg bg-gray-50">
+                <h3 className="font-semibold text-base sm:text-lg text-gray-800 mb-4">Job Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Service Type</Label>
                     <Select
                       value={formData.service_type}
                       onValueChange={(v) => handleFieldChange("", "service_type", v as any)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select service" />
+                        <SelectValue placeholder="Choose service type" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Installation">Installation</SelectItem>
@@ -933,14 +933,14 @@ const fetchJobs = async (page = currentPage) => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>Solar Service</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Solar Service</Label>
                     <Select
                       value={formData.solar_service}
                       onValueChange={(v) => handleFieldChange("", "solar_service", v)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select solar type" />
+                        <SelectValue placeholder="Choose solar service category" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Residential Solar">Residential Solar</SelectItem>
@@ -949,9 +949,9 @@ const fetchJobs = async (page = currentPage) => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>
-                      Package <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Package <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Select
                       value={formData.package_id ? String(formData.package_id) : undefined}
@@ -973,11 +973,11 @@ const fetchJobs = async (page = currentPage) => {
                       </SelectContent>
                     </Select>
                     {validationErrors.package_id && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.package_id}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.package_id}</p>
                     )}
                   </div>
-                  <div>
-                    <Label>Priority</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Priority</Label>
                     <Select
                       value={formData.job_priority}
                       onValueChange={(v) => handleFieldChange("", "job_priority", v as any)}
@@ -992,9 +992,9 @@ const fetchJobs = async (page = currentPage) => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>
-                      Scheduled Date <span className="text-red-500">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Scheduled Date <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Input
                       type="date"
@@ -1004,28 +1004,28 @@ const fetchJobs = async (page = currentPage) => {
                       className={validationErrors.scheduled_date ? "border-red-500" : ""}
                     />
                     {validationErrors.scheduled_date && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.scheduled_date}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.scheduled_date}</p>
                     )}
                   </div>
-                  <div className="sm:col-span-2 lg:col-span-2">
-                    <Label>
-                      Description <span className="text-red-500">*</span>
+                  <div className="sm:col-span-2 lg:col-span-2 space-y-2">
+                    <Label className="text-sm font-medium">
+                      Description <span className="text-red-600 font-bold">*</span>
                     </Label>
                     <Textarea
-                      placeholder="e.g., Install 5KW rooftop solar system"
+                      placeholder="Enter detailed job description"
                       value={formData.job_description}
                       rows={3}
                       onChange={(e) => handleFieldChange("", "job_description", e.target.value)}
                       className={validationErrors.job_description ? "border-red-500" : ""}
                     />
                     {validationErrors.job_description && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.job_description}</p>
+                      <p className="text-red-600 font-medium text-xs mt-1">{validationErrors.job_description}</p>
                     )}
                   </div>
-                  <div className="sm:col-span-2 lg:col-span-2">
-                    <Label>Special Instructions</Label>
+                  <div className="sm:col-span-2 lg:col-span-2 space-y-2">
+                    <Label className="text-sm font-medium">Special Instructions</Label>
                     <Textarea
-                      placeholder="e.g., Customer prefers morning slot"
+                      placeholder="Enter any special instructions or preferences"
                       value={formData.special_instructions}
                       rows={2}
                       onChange={(e) => handleFieldChange("", "special_instructions", e.target.value)}
@@ -1034,7 +1034,7 @@ const fetchJobs = async (page = currentPage) => {
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-4">
+              <div className="flex gap-4 justify-end pt-8 border-t border-gray-200">
                 <Button variant="outline" onClick={closeDialog} disabled={isSubmitting}>
                   Cancel
                 </Button>
@@ -1063,7 +1063,7 @@ const fetchJobs = async (page = currentPage) => {
           <div className="space-y-4 py-4">
             <div>
               <Label>
-                Select Employee <span className="text-red-500">*</span>
+                Select Employee <span className="text-red-600 font-bold">*</span>
               </Label>
               <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
                 <SelectTrigger>

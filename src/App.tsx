@@ -89,22 +89,62 @@ console.log("loginuser", user);
 
    const getCurrentUserData = async () => {
     try {
-
-      
       const response = await apiCurrentUserData();
       console.log("Fetching user data from API", response);
 
+      // Handle different response structures
+      let employeeData = null;
+      
+      if (response?.data) {
+        // If response has a data property, check if it's the employee or contains employee
+        const data = response.data as any;
+        if (data.employee) {
+          employeeData = data.employee;
+        } else if (data.data?.employee) {
+          employeeData = data.data.employee;
+        } else if (Array.isArray(data) && data.length > 0) {
+          employeeData = data[0]; // If it's an array, take first item
+        } else {
+          employeeData = data; // Assume the data itself is the employee
+        }
+      }
 
-      const userData = response.data || response;
-      console.log("userDatafrom app.jsx", userData.data)
+      console.log("Extracted employee data:", employeeData);
 
-      if (userData.data) {
+      if (employeeData) {
+        
+        // Check if permissions are included in employee data
+        if (!employeeData.permissions || employeeData.permissions.length === 0) {
+          console.log("No permissions in employee data, fetching user permissions separately");
+          
+          // Fetch permissions separately if not included
+          try {
+            const permissionsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/my-permissions`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+              },
+            });
+            
+            if (permissionsResponse.ok) {
+              const permissionsData = await permissionsResponse.json();
+              console.log("Fetched permissions separately:", permissionsData);
+              
+              if (permissionsData.data && Array.isArray(permissionsData.data)) {
+                employeeData.permissions = permissionsData.data;
+              }
+            }
+          } catch (permError) {
+            console.warn("Could not fetch permissions separately:", permError);
+          }
+        }
+        
+        console.log("Final employee data with permissions:", employeeData);
         dispatch({
           type: "currentUserData",
-          payload: userData.data?.employee,
+          payload: employeeData,
         });
-       
-
       }
     } catch (error) {
       console.error("Error fetching user data:", error);

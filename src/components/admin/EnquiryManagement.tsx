@@ -182,7 +182,7 @@ export function EnquiryManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-muted-foreground">KV Required</div>
+                  <div className="text-sm text-muted-foreground">KW Required</div>
                   <div>{selectedEnquiry.kv}</div>
                 </div>
                 <div>

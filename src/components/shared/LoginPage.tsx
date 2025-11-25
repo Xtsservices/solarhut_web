@@ -78,7 +78,7 @@ export default function LoginPage({ onLogin }: { onLogin: (mobile: string, otp: 
         // Token and user data are automatically stored by the API module
         // console.log('🛡️ OTP verified successfully for mobile:', result);
         // console.log('✅ Login successful:', result.data?.user);
-        const user = result?.data?.data; console.log('user data after login', user);
+        const user = result?.data?.data;
          if (user) {
           dispatch({
             type: "currentUserData",

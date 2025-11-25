@@ -192,21 +192,50 @@ export default function MastersPage() {
   };
 
   // Fetch sidebar features for Add Feature dropdown
-  const fetchSidebarFeatures = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/features/allfeatures`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) throw new Error('Failed to fetch sidebar features');
-      const result = await response.json();
-      let data = Array.isArray(result.data) ? result.data : [];
-      setSidebarFeatures(data);
-    } catch (err) {
-      toast.error('Error loading sidebar features');
-      setSidebarFeatures([]);
-    }
-  };
+  // const fetchSidebarFeatures = async () => {
+  //   const token = localStorage.getItem('authToken');
+  //   try {
+  //     const response = await fetch(`${API_BASE_URL}/api/features/allfeatures`, {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  //       },
+  //     });
+  //     if (!response.ok) throw new Error('Failed to fetch sidebar features');
+  //     const result = await response.json();
+  //     console.log('Sidebar features API response:', result);
+      
+  //     let data = [];
+  //     if (Array.isArray(result)) {
+  //       data = result;
+  //     } else if (Array.isArray(result.data)) {
+  //       data = result.data;
+  //     } else if (result.features && Array.isArray(result.features)) {
+  //       data = result.features;
+  //     }
+      
+  //     console.log('Processed sidebar features:', data);
+  //     setSidebarFeatures(data);
+  //   } catch (err) {
+  //     console.error('Error loading sidebar features:', err);
+  //     toast.error('Error loading sidebar features');
+  //     // Fallback to predefined features if API fails
+  //     setSidebarFeatures([
+  //       'Dashboard',
+  //       'Enquiries', 
+  //       'Employees',
+  //       'Packages',
+  //       'Payments',
+  //       'Contacts',
+  //       'Work_Progress',
+  //       'Masters',
+  //       'Locations',
+  //       'Jobs',
+  //       'My_Tasks'
+  //     ]);
+  //   }
+  // };
 
   // Fetch permissions from API
   const fetchPermissions = async () => {
@@ -283,8 +312,13 @@ export default function MastersPage() {
     fetchRoles();
     fetchFeatures();
     fetchPermissions();
-    fetchSidebarFeatures();
+    // fetchSidebarFeatures();
   }, []);
+
+  // Debug logging for sidebarFeatures
+  useEffect(() => {
+    console.log('SidebarFeatures state updated:', sidebarFeatures);
+  }, [sidebarFeatures]);
 
   const [isFeatureDialogOpen, setIsFeatureDialogOpen] = useState(false);
   const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
@@ -935,66 +969,64 @@ export default function MastersPage() {
                     </Select>
                   </div>
 
-                  {/* Permissions Checkboxes */}
+                  {/* Permissions Checkboxes using Input type="checkbox" */}
                   <div style={{ gridColumn: 'span 6', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <Label>Permissions</Label>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', paddingTop: '0.25rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Checkbox
+                        <Input
+                          type="checkbox"
                           id="create"
                           checked={permissionChecks.create}
-                          onCheckedChange={(checked: boolean) =>
-                            handlePermissionCheckChange('create', checked)
-                          }
+                          onChange={(e) => handlePermissionCheckChange('create', e.target.checked)}
                           disabled={!selectedRoleId || !selectedFeatureId}
+                          style={{ width: '16px', height: '16px' }}
                         />
                         <label htmlFor="create" style={{ cursor: 'pointer', userSelect: 'none' }}>
                           Create
                         </label>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Checkbox
+                        <Input
+                          type="checkbox"
                           id="read"
                           checked={permissionChecks.read}
-                          onCheckedChange={(checked: boolean) =>
-                            handlePermissionCheckChange('read', checked)
-                          }
+                          onChange={(e) => handlePermissionCheckChange('read', e.target.checked)}
                           disabled={!selectedRoleId || !selectedFeatureId}
+                          style={{ width: '16px', height: '16px' }}
                         />
                         <label htmlFor="read" style={{ cursor: 'pointer', userSelect: 'none' }}>
                           Read
                         </label>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Checkbox
+                        <Input
+                          type="checkbox"
                           id="edit"
                           checked={permissionChecks.edit}
-                          onCheckedChange={(checked: boolean) =>
-                            handlePermissionCheckChange('edit', checked)
-                          }
+                          onChange={(e) => handlePermissionCheckChange('edit', e.target.checked)}
                           disabled={!selectedRoleId || !selectedFeatureId}
+                          style={{ width: '16px', height: '16px' }}
                         />
                         <label htmlFor="edit" style={{ cursor: 'pointer', userSelect: 'none' }}>
                           Edit
                         </label>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Checkbox
+                        <Input
+                          type="checkbox"
                           id="delete"
                           checked={permissionChecks.delete}
-                          onCheckedChange={(checked: boolean) =>
-                            handlePermissionCheckChange('delete', checked)
-                          }
+                          onChange={(e) => handlePermissionCheckChange('delete', e.target.checked)}
                           disabled={!selectedRoleId || !selectedFeatureId}
+                          style={{ width: '16px', height: '16px' }}
                         />
                         <label htmlFor="delete" style={{ cursor: 'pointer', userSelect: 'none' }}>
                           Delete
                         </label>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Submit Button */}
+                  </div>  {/* Submit Button */}
                   <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <Label style={{ opacity: 0, visibility: 'hidden' }}>Action</Label>
                     <Button
@@ -1212,11 +1244,17 @@ export default function MastersPage() {
                   <SelectValue placeholder="Select Feature" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sidebarFeatures.map((feature) => (
-                    <SelectItem key={feature} value={feature}>
-                      {feature}
+                  {sidebarFeatures.length > 0 ? (
+                    sidebarFeatures.map((feature, index) => (
+                      <SelectItem key={`${feature}-${index}`} value={feature}>
+                        {feature}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>
+                      No features available
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
               {featureFormErrors.feature_name && (

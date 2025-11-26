@@ -109,13 +109,32 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
 
       case 'email':
         if (!value) return 'Email is required.';
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) return 'Enter a valid email address.';
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in|co|net|org|edu|gov|biz|info|io|ai|tech|app)$/i;
+        if (!emailRegex.test(value)) return 'Enter a valid email address (e.g., user@example.com).';
+        // Disallow consecutive dots and leading/trailing dots in local part
+        const local = value.split('@')[0] || '';
+        if (/^\.|\.$|\.\./.test(local)) return 'Email local part cannot start/end with a dot or have consecutive dots.';
         return undefined;
 
       case 'location':
         if (!value.trim()) return 'Location is required.';
         if (value.trim().length < 10) return 'Please enter full address with city & pin code.';
+        return undefined;
+
+      case 'service_type':
+        if (!value) return 'Please select service type.';
+        return undefined;
+
+      case 'solar_service':
+        if (!value) return 'Please select solar service.';
+        return undefined;
+
+      case 'capacity':
+        if (!value) return 'Please select system capacity.';
+        return undefined;
+
+      case 'property_type':
+        if (!value) return 'Please select property type.';
         return undefined;
 
       case 'message':
@@ -152,10 +171,10 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
     newErrors.email = validateField('email', enquiryData.email);
 
     // Installation
-    if (!enquiryData.solar_service) newErrors.solar_service = 'Please select solar service.';
-    if (!enquiryData.property_type) newErrors.property_type = 'Please select property type.';
-    if (!enquiryData.capacity) newErrors.capacity = 'Please select system capacity.';
-    if (!enquiryData.service_type) newErrors.service_type = 'Please select service type.';
+    newErrors.solar_service = validateField('solar_service', enquiryData.solar_service);
+    newErrors.property_type = validateField('property_type', enquiryData.property_type);
+    newErrors.capacity = validateField('capacity', enquiryData.capacity);
+    newErrors.service_type = validateField('service_type', enquiryData.service_type);
 
     // Location & Message
     newErrors.location = validateField('location', enquiryData.location);
@@ -167,75 +186,11 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate required fields
-    if (!enquiryData.first_name || !enquiryData.last_name || !enquiryData.mobile || !enquiryData.email) {
-      toast.error('Please fill all personal details.');
+    // Validate all fields and show inline errors under each field
+    if (!validateAll()) {
+      // validateAll sets `errors` state, so just return to show inline messages
       return;
     }
-
-    // Validate first name format - Allow spaces in UI, will be removed for API
-    const nameRegex = /^[A-Za-z\s]{2,50}$/;
-    if (!nameRegex.test(enquiryData.first_name.trim())) {
-      toast.error('First name must contain only alphabets and spaces, and be between 2-50 characters.');
-      return;
-    }
-
-    if (!nameRegex.test(enquiryData.last_name.trim())) {
-      toast.error('Last name must contain only alphabets and spaces, and be between 2-50 characters.');
-      return;
-    }
-
-    // Check if names without spaces meet API requirements (2-50 characters)
-    const firstNameNoSpaces = enquiryData.first_name.replace(/\s+/g, '');
-    const lastNameNoSpaces = enquiryData.last_name.replace(/\s+/g, '');
-    
-    if (firstNameNoSpaces.length < 2 || firstNameNoSpaces.length > 50) {
-      toast.error('First name (without spaces) must be between 2-50 characters.');
-      return;
-    }
-    
-    if (lastNameNoSpaces.length < 2 || lastNameNoSpaces.length > 50) {
-      toast.error('Last name (without spaces) must be between 2-50 characters.');
-      return;
-    }
-
-    // Validate mobile number format
-    const mobileRegex = /^[6-9]\d{9}$/;
-    if (!mobileRegex.test(enquiryData.mobile)) {
-      toast.error('Please enter a valid 10-digit mobile number.');
-      return;
-    }
-
-    // Improved email validation
-    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-    if (!emailRegex.test(enquiryData.email.trim())) {
-      toast.error('Please enter a valid email address (e.g., user@example.com).');
-      return;
-    }
-    // Disallow consecutive dots and leading/trailing dots in local part
-    const localPart = enquiryData.email.split('@')[0];
-    if (/^\.|\.$|\.\./.test(localPart)) {
-      toast.error('Email local part cannot start/end with a dot or have consecutive dots.');
-      return;
-    }
-
-    if (!enquiryData.service_type || !enquiryData.solar_service || !enquiryData.capacity || !enquiryData.property_type) {
-      toast.error('Please fill all installation details.');
-      return;
-    }
-
-    if (!enquiryData.location) {
-      toast.error('Please provide your location.');
-      return;
-    }
-
-    // Validate message length (API requires at least 5 characters)
-    if (enquiryData.message && enquiryData.message.trim().length < 5) {
-      toast.error('Message must be at least 5 characters long.');
-      return;
-    }
-
     setLoading(true);
 
     const capitalizeFirst = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
@@ -307,7 +262,8 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl w-full mx-4 my-6 sm:my-12 max-h-[90vh] overflow-y-auto rounded-xl">
+      <DialogContent className="max-w-2xl w-full mx-4 my-6 sm:my-12 rounded-2xl overflow-hidden">
+        <div className="max-h-[90vh] overflow-y-auto p-6 py-4">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center sm:text-left">Get Your Free Quote</DialogTitle>
         </DialogHeader>
@@ -328,11 +284,11 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                     <Input
                       value={enquiryData[field]}
                       onChange={(e) => handleInputChange(field, e.target.value)}
-                      placeholder={field === 'first_name' ? 'John or Mary Jane' : 'Doe or Van Der Berg'}
-                      className={`rounded-lg ${errors[field] ? 'border-red-500 focus:ring-red-500' : ''}`}
+                      placeholder={field === 'first_name' ? 'Enter your first name' : 'Enter your last name'}
+                      className={`mt-2 rounded-lg ${errors[field] ? 'border-red-500 focus:ring-red-500' : ''}`}
                     />
                     {errors[field] && (
-                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <p className="text-red-600 text-xs mt-1 flex items-center gap-1" style={{ color: '#dc2626' }}>
                         <AlertCircle className="w-3 h-3" /> {errors[field]}
                       </p>
                     )}
@@ -345,12 +301,12 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                     type="tel"
                     value={enquiryData.mobile}
                     onChange={(e) => handleInputChange('mobile', e.target.value)}
-                    placeholder="+91 98765 43210"
+                    placeholder="Enter your 10-digit mobile number"
                     maxLength={10}
-                    className={`rounded-lg ${errors.mobile ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    className={`mt-2 rounded-lg ${errors.mobile ? 'border-red-500 focus:ring-red-500' : ''}`}
                   />
                   {errors.mobile && (
-                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1" style={{ color: '#dc2626' }}>
                       <AlertCircle className="w-3 h-3" /> {errors.mobile}
                     </p>
                   )}
@@ -362,11 +318,11 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                     type="email"
                     value={enquiryData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="john@example.com"
-                    className={`rounded-lg ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    placeholder="Enter your email address"
+                    className={`mt-2 rounded-lg ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                   />
                   {errors.email && (
-                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1" style={{ color: '#dc2626' }}>
                       <AlertCircle className="w-3 h-3" /> {errors.email}
                     </p>
                   )}
@@ -391,7 +347,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                       setErrors(prev => ({ ...prev, solar_service: undefined, property_type: undefined, capacity: undefined }));
                     }}
                   >
-                    <SelectTrigger className={`rounded-lg ${errors.solar_service ? 'border-red-500' : ''}`}>
+                    <SelectTrigger className={`mt-2 rounded-lg ${errors.solar_service ? 'border-red-500' : ''}`}>
                       <SelectValue placeholder="Select solar service" />
                     </SelectTrigger>
                     <SelectContent>
@@ -401,7 +357,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                     </SelectContent>
                   </Select>
                   {errors.solar_service && (
-                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1" style={{ color: '#dc2626' }}>
                       <AlertCircle className="w-3 h-3" /> {errors.solar_service}
                     </p>
                   )}
@@ -414,7 +370,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                     onValueChange={(v) => handleInputChange('property_type', v)}
                     disabled={!enquiryData.solar_service}
                   >
-                    <SelectTrigger className={`rounded-lg ${errors.property_type ? 'border-red-500' : ''}`}>
+                    <SelectTrigger className={`mt-2 rounded-lg ${errors.property_type ? 'border-red-500' : ''}`}>
                       <SelectValue placeholder={!enquiryData.solar_service ? "Select solar service first" : "Select property type"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -424,7 +380,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                     </SelectContent>
                   </Select>
                   {errors.property_type && (
-                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1" style={{ color: '#dc2626' }}>
                       <AlertCircle className="w-3 h-3" /> {errors.property_type}
                     </p>
                   )}
@@ -437,7 +393,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                     onValueChange={(v) => handleInputChange('capacity', v)}
                     disabled={!enquiryData.solar_service}
                   >
-                    <SelectTrigger className={`rounded-lg ${errors.capacity ? 'border-red-500' : ''}`}>
+                    <SelectTrigger className={`mt-2 rounded-lg ${errors.capacity ? 'border-red-500' : ''}`}>
                       <SelectValue placeholder={!enquiryData.solar_service ? "Select solar service first" : "Select capacity"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -447,7 +403,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                     </SelectContent>
                   </Select>
                   {errors.capacity && (
-                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1" style={{ color: '#dc2626' }}>
                       <AlertCircle className="w-3 h-3" /> {errors.capacity}
                     </p>
                   )}
@@ -459,7 +415,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                     value={enquiryData.service_type}
                     onValueChange={(v) => handleInputChange('service_type', v)}
                   >
-                    <SelectTrigger className={`rounded-lg ${errors.service_type ? 'border-red-500' : ''}`}>
+                    <SelectTrigger className={`mt-2 rounded-lg ${errors.service_type ? 'border-red-500' : ''}`}>
                       <SelectValue placeholder="Installation or Maintenance" />
                     </SelectTrigger>
                     <SelectContent>
@@ -468,7 +424,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                     </SelectContent>
                   </Select>
                   {errors.service_type && (
-                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1" style={{ color: '#dc2626' }}>
                       <AlertCircle className="w-3 h-3" /> {errors.service_type}
                     </p>
                   )}
@@ -480,7 +436,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
             <div className="rounded-xl bg-gray-50 p-5">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <div className="w-8 h-8 bg-[#FFA500] text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
-                Location Details
+                Location Details *
               </h3>
               <Input
                 placeholder="Full address with city & pin code (min 10 chars)"
@@ -489,7 +445,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                 className={`rounded-lg ${errors.location ? 'border-red-500 focus:ring-red-500' : ''}`}
               />
               {errors.location && (
-                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <p className="text-red-600 text-xs mt-1 flex items-center gap-1" style={{ color: '#dc2626' }}>
                   <AlertCircle className="w-3 h-3" /> {errors.location}
                 </p>
               )}
@@ -509,7 +465,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
                 className={`rounded-lg ${errors.message ? 'border-red-500 focus:ring-red-500' : ''}`}
               />
               {errors.message && (
-                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <p className="text-red-600 text-xs mt-1 flex items-center gap-1" style={{ color: '#dc2626' }}>
                   <AlertCircle className="w-3 h-3" /> {errors.message}
                 </p>
               )}
@@ -525,6 +481,7 @@ export function EnquiryFormPopup({ open, onClose, onSuccess }: { open: boolean; 
             </Button>
           </div>
         </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

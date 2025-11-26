@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Switch } from '../ui/switch';
 import { Package, Plus, Edit, Trash2, RefreshCw, IndianRupee } from 'lucide-react';
 import { toast } from 'sonner';
-// import { getPackages, addPackage, updatePackage, deletePackage, resetToDefaults, type SolarPackage } from '../../lib/packagesData';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface SolarPackage {
@@ -31,6 +31,10 @@ export function PackagesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // Added for inline errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const [formData, setFormData] = useState({
     name: '',
     capacity: '',
@@ -75,10 +79,14 @@ export function PackagesPage() {
   };
 
   const handleAdd = async () => {
-    if (!formData.name || !formData.capacity || !formData.price) {
-      toast.error('Please fill all required fields');
-      return;
-    }
+    // Reset previous errors
+    setErrors({});
+
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) newErrors.name = 'Package name is required';
+    if (!formData.capacity.trim()) newErrors.capacity = 'Capacity is required';
+    if (!formData.price.trim()) newErrors.price = 'Price is required';
 
     const featuresArray = formData.features
       .split('\n')
@@ -86,7 +94,12 @@ export function PackagesPage() {
       .filter(f => f.length > 0);
 
     if (featuresArray.length === 0) {
-      toast.error('Please add at least one feature');
+      newErrors.features = 'Please add at least one feature';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('Please fix the errors below');
       return;
     }
 
@@ -144,6 +157,7 @@ export function PackagesPage() {
     setEditingId(pkg.id?.toString() ?? '');
     setEditMode(true);
     setDialogOpen(true);
+    setErrors({}); // clear errors when editing
   };
 
   const handleDelete = async (id: string | number) => {
@@ -170,7 +184,6 @@ export function PackagesPage() {
     }
   };
 
-  // Optionally implement reset using backend if available
   const handleReset = () => {
     toast.info('Reset to defaults is not available for backend API.');
   };
@@ -187,13 +200,13 @@ export function PackagesPage() {
       features: '',
       recommended: false,
     });
+    setErrors({});
     setEditMode(false);
     setEditingId(null);
   };
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Only show Active packages */}
       {(() => {
         const activePackages = packages.filter(pkg => String(pkg.status).toLowerCase() === 'active');
         return (
@@ -204,11 +217,6 @@ export function PackagesPage() {
                 <p className="text-gray-600 text-sm sm:text-base">Manage packages displayed on the website</p>
               </div>
               <div className="flex gap-2">
-                {/* <Button variant="outline" onClick={handleReset} className="gap-2">
-                  <RefreshCw className="h-4 w-4" />
-                  <span className="hidden sm:inline">Reset to Defaults</span>
-                  <span className="sm:hidden">Reset</span>
-                </Button> */}
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-[#FFA500] hover:bg-[#FF8C00] gap-2">
@@ -229,138 +237,129 @@ export function PackagesPage() {
                     <div className="space-y-3 sm:space-y-4 mt-4">
                       {/* Package Name */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div>
-                        <Label className="text-xs sm:text-sm" htmlFor="package-name">Package Name </Label>
-                        <Input
-                        id="package-name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g., Starter Home"
-                        className="mt-1 text-sm"
-                        />
-                      </div>
-                      {/* Capacity */}
-                      <div>
-                        <Label className="text-xs sm:text-sm" htmlFor="package-capacity">Capacity </Label>
-                        <Input
-                        id="package-capacity"
-                        value={formData.capacity}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (/^\d*\.?\d*$/.test(value)) {
-                          setFormData({ ...formData, capacity: value });
-                          }
-                        }}
-                        placeholder="e.g., 3"
-                        className="mt-1 text-sm"
-                        inputMode="decimal"
-                        type="text"
-                        />
-                      </div>
+                        <div>
+                          <Label className="text-xs sm:text-sm" htmlFor="package-name">Package Name </Label>
+                          <Input
+                            id="package-name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            placeholder="e.g., Starter Home"
+                            className={`mt-1 text-sm ${errors.name ? 'border-red-600' : ''}`}
+                          />
+                          {errors.name && <p className="text-red-600 text-xs mt-1">{errors.name}</p>}
+                        </div>
+                        {/* Capacity */}
+                        <div>
+                          <Label className="text-xs sm:text-sm" htmlFor="package-capacity">Capacity </Label>
+                          <Input
+                            id="package-capacity"
+                            value={formData.capacity}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^\d*\.?\d*$/.test(value)) {
+                                setFormData({ ...formData, capacity: value });
+                              }
+                            }}
+                            placeholder="e.g., 3"
+                            className={`mt-1 text-sm ${errors.capacity ? 'border-red-600' : ''}`}
+                            inputMode="decimal"
+                            type="text"
+                          />
+                          {errors.capacity && <p className="text-red-600 text-xs mt-1">{errors.capacity}</p>}
+                        </div>
                       </div>
 
                       {/* Price, Original Price, Savings */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                      <div>
-                        <Label className="text-xs sm:text-sm" htmlFor="package-price">Price (₹) </Label>
-                        <Input
-                        id="package-price"
-                        value={formData.price}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9]/g, '');
-                          setFormData({ ...formData, price: value });
-                        }}
-                        placeholder="e.g., 180000"
-                        className="mt-1 text-sm"
-                        inputMode="numeric"
-                        type="text"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs sm:text-sm" htmlFor="package-original-price">Original Price (₹)</Label>
-                        <Input
-                        id="package-original-price"
-                        value={formData.originalPrice}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9]/g, '');
-                          setFormData({ ...formData, originalPrice: value });
-                        }}
-                        placeholder="e.g., 240000"
-                        className="mt-1 text-sm"
-                        inputMode="numeric"
-                        type="text"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs sm:text-sm" htmlFor="package-savings">Savings Text</Label>
-                        <Input
-                        id="package-savings"
-                        value={formData.savings}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9]/g, '');
-                          setFormData({ ...formData, savings: value });
-                        }}
-                        placeholder="e.g., 60000"
-                        className="mt-1 text-sm"
-                        inputMode="numeric"
-                        type="text"
-                        />
-                      </div>
+                        <div>
+                          <Label className="text-xs sm:text-sm" htmlFor="package-price">Price (₹) </Label>
+                          <Input
+                            id="package-price"
+                            value={formData.price}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '');
+                              setFormData({ ...formData, price: value });
+                            }}
+                            placeholder="e.g., 180000"
+                            className={`mt-1 text-sm ${errors.price ? 'border-red-600' : ''}`}
+                            inputMode="numeric"
+                            type="text"
+                          />
+                          {errors.price && <p className="text-red-600 text-xs mt-1">{errors.price}</p>}
+                        </div>
+                        <div>
+                          <Label className="text-xs sm:text-sm" htmlFor="package-original-price">Original Price (₹)</Label>
+                          <Input
+                            id="package-original-price"
+                            value={formData.originalPrice}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '');
+                              setFormData({ ...formData, originalPrice: value });
+                            }}
+                            placeholder="e.g., 240000"
+                            className="mt-1 text-sm"
+                            inputMode="numeric"
+                            type="text"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs sm:text-sm" htmlFor="package-savings">Savings Text</Label>
+                          <Input
+                            id="package-savings"
+                            value={formData.savings}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '');
+                              setFormData({ ...formData, savings: value });
+                            }}
+                            placeholder="e.g., 60000"
+                            className="mt-1 text-sm"
+                            inputMode="numeric"
+                            type="text"
+                          />
+                        </div>
                       </div>
 
                       {/* Monthly Generation */}
                       <div>
-                      <Label className="text-xs sm:text-sm" htmlFor="package-monthly-generation">Monthly Generation</Label>
-                      <Input
-                        id="package-monthly-generation"
-                        value={formData.monthlyGeneration}
-                        onChange={(e) => setFormData({ ...formData, monthlyGeneration: e.target.value })}
-                        placeholder="e.g., 360-450 units"
-                        className="mt-1 text-sm"
-                      />
+                        <Label className="text-xs sm:text-sm" htmlFor="package-monthly-generation">Monthly Generation</Label>
+                        <Input
+                          id="package-monthly-generation"
+                          value={formData.monthlyGeneration}
+                          onChange={(e) => setFormData({ ...formData, monthlyGeneration: e.target.value })}
+                          placeholder="e.g., 360-450 units"
+                          className="mt-1 text-sm"
+                        />
                       </div>
 
                       {/* Features */}
                       <div>
-                      <Label className="text-xs sm:text-sm" htmlFor="package-features">Features</Label>
-                      <Textarea
-                        id="package-features"
-                        value={formData.features}
-                        onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                        placeholder={`12 High-efficiency solar panels\n3 kW string inverter\nNet metering setup`}
-                        rows={6}
-                        className="mt-1 text-sm font-mono"
-                      />
-                      {/* <p className="text-xs text-gray-500 mt-1">Enter each feature on a new line</p> */}
+                        <Label className="text-xs sm:text-sm" htmlFor="package-features">Features</Label>
+                        <Textarea
+                          id="package-features"
+                          value={formData.features}
+                          onChange={(e) => setFormData({ ...formData, features: e.target.value })}
+                          placeholder={`12 High-efficiency solar panels\n3 kW string inverter\nNet metering setup`}
+                          rows={6}
+                          className={`mt-1 text-sm font-mono ${errors.features ? 'border-red-600' : ''}`}
+                        />
+                        {errors.features && <p className="text-red-600 text-xs mt-1">{errors.features}</p>}
                       </div>
-
-                      {/* Recommended Switch */}
-                      {/* <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg"> */}
-                      {/* <Switch
-                        id="recommended"
-                        checked={formData.recommended}
-                        onCheckedChange={(checked: boolean) => setFormData({ ...formData, recommended: checked })}
-                      /> */}
-                      {/* <Label htmlFor="recommended" className="text-xs sm:text-sm cursor-pointer">
-                        Mark as "Most Popular" / Recommended
-                      </Label> */}
-                      {/* </div> */}
 
                       {/* Actions */}
                       <div className="flex gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        onClick={handleDialogClose}
-                        className="flex-1"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleAdd}
-                        className="flex-1 bg-[#FFA500] hover:bg-[#FF8C00]"
-                      >
-                        {editMode ? 'Update Package' : 'Add Package'}
-                      </Button>
+                        <Button
+                          variant="outline"
+                          onClick={handleDialogClose}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleAdd}
+                          className="flex-1 bg-[#FFA500] hover:bg-[#FF8C00]"
+                        >
+                          {editMode ? 'Update Package' : 'Add Package'}
+                        </Button>
                       </div>
                     </div>
                   </DialogContent>
@@ -368,6 +367,7 @@ export function PackagesPage() {
               </div>
             </div>
 
+            {/* Rest of your UI (cards, table, mobile view, empty state) remains 100% unchanged */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
               <Card>
                 <CardContent className="p-3 sm:p-4">
@@ -380,19 +380,6 @@ export function PackagesPage() {
                   </div>
                 </CardContent>
               </Card>
-              {/* <Card> */}
-                {/* <CardContent className="p-3 sm:p-4">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-[#FFA500] text-white">Popular</Badge>
-                    <div>
-                       <p className="text-xs text-gray-600">Recommended</p>
-                      <p className="text-xl sm:text-2xl text-gray-900">
-                        {activePackages.filter(p => p.recommended).length}
-                      </p> 
-                    </div>
-                  </div>
-                </CardContent> */}
-              {/* </Card> */}
             </div>
 
             <Card className="hidden md:block">

@@ -278,6 +278,28 @@ export function EnquiriesPage() {
     });
   };
 
+  // Helper function to get employee display name
+  const getEmployeeDisplayName = (emp: any) => {
+    if (!emp) return 'Employee';
+    
+    // Check if emp.name exists and is valid
+    if (typeof emp.name === 'string' && emp.name.trim().length > 0) {
+      return emp.name;
+    }
+    
+    // Try to combine first_name and last_name
+    const firstName = emp.first_name || '';
+    const lastName = emp.last_name || '';
+    const combinedName = `${firstName} ${lastName}`.trim();
+    
+    if (combinedName.length > 0) {
+      return combinedName;
+    }
+    
+    // Fallback to Employee if no name found
+    return 'Employee';
+  };
+
   // Create new employee function
   const handleCreateEmployee = async () => {
     if (!newEmployeeName.trim() || !newEmployeeEmail.trim() || !newEmployeeMobile.trim()) {
@@ -491,8 +513,11 @@ export function EnquiriesPage() {
   }, [statusFilter, serviceTypeFilter, searchTerm, dateFilter]);
 
   // Assign lead using assignleads API
-  const handleAssignTo = async () => {
-    if (!assignToEmployeeId) {
+  const handleAssignTo = async (employeeIdToAssign?: string) => {
+    // Use provided employeeId or fall back to assignToEmployeeId
+    const employeeId = employeeIdToAssign || assignToEmployeeId;
+    
+    if (!employeeId) {
       toast.error('Please select an employee');
       return;
     }
@@ -503,45 +528,151 @@ export function EnquiriesPage() {
     setIsAssigning(true);
     try {
       const enquiryId = selectedEnquiry.id || selectedEnquiry.lead_id;
-      // Get token from localStorage or context
-      const token = localStorage.getItem('authToken');
-      console.log(token,"authToken");
+      
+      // Try multiple token sources
+      let token = localStorage.getItem('authToken') || 
+                  localStorage.getItem('token') || 
+                  localStorage.getItem('accessToken') || 
+                  sessionStorage.getItem('authToken') ||
+                  sessionStorage.getItem('token');
+      
+      console.log('🔑 Token found:', token ? 'Yes' : 'No');
+      console.log('👤 Current user:', user);
+      console.log('📋 Assignment data:', {
+        leadId: enquiryId,
+        employeeId: parseInt(employeeId, 10),
+        API_URL: `${API_BASE_URL}/api/assignleads`
+      });
+
+      if (!token) {
+        toast.error('Authentication token not found. Please login again.');
+        return;
+      }
+
+      const requestHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      };
+
+      console.log('📤 Request headers:', requestHeaders);
+
+      // Prepare request body with additional user context
+      const requestBody = {
+        leadId: enquiryId,
+        employeeId: parseInt(employeeId, 10),
+        assignedBy: userId || user?.id,
+      };
+
+      console.log('📤 Request body:', requestBody);
+
       const response = await fetch(`${API_BASE_URL}/api/assignleads`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : '',
-        },
-        body: JSON.stringify({
-          leadId: enquiryId,
-          employeeId: parseInt(assignToEmployeeId, 10),
-        }),
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody),
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+
+      console.log('📡 Response status:', response.status, response.statusText);
+
+      // Handle response
+      let result;
+      try {
+        result = await response.json();
+        console.log('📊 API Response:', result);
+      } catch (parseError) {
+        console.error('❌ Failed to parse response:', parseError);
+        const responseText = await response.text();
+        console.error('📄 Raw response:', responseText);
+        throw new Error('Invalid response format from server');
       }
-      const result = await response.json();
+
+      if (!response.ok) {
+        // If forbidden with Bearer token, try alternative authentication
+        if (response.status === 403 && requestHeaders.Authorization?.startsWith('Bearer ')) {
+          console.log('🔄 Bearer token failed, trying alternative authentication...');
+          
+          // Try without Bearer prefix
+          const altHeaders = {
+            'Content-Type': 'application/json',
+            'Authorization': token,
+            'X-Auth-Token': token,
+          };
+
+          console.log('🔄 Trying alternative headers:', altHeaders);
+
+          const altResponse = await fetch(`${API_BASE_URL}/api/assignleads`, {
+            method: 'POST',
+            headers: altHeaders,
+            body: JSON.stringify(requestBody),
+          });
+
+          if (altResponse.ok) {
+            const altResult = await altResponse.json();
+            if (altResult.success) {
+              const emp = employees.find(e => String(e.id) === String(employeeId));
+              toast.success(`Successfully assigned to ${getEmployeeDisplayName(emp)}`);
+              // Update table status and assigned_to
+              setEnquiries(prev => prev.map(enquiry =>
+                (enquiry.id || enquiry.lead_id) === enquiryId
+                  ? { ...enquiry, status: 'Assigned', assigned_to: employeeId }
+                  : enquiry
+              ));
+              setSelectedEnquiry((prev: any) => ({
+                ...prev,
+                status: 'Assigned',
+                assigned_to: employeeId
+              }));
+              // Reset all assignment states
+              setAssignToEmployeeId('');
+              setSelectedSalesPerson('');
+              setSelectedRole('');
+              setViewDialogOpen(false);
+              return;
+            }
+          }
+        }
+
+        // Handle specific error cases
+        if (response.status === 403) {
+          console.error('🚫 Forbidden error - possible causes:');
+          console.error('1. Invalid or expired token');
+          console.error('2. Insufficient permissions');
+          console.error('3. User not authorized for this action');
+          console.error('4. API endpoint requires different authentication');
+          toast.error(`Access forbidden. ${result.message || 'Please check your permissions or contact administrator.'}`);
+        } else if (response.status === 401) {
+          toast.error('Authentication failed. Please login again.');
+        } else {
+          toast.error(`Server error: ${response.status} - ${result.message || response.statusText}`);
+        }
+        return;
+      }
+
       if (result.success) {
-        const emp = employees.find(e => e.id === assignToEmployeeId);
-        toast.success(`Successfully assigned to ${emp ? emp.name : 'Employee'}`);
+        const emp = employees.find(e => String(e.id) === String(employeeId));
+        toast.success(`Successfully assigned to ${getEmployeeDisplayName(emp)}`);
         // Update table status and assigned_to
         setEnquiries(prev => prev.map(enquiry =>
           (enquiry.id || enquiry.lead_id) === enquiryId
-            ? { ...enquiry, status: 'Assigned', assigned_to: assignToEmployeeId }
+            ? { ...enquiry, status: 'Assigned', assigned_to: employeeId }
             : enquiry
         ));
         setSelectedEnquiry((prev: any) => ({
           ...prev,
           status: 'Assigned',
-          assigned_to: assignToEmployeeId
+          assigned_to: employeeId
         }));
+        // Reset all assignment states
         setAssignToEmployeeId('');
+        setSelectedSalesPerson('');
+        setSelectedRole('');
         setViewDialogOpen(false);
       } else {
+        console.error('❌ Assignment failed:', result);
         toast.error(result.message || 'Failed to assign');
       }
     } catch (error) {
-      toast.error('Failed to assign. Please try again.');
+      console.error('💥 Assignment error:', error);
+      toast.error(`Failed to assign: ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
       setIsAssigning(false);
     }
@@ -670,7 +801,10 @@ export function EnquiriesPage() {
                       <div className="flex items-center h-full">{getStatusBadge(enquiry.status || 'new')}</div>
                     </TableCell>
                     <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">{enquiry.createdAt || enquiry.created_at || enquiry.date_created 
-                      ? new Date(enquiry.createdAt || enquiry.created_at || enquiry.date_created).toLocaleDateString()
+                      ? (() => {
+                          const date = new Date(enquiry.createdAt || enquiry.created_at || enquiry.date_created);
+                          return `${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+                        })()
                       : 'N/A'
                     }</TableCell>
                     <TableCell className="text-left px-3 py-2 whitespace-nowrap align-middle">
@@ -822,7 +956,10 @@ export function EnquiriesPage() {
                 </div>
                 <div className="text-xs text-gray-500 pt-1">
                   {enquiry.createdAt || enquiry.created_at || enquiry.date_created
-                    ? new Date(enquiry.createdAt || enquiry.created_at || enquiry.date_created).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                    ? (() => {
+                        const date = new Date(enquiry.createdAt || enquiry.created_at || enquiry.date_created);
+                        return `${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+                      })()
                     : 'Date N/A'
                   }
                 </div>
@@ -925,7 +1062,8 @@ export function EnquiriesPage() {
               // Handle dates
               if ((key.includes('date') || key.includes('Date') || key.includes('created') || key.includes('updated')) && 
                   typeof value === 'string' && !isNaN(Date.parse(value))) {
-                return new Date(value).toLocaleString();
+                const date = new Date(value);
+                return `${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
               }
               
               // Handle booleans
@@ -1017,7 +1155,7 @@ export function EnquiriesPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Essential Fields First */}
                   <div>
-                    <Label className="text-xs sm:text-sm font-semibold text-blue-700">Enquiry ID</Label>
+                    <Label className="text-xs sm:text-sm font-semibold text-orang-700">Enquiry ID</Label>
                     <p className="text-sm sm:text-base text-gray-900 mt-1 font-medium">
                       {selectedEnquiry.id || selectedEnquiry.lead_id || 'N/A'}
                     </p>
@@ -1215,11 +1353,21 @@ export function EnquiriesPage() {
                               {/* Show assign button only if both role and employee are selected */}
                               {selectedRole && selectedSalesPerson && selectedSalesPerson !== 'create_new' && (
                                 <Button 
-                                  onClick={handleAssignTo} 
+                                  onClick={() => handleAssignTo(selectedSalesPerson)} 
                                   className="w-full"
+                                  disabled={isAssigning}
                                 >
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  Assign to {selectedRole}
+                                  {isAssigning ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                      Assigning...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserPlus className="h-4 w-4 mr-2" />
+                                      Assign to {selectedRole}
+                                    </>
+                                  )}
                                 </Button>
                               )}
                             </div>
@@ -1264,7 +1412,7 @@ export function EnquiriesPage() {
                         <div>
                           <Label className="text-xs sm:text-sm text-gray-600">Work Date</Label>
                           <p className="text-sm sm:text-base text-gray-900 mt-1">
-                            {new Date(selectedEnquiry.workDate).toLocaleDateString()}
+                            {new Date(selectedEnquiry.workDate).toLocaleDateString('en-GB')}
                           </p>
                         </div>
                       )}
@@ -1318,7 +1466,7 @@ export function EnquiriesPage() {
                     })}
                   </select>
                   <Button
-                    onClick={handleAssignTo}
+                    onClick={() => handleAssignTo()}
                     className="w-full mt-3"
                     style={{ backgroundColor: '#F97316', color: 'white' }}
                     disabled={isAssigning || !assignToEmployeeId}

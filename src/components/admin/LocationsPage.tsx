@@ -151,6 +151,12 @@ export function LocationsPage() {
   const [districtToDelete, setDistrictToDelete] = useState<string | null>(null);
   const [districtSearchQuery, setDistrictSearchQuery] = useState('');
 
+  // Pagination state
+  const [currentCountryPage, setCurrentCountryPage] = useState(1);
+  const [currentStatePage, setCurrentStatePage] = useState(1);
+  const [currentDistrictPage, setCurrentDistrictPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Fetch countries from API on mount
   useEffect(() => {
     let mounted = true;
@@ -210,7 +216,7 @@ export function LocationsPage() {
     };
   }, []);
 
-  // Filter functions
+  // Filter functions with pagination
   const filteredCountries = countries.filter(
     (country) =>
       country.country_code.toLowerCase().includes(countrySearchQuery.toLowerCase()) ||
@@ -229,6 +235,32 @@ export function LocationsPage() {
       district.district_code.toLowerCase().includes(districtSearchQuery.toLowerCase()) ||
       district.name.toLowerCase().includes(districtSearchQuery.toLowerCase())
   );
+
+  // Pagination calculations
+  const totalCountryPages = Math.ceil(filteredCountries.length / itemsPerPage);
+  const totalStatePages = Math.ceil(filteredStates.length / itemsPerPage);
+  const totalDistrictPages = Math.ceil(filteredDistricts.length / itemsPerPage);
+
+  // Current page data
+  const currentCountries = filteredCountries.slice(
+    (currentCountryPage - 1) * itemsPerPage,
+    currentCountryPage * itemsPerPage
+  );
+  
+  const currentStates = filteredStates.slice(
+    (currentStatePage - 1) * itemsPerPage,
+    currentStatePage * itemsPerPage
+  );
+  
+  const currentDistricts = filteredDistricts.slice(
+    (currentDistrictPage - 1) * itemsPerPage,
+    currentDistrictPage * itemsPerPage
+  );
+
+  // Reset pagination when search changes
+  const resetCountryPagination = () => setCurrentCountryPage(1);
+  const resetStatePagination = () => setCurrentStatePage(1);
+  const resetDistrictPagination = () => setCurrentDistrictPage(1);
 
   // Country handlers
   const handleAddCountry = () => {
@@ -253,23 +285,102 @@ export function LocationsPage() {
     const errors = { country_code: '', name: '', currency_format: '' };
     let isValid = true;
 
+    // Country Code validation
     if (!countryFormData.country_code.trim()) {
       errors.country_code = 'Country code is required';
       isValid = false;
-    }
-
-    if (!countryFormData.name.trim()) {
-      errors.name = 'Country name is required';
+    } else if (countryFormData.country_code.trim().length < 2) {
+      errors.country_code = 'Country code must be at least 2 characters';
+      isValid = false;
+    } else if (countryFormData.country_code.trim().length > 5) {
+      errors.country_code = 'Country code must be maximum 5 characters';
+      isValid = false;
+    } else if (!/^[A-Z]+$/.test(countryFormData.country_code.trim().toUpperCase())) {
+      errors.country_code = 'Country code must contain only alphabets';
+      isValid = false;
+    } else if (!editingCountry && countries.some(c => c.country_code.toUpperCase() === countryFormData.country_code.trim().toUpperCase())) {
+      errors.country_code = 'Country code already exists';
       isValid = false;
     }
 
+    // Country Name validation
+    if (!countryFormData.name.trim()) {
+      errors.name = 'Country name is required';
+      isValid = false;
+    } else if (countryFormData.name.trim().length < 2) {
+      errors.name = 'Country name must be at least 2 characters';
+      isValid = false;
+    } else if (countryFormData.name.trim().length > 50) {
+      errors.name = 'Country name must be maximum 50 characters';
+      isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(countryFormData.name.trim())) {
+      errors.name = 'Country name must contain only alphabets and spaces';
+      isValid = false;
+    } else if (!editingCountry && countries.some(c => c.name.toLowerCase() === countryFormData.name.trim().toLowerCase())) {
+      errors.name = 'Country name already exists';
+      isValid = false;
+    }
+
+    // Currency Format validation
     if (!countryFormData.currency_format.trim()) {
       errors.currency_format = 'Currency format is required';
+      isValid = false;
+    } else if (countryFormData.currency_format.trim().length > 5) {
+      errors.currency_format = 'Currency format must be maximum 5 characters';
       isValid = false;
     }
 
     setCountryFormErrors(errors);
     return isValid;
+  };
+
+  // Real-time country validation
+  const validateCountryField = (field: string, value: string) => {
+    const errors = { ...countryFormErrors };
+    
+    switch (field) {
+      case 'country_code':
+        if (!value.trim()) {
+          errors.country_code = 'Country code is required';
+        } else if (value.trim().length < 2) {
+          errors.country_code = 'Country code must be at least 2 characters';
+        } else if (value.trim().length > 5) {
+          errors.country_code = 'Country code must be maximum 5 characters';
+        } else if (!/^[A-Z]+$/i.test(value.trim())) {
+          errors.country_code = 'Country code must contain only alphabets';
+        } else if (!editingCountry && countries.some(c => c.country_code.toUpperCase() === value.trim().toUpperCase())) {
+          errors.country_code = 'Country code already exists';
+        } else {
+          errors.country_code = '';
+        }
+        break;
+      case 'name':
+        if (!value.trim()) {
+          errors.name = 'Country name is required';
+        } else if (value.trim().length < 2) {
+          errors.name = 'Country name must be at least 2 characters';
+        } else if (value.trim().length > 50) {
+          errors.name = 'Country name must be maximum 50 characters';
+        } else if (!/^[A-Za-z\s]+$/.test(value.trim())) {
+          errors.name = 'Country name must contain only alphabets and spaces';
+        } else if (!editingCountry && countries.some(c => c.name.toLowerCase() === value.trim().toLowerCase())) {
+          errors.name = 'Country name already exists';
+        } else {
+          errors.name = '';
+        }
+        break;
+      case 'currency_format':
+        if (!value.trim()) {
+          errors.currency_format = 'Currency format is required';
+        } else if (value.trim().length > 5) {
+          errors.currency_format = 'Currency format must be maximum 5 characters';
+        } else {
+          errors.currency_format = '';
+        }
+        break;
+    }
+    
+    setCountryFormErrors(errors);
   };
 
   const handleSaveCountry = async () => {
@@ -360,21 +471,49 @@ export function LocationsPage() {
     const errors = { country_id: '', state_code: '', name: '', type: '' };
     let isValid = true;
 
+    // Country selection validation
     if (!stateFormData.country_id) {
       errors.country_id = 'Country is required';
       isValid = false;
     }
 
+    // State Code validation
     if (!stateFormData.state_code.trim()) {
       errors.state_code = 'State code is required';
       isValid = false;
-    }
-
-    if (!stateFormData.name.trim()) {
-      errors.name = 'State name is required';
+    } else if (stateFormData.state_code.trim().length < 2) {
+      errors.state_code = 'State code must be at least 2 characters';
+      isValid = false;
+    } else if (stateFormData.state_code.trim().length > 5) {
+      errors.state_code = 'State code must be maximum 5 characters';
+      isValid = false;
+    } else if (!/^[A-Z]+$/i.test(stateFormData.state_code.trim())) {
+      errors.state_code = 'State code must contain only alphabets';
+      isValid = false;
+    } else if (!editingState && states.some(s => s.state_code.toUpperCase() === stateFormData.state_code.trim().toUpperCase() && s.country_id === stateFormData.country_id)) {
+      errors.state_code = 'State code already exists in this country';
       isValid = false;
     }
 
+    // State Name validation
+    if (!stateFormData.name.trim()) {
+      errors.name = 'State name is required';
+      isValid = false;
+    } else if (stateFormData.name.trim().length < 2) {
+      errors.name = 'State name must be at least 2 characters';
+      isValid = false;
+    } else if (stateFormData.name.trim().length > 50) {
+      errors.name = 'State name must be maximum 50 characters';
+      isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(stateFormData.name.trim())) {
+      errors.name = 'State name must contain only alphabets and spaces';
+      isValid = false;
+    } else if (!editingState && states.some(s => s.name.toLowerCase() === stateFormData.name.trim().toLowerCase() && s.country_id === stateFormData.country_id)) {
+      errors.name = 'State name already exists in this country';
+      isValid = false;
+    }
+
+    // Type validation
     if (!stateFormData.type) {
       errors.type = 'Type is required';
       isValid = false;
@@ -382,6 +521,60 @@ export function LocationsPage() {
 
     setStateFormErrors(errors);
     return isValid;
+  };
+
+  // Real-time state validation
+  const validateStateField = (field: string, value: string) => {
+    const errors = { ...stateFormErrors };
+    
+    switch (field) {
+      case 'country_id':
+        if (!value) {
+          errors.country_id = 'Country is required';
+        } else {
+          errors.country_id = '';
+        }
+        break;
+      case 'state_code':
+        if (!value.trim()) {
+          errors.state_code = 'State code is required';
+        } else if (value.trim().length < 2) {
+          errors.state_code = 'State code must be at least 2 characters';
+        } else if (value.trim().length > 5) {
+          errors.state_code = 'State code must be maximum 5 characters';
+        } else if (!/^[A-Z]+$/i.test(value.trim())) {
+          errors.state_code = 'State code must contain only alphabets';
+        } else if (!editingState && states.some(s => s.state_code.toUpperCase() === value.trim().toUpperCase() && s.country_id === stateFormData.country_id)) {
+          errors.state_code = 'State code already exists in this country';
+        } else {
+          errors.state_code = '';
+        }
+        break;
+      case 'name':
+        if (!value.trim()) {
+          errors.name = 'State name is required';
+        } else if (value.trim().length < 2) {
+          errors.name = 'State name must be at least 2 characters';
+        } else if (value.trim().length > 50) {
+          errors.name = 'State name must be maximum 50 characters';
+        } else if (!/^[A-Za-z\s]+$/.test(value.trim())) {
+          errors.name = 'State name must contain only alphabets and spaces';
+        } else if (!editingState && states.some(s => s.name.toLowerCase() === value.trim().toLowerCase() && s.country_id === stateFormData.country_id)) {
+          errors.name = 'State name already exists in this country';
+        } else {
+          errors.name = '';
+        }
+        break;
+      case 'type':
+        if (!value) {
+          errors.type = 'Type is required';
+        } else {
+          errors.type = '';
+        }
+        break;
+    }
+    
+    setStateFormErrors(errors);
   };
 
   const handleSaveState = () => {
@@ -481,23 +674,97 @@ export function LocationsPage() {
     const errors = { state_id: '', district_code: '', name: '' };
     let isValid = true;
 
+    // State selection validation
     if (!districtFormData.state_id) {
       errors.state_id = 'State is required';
       isValid = false;
     }
 
+    // District Code validation
     if (!districtFormData.district_code.trim()) {
       errors.district_code = 'District code is required';
       isValid = false;
+    } else if (districtFormData.district_code.trim().length < 2) {
+      errors.district_code = 'District code must be at least 2 characters';
+      isValid = false;
+    } else if (districtFormData.district_code.trim().length > 10) {
+      errors.district_code = 'District code must be maximum 10 characters';
+      isValid = false;
+    } else if (!/^[A-Z0-9]+$/i.test(districtFormData.district_code.trim())) {
+      errors.district_code = 'District code must contain only alphabets and numbers';
+      isValid = false;
+    } else if (!editingDistrict && districts.some(d => d.district_code.toUpperCase() === districtFormData.district_code.trim().toUpperCase() && d.state_id === districtFormData.state_id)) {
+      errors.district_code = 'District code already exists in this state';
+      isValid = false;
     }
 
+    // District Name validation
     if (!districtFormData.name.trim()) {
       errors.name = 'District name is required';
+      isValid = false;
+    } else if (districtFormData.name.trim().length < 2) {
+      errors.name = 'District name must be at least 2 characters';
+      isValid = false;
+    } else if (districtFormData.name.trim().length > 50) {
+      errors.name = 'District name must be maximum 50 characters';
+      isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(districtFormData.name.trim())) {
+      errors.name = 'District name must contain only alphabets and spaces';
+      isValid = false;
+    } else if (!editingDistrict && districts.some(d => d.name.toLowerCase() === districtFormData.name.trim().toLowerCase() && d.state_id === districtFormData.state_id)) {
+      errors.name = 'District name already exists in this state';
       isValid = false;
     }
 
     setDistrictFormErrors(errors);
     return isValid;
+  };
+
+  // Real-time district validation
+  const validateDistrictField = (field: string, value: string) => {
+    const errors = { ...districtFormErrors };
+    
+    switch (field) {
+      case 'state_id':
+        if (!value) {
+          errors.state_id = 'State is required';
+        } else {
+          errors.state_id = '';
+        }
+        break;
+      case 'district_code':
+        if (!value.trim()) {
+          errors.district_code = 'District code is required';
+        } else if (value.trim().length < 2) {
+          errors.district_code = 'District code must be at least 2 characters';
+        } else if (value.trim().length > 10) {
+          errors.district_code = 'District code must be maximum 10 characters';
+        } else if (!/^[A-Z0-9]+$/i.test(value.trim())) {
+          errors.district_code = 'District code must contain only alphabets and numbers';
+        } else if (!editingDistrict && districts.some(d => d.district_code.toUpperCase() === value.trim().toUpperCase() && d.state_id === districtFormData.state_id)) {
+          errors.district_code = 'District code already exists in this state';
+        } else {
+          errors.district_code = '';
+        }
+        break;
+      case 'name':
+        if (!value.trim()) {
+          errors.name = 'District name is required';
+        } else if (value.trim().length < 2) {
+          errors.name = 'District name must be at least 2 characters';
+        } else if (value.trim().length > 50) {
+          errors.name = 'District name must be maximum 50 characters';
+        } else if (!/^[A-Za-z\s]+$/.test(value.trim())) {
+          errors.name = 'District name must contain only alphabets and spaces';
+        } else if (!editingDistrict && districts.some(d => d.name.toLowerCase() === value.trim().toLowerCase() && d.state_id === districtFormData.state_id)) {
+          errors.name = 'District name already exists in this state';
+        } else {
+          errors.name = '';
+        }
+        break;
+    }
+    
+    setDistrictFormErrors(errors);
   };
 
   const handleSaveDistrict = () => {
@@ -721,7 +988,10 @@ export function LocationsPage() {
                 <Input
                   placeholder="Search countries..."
                   value={countrySearchQuery}
-                  onChange={(e) => setCountrySearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setCountrySearchQuery(e.target.value);
+                    resetCountryPagination();
+                  }}
                   style={{ maxWidth: '300px' }}
                 />
                 <Button onClick={handleAddCountry} style={{ backgroundColor: '#F97316', color: 'white' }}>
@@ -734,31 +1004,31 @@ export function LocationsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead style={{ width: '80px' }}>S.No</TableHead>
-                      <TableHead>Country Code</TableHead>
-                      <TableHead>Country Name</TableHead>
-                      <TableHead>Currency Format</TableHead>
-                      <TableHead>Created Date</TableHead>
-                      <TableHead style={{ textAlign: 'right' }}>Actions</TableHead>
+                      <TableHead style={{ width: '80px', textAlign: 'center' }}>S.No</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Country Code</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Country Name</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Currency Format</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Created Date</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCountries.length === 0 ? (
+                    {currentCountries.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: '#6B7280' }}>
                           {countrySearchQuery ? 'No countries found matching your search.' : 'No countries added yet.'}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredCountries.map((country, index) => (
+                      currentCountries.map((country, index) => (
                         <TableRow key={country.id}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>{country.country_code}</TableCell>
-                          <TableCell>{country.name}</TableCell>
-                          <TableCell>{country.currency_format}</TableCell>
-                          <TableCell style={{ color: '#6B7280' }}>{country.created_date}</TableCell>
-                          <TableCell style={{ textAlign: 'right' }}>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                          <TableCell style={{ textAlign: 'center' }}>{(currentCountryPage - 1) * itemsPerPage + index + 1}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{country.country_code}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{country.name}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{country.currency_format}</TableCell>
+                          <TableCell style={{ color: '#6B7280', textAlign: 'center' }}>{country.created_date}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -783,6 +1053,35 @@ export function LocationsPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Country Pagination */}
+              {filteredCountries.length > itemsPerPage && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1rem', padding: '1rem 0', borderTop: '1px solid #E5E7EB' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>
+                    Page {currentCountryPage} of {totalCountryPages}
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentCountryPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentCountryPage === 1}
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentCountryPage(prev => Math.min(prev + 1, totalCountryPages))}
+                      disabled={currentCountryPage === totalCountryPages}
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -793,7 +1092,10 @@ export function LocationsPage() {
                 <Input
                   placeholder="Search states..."
                   value={stateSearchQuery}
-                  onChange={(e) => setStateSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setStateSearchQuery(e.target.value);
+                    resetStatePagination();
+                  }}
                   style={{ maxWidth: '300px' }}
                 />
                 <Button onClick={handleAddState} style={{ backgroundColor: '#F97316', color: 'white' }}>
@@ -806,33 +1108,33 @@ export function LocationsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead style={{ width: '80px' }}>S.No</TableHead>
-                      <TableHead>Country</TableHead>
-                      <TableHead>State Code</TableHead>
-                      <TableHead>State Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Created Date</TableHead>
-                      <TableHead style={{ textAlign: 'right' }}>Actions</TableHead>
+                      <TableHead style={{ width: '80px', textAlign: 'center' }}>S.No</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Country</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>State Code</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>State Name</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Type</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Created Date</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredStates.length === 0 ? (
+                    {currentStates.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#6B7280' }}>
                           {stateSearchQuery ? 'No states found matching your search.' : 'No states added yet.'}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredStates.map((state, index) => (
+                      currentStates.map((state, index) => (
                         <TableRow key={state.id}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>{getCountryName(state.country_id)}</TableCell>
-                          <TableCell>{state.state_code}</TableCell>
-                          <TableCell>{state.name}</TableCell>
-                          <TableCell>{state.type}</TableCell>
-                          <TableCell style={{ color: '#6B7280' }}>{state.created_date}</TableCell>
-                          <TableCell style={{ textAlign: 'right' }}>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                          <TableCell style={{ textAlign: 'center' }}>{(currentStatePage - 1) * itemsPerPage + index + 1}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{getCountryName(state.country_id)}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{state.state_code}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{state.name}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{state.type}</TableCell>
+                          <TableCell style={{ color: '#6B7280', textAlign: 'center' }}>{state.created_date}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -857,6 +1159,35 @@ export function LocationsPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* State Pagination */}
+              {filteredStates.length > itemsPerPage && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1rem', padding: '1rem 0', borderTop: '1px solid #E5E7EB' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>
+                    Page {currentStatePage} of {totalStatePages}
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentStatePage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentStatePage === 1}
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentStatePage(prev => Math.min(prev + 1, totalStatePages))}
+                      disabled={currentStatePage === totalStatePages}
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -867,7 +1198,10 @@ export function LocationsPage() {
                 <Input
                   placeholder="Search districts..."
                   value={districtSearchQuery}
-                  onChange={(e) => setDistrictSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setDistrictSearchQuery(e.target.value);
+                    resetDistrictPagination();
+                  }}
                   style={{ maxWidth: '300px' }}
                 />
                 <Button onClick={handleAddDistrict} style={{ backgroundColor: '#F97316', color: 'white' }}>
@@ -880,31 +1214,31 @@ export function LocationsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead style={{ width: '80px' }}>S.No</TableHead>
-                      <TableHead>State</TableHead>
-                      <TableHead>District Code</TableHead>
-                      <TableHead>District Name</TableHead>
-                      <TableHead>Created Date</TableHead>
-                      <TableHead style={{ textAlign: 'right' }}>Actions</TableHead>
+                      <TableHead style={{ width: '80px', textAlign: 'center' }}>S.No</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>State</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>District Code</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>District Name</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Created Date</TableHead>
+                      <TableHead style={{ textAlign: 'center' }}>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredDistricts.length === 0 ? (
+                    {currentDistricts.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: '#6B7280' }}>
                           {districtSearchQuery ? 'No districts found matching your search.' : 'No districts added yet.'}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredDistricts.map((district, index) => (
+                      currentDistricts.map((district, index) => (
                         <TableRow key={district.id}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>{getStateName(district.state_id)}</TableCell>
-                          <TableCell>{district.district_code}</TableCell>
-                          <TableCell>{district.name}</TableCell>
-                          <TableCell style={{ color: '#6B7280' }}>{district.created_date}</TableCell>
-                          <TableCell style={{ textAlign: 'right' }}>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                          <TableCell style={{ textAlign: 'center' }}>{(currentDistrictPage - 1) * itemsPerPage + index + 1}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{getStateName(district.state_id)}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{district.district_code}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{district.name}</TableCell>
+                          <TableCell style={{ color: '#6B7280', textAlign: 'center' }}>{district.created_date}</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -929,6 +1263,35 @@ export function LocationsPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* District Pagination */}
+              {filteredDistricts.length > itemsPerPage && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1rem', padding: '1rem 0', borderTop: '1px solid #E5E7EB' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>
+                    Page {currentDistrictPage} of {totalDistrictPages}
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentDistrictPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentDistrictPage === 1}
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentDistrictPage(prev => Math.min(prev + 1, totalDistrictPages))}
+                      disabled={currentDistrictPage === totalDistrictPages}
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -952,10 +1315,12 @@ export function LocationsPage() {
                 id="country_code"
                 value={countryFormData.country_code}
                 onChange={(e) => {
-                  setCountryFormData({ ...countryFormData, country_code: e.target.value });
-                  setCountryFormErrors({ ...countryFormErrors, country_code: '' });
+                  const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5);
+                  setCountryFormData({ ...countryFormData, country_code: value });
+                  validateCountryField('country_code', value);
                 }}
                 placeholder="e.g., IN"
+                maxLength={5}
                 style={countryFormErrors.country_code ? { borderColor: '#EF4444' } : {}}
               />
               {countryFormErrors.country_code && (
@@ -971,10 +1336,12 @@ export function LocationsPage() {
                 id="country_name"
                 value={countryFormData.name}
                 onChange={(e) => {
-                  setCountryFormData({ ...countryFormData, name: e.target.value });
-                  setCountryFormErrors({ ...countryFormErrors, name: '' });
+                  const value = e.target.value.replace(/[^A-Za-z\s]/g, '').slice(0, 50);
+                  setCountryFormData({ ...countryFormData, name: value });
+                  validateCountryField('name', value);
                 }}
                 placeholder="e.g., India"
+                maxLength={50}
                 style={countryFormErrors.name ? { borderColor: '#EF4444' } : {}}
               />
               {countryFormErrors.name && (
@@ -990,10 +1357,12 @@ export function LocationsPage() {
                 id="currency_format"
                 value={countryFormData.currency_format}
                 onChange={(e) => {
-                  setCountryFormData({ ...countryFormData, currency_format: e.target.value });
-                  setCountryFormErrors({ ...countryFormErrors, currency_format: '' });
+                  const value = e.target.value.slice(0, 5);
+                  setCountryFormData({ ...countryFormData, currency_format: value });
+                  validateCountryField('currency_format', value);
                 }}
                 placeholder="e.g., ₹"
+                maxLength={5}
                 style={countryFormErrors.currency_format ? { borderColor: '#EF4444' } : {}}
               />
               {countryFormErrors.currency_format && (
@@ -1030,7 +1399,7 @@ export function LocationsPage() {
                 value={stateFormData.country_id}
                 onValueChange={(value) => {
                   setStateFormData({ ...stateFormData, country_id: value });
-                  setStateFormErrors({ ...stateFormErrors, country_id: '' });
+                  validateStateField('country_id', value);
                 }}
               >
                 <SelectTrigger style={stateFormErrors.country_id ? { borderColor: '#EF4444' } : {}}>
@@ -1057,10 +1426,12 @@ export function LocationsPage() {
                 id="state_code"
                 value={stateFormData.state_code}
                 onChange={(e) => {
-                  setStateFormData({ ...stateFormData, state_code: e.target.value });
-                  setStateFormErrors({ ...stateFormErrors, state_code: '' });
+                  const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5);
+                  setStateFormData({ ...stateFormData, state_code: value });
+                  validateStateField('state_code', value);
                 }}
                 placeholder="e.g., TN"
+                maxLength={5}
                 style={stateFormErrors.state_code ? { borderColor: '#EF4444' } : {}}
               />
               {stateFormErrors.state_code && (
@@ -1076,10 +1447,12 @@ export function LocationsPage() {
                 id="state_name"
                 value={stateFormData.name}
                 onChange={(e) => {
-                  setStateFormData({ ...stateFormData, name: e.target.value });
-                  setStateFormErrors({ ...stateFormErrors, name: '' });
+                  const value = e.target.value.replace(/[^A-Za-z\s]/g, '').slice(0, 50);
+                  setStateFormData({ ...stateFormData, name: value });
+                  validateStateField('name', value);
                 }}
                 placeholder="e.g., Tamil Nadu"
+                maxLength={50}
                 style={stateFormErrors.name ? { borderColor: '#EF4444' } : {}}
               />
               {stateFormErrors.name && (
@@ -1095,7 +1468,7 @@ export function LocationsPage() {
                 value={stateFormData.type}
                 onValueChange={(value) => {
                   setStateFormData({ ...stateFormData, type: value });
-                  setStateFormErrors({ ...stateFormErrors, type: '' });
+                  validateStateField('type', value);
                 }}
               >
                 <SelectTrigger style={stateFormErrors.type ? { borderColor: '#EF4444' } : {}}>
@@ -1140,7 +1513,7 @@ export function LocationsPage() {
                 value={districtFormData.state_id}
                 onValueChange={(value) => {
                   setDistrictFormData({ ...districtFormData, state_id: value });
-                  setDistrictFormErrors({ ...districtFormErrors, state_id: '' });
+                  validateDistrictField('state_id', value);
                 }}
               >
                 <SelectTrigger style={districtFormErrors.state_id ? { borderColor: '#EF4444' } : {}}>
@@ -1167,10 +1540,12 @@ export function LocationsPage() {
                 id="district_code"
                 value={districtFormData.district_code}
                 onChange={(e) => {
-                  setDistrictFormData({ ...districtFormData, district_code: e.target.value });
-                  setDistrictFormErrors({ ...districtFormErrors, district_code: '' });
+                  const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+                  setDistrictFormData({ ...districtFormData, district_code: value });
+                  validateDistrictField('district_code', value);
                 }}
                 placeholder="e.g., WG"
+                maxLength={10}
                 style={districtFormErrors.district_code ? { borderColor: '#EF4444' } : {}}
               />
               {districtFormErrors.district_code && (
@@ -1186,10 +1561,12 @@ export function LocationsPage() {
                 id="district_name"
                 value={districtFormData.name}
                 onChange={(e) => {
-                  setDistrictFormData({ ...districtFormData, name: e.target.value });
-                  setDistrictFormErrors({ ...districtFormErrors, name: '' });
+                  const value = e.target.value.replace(/[^A-Za-z\s]/g, '').slice(0, 50);
+                  setDistrictFormData({ ...districtFormData, name: value });
+                  validateDistrictField('name', value);
                 }}
                 placeholder="e.g., West Godavari"
+                maxLength={50}
                 style={districtFormErrors.name ? { borderColor: '#EF4444' } : {}}
               />
               {districtFormErrors.name && (

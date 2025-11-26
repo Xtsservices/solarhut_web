@@ -18,9 +18,9 @@ interface SolarPackage {
   name: string;
   capacity: string;
   price: string;
-    originalPrice: string;
-    savings: string;
-    monthlyGeneration: string;
+  originalPrice: string;
+  savings: string;
+  monthlyGeneration: string;
   features: string[];
   recommended?: boolean;
   status?: string;
@@ -100,7 +100,6 @@ export function PackagesPage() {
       monthly_generation: formData.monthlyGeneration,
       features: featuresArray.join(', '),
       status: 'Active',
-      recommended: formData.recommended,
     };
 
     try {
@@ -205,11 +204,11 @@ export function PackagesPage() {
                 <p className="text-gray-600 text-sm sm:text-base">Manage packages displayed on the website</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleReset} className="gap-2">
+                {/* <Button variant="outline" onClick={handleReset} className="gap-2">
                   <RefreshCw className="h-4 w-4" />
                   <span className="hidden sm:inline">Reset to Defaults</span>
                   <span className="sm:hidden">Reset</span>
-                </Button>
+                </Button> */}
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-[#FFA500] hover:bg-[#FF8C00] gap-2">
@@ -228,104 +227,140 @@ export function PackagesPage() {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-3 sm:space-y-4 mt-4">
+                      {/* Package Name */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                          <Label className="text-xs sm:text-sm">Package Name *</Label>
-                          <Input
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            placeholder="e.g., Starter Home"
-                            className="mt-1 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs sm:text-sm">Capacity *</Label>
-                          <Input
-                            value={formData.capacity}
-                            onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                            placeholder="e.g., 3 kW"
-                            className="mt-1 text-sm"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                        <div>
-                          <Label className="text-xs sm:text-sm">Price (₹) *</Label>
-                          <Input
-                            value={formData.price}
-                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                            placeholder="e.g., 1,80,000"
-                            className="mt-1 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs sm:text-sm">Original Price (₹)</Label>
-                          <Input
-                            value={formData.originalPrice}
-                            onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
-                            placeholder="e.g., 2,40,000"
-                            className="mt-1 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs sm:text-sm">Savings Text</Label>
-                          <Input
-                            value={formData.savings}
-                            onChange={(e) => setFormData({ ...formData, savings: e.target.value })}
-                            placeholder="e.g., Save ₹60,000"
-                            className="mt-1 text-sm"
-                          />
-                        </div>
-                      </div>
-
                       <div>
-                        <Label className="text-xs sm:text-sm">Monthly Generation</Label>
+                        <Label className="text-xs sm:text-sm" htmlFor="package-name">Package Name </Label>
                         <Input
-                          value={formData.monthlyGeneration}
-                          onChange={(e) => setFormData({ ...formData, monthlyGeneration: e.target.value })}
-                          placeholder="e.g., 360-450 units"
-                          className="mt-1 text-sm"
+                        id="package-name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="e.g., Starter Home"
+                        className="mt-1 text-sm"
                         />
                       </div>
-
+                      {/* Capacity */}
                       <div>
-                        <Label className="text-xs sm:text-sm">Features (one per line) *</Label>
-                        <Textarea
-                          value={formData.features}
-                          onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                          placeholder="12 High-efficiency solar panels&#10;3 kW string inverter&#10;Net metering setup"
-                          rows={6}
-                          className="mt-1 text-sm font-mono"
+                        <Label className="text-xs sm:text-sm" htmlFor="package-capacity">Capacity </Label>
+                        <Input
+                        id="package-capacity"
+                        value={formData.capacity}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (/^\d*\.?\d*$/.test(value)) {
+                          setFormData({ ...formData, capacity: value });
+                          }
+                        }}
+                        placeholder="e.g., 3"
+                        className="mt-1 text-sm"
+                        inputMode="decimal"
+                        type="text"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Enter each feature on a new line</p>
+                      </div>
                       </div>
 
-                      <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
-                        <Switch
-                          id="recommended"
-                          checked={formData.recommended}
-                          onCheckedChange={(checked: boolean) => setFormData({ ...formData, recommended: checked })}
+                      {/* Price, Original Price, Savings */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                      <div>
+                        <Label className="text-xs sm:text-sm" htmlFor="package-price">Price (₹) </Label>
+                        <Input
+                        id="package-price"
+                        value={formData.price}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, '');
+                          setFormData({ ...formData, price: value });
+                        }}
+                        placeholder="e.g., 180000"
+                        className="mt-1 text-sm"
+                        inputMode="numeric"
+                        type="text"
                         />
-                        <Label htmlFor="recommended" className="text-xs sm:text-sm cursor-pointer">
-                          Mark as "Most Popular" / Recommended
-                        </Label>
+                      </div>
+                      <div>
+                        <Label className="text-xs sm:text-sm" htmlFor="package-original-price">Original Price (₹)</Label>
+                        <Input
+                        id="package-original-price"
+                        value={formData.originalPrice}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, '');
+                          setFormData({ ...formData, originalPrice: value });
+                        }}
+                        placeholder="e.g., 240000"
+                        className="mt-1 text-sm"
+                        inputMode="numeric"
+                        type="text"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs sm:text-sm" htmlFor="package-savings">Savings Text</Label>
+                        <Input
+                        id="package-savings"
+                        value={formData.savings}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, '');
+                          setFormData({ ...formData, savings: value });
+                        }}
+                        placeholder="e.g., 60000"
+                        className="mt-1 text-sm"
+                        inputMode="numeric"
+                        type="text"
+                        />
+                      </div>
                       </div>
 
+                      {/* Monthly Generation */}
+                      <div>
+                      <Label className="text-xs sm:text-sm" htmlFor="package-monthly-generation">Monthly Generation</Label>
+                      <Input
+                        id="package-monthly-generation"
+                        value={formData.monthlyGeneration}
+                        onChange={(e) => setFormData({ ...formData, monthlyGeneration: e.target.value })}
+                        placeholder="e.g., 360-450 units"
+                        className="mt-1 text-sm"
+                      />
+                      </div>
+
+                      {/* Features */}
+                      <div>
+                      <Label className="text-xs sm:text-sm" htmlFor="package-features">Features</Label>
+                      <Textarea
+                        id="package-features"
+                        value={formData.features}
+                        onChange={(e) => setFormData({ ...formData, features: e.target.value })}
+                        placeholder={`12 High-efficiency solar panels\n3 kW string inverter\nNet metering setup`}
+                        rows={6}
+                        className="mt-1 text-sm font-mono"
+                      />
+                      {/* <p className="text-xs text-gray-500 mt-1">Enter each feature on a new line</p> */}
+                      </div>
+
+                      {/* Recommended Switch */}
+                      {/* <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg"> */}
+                      {/* <Switch
+                        id="recommended"
+                        checked={formData.recommended}
+                        onCheckedChange={(checked: boolean) => setFormData({ ...formData, recommended: checked })}
+                      /> */}
+                      {/* <Label htmlFor="recommended" className="text-xs sm:text-sm cursor-pointer">
+                        Mark as "Most Popular" / Recommended
+                      </Label> */}
+                      {/* </div> */}
+
+                      {/* Actions */}
                       <div className="flex gap-2 pt-2">
-                        <Button 
-                          variant="outline" 
-                          onClick={handleDialogClose}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          onClick={handleAdd}
-                          className="flex-1 bg-[#FFA500] hover:bg-[#FF8C00]"
-                        >
-                          {editMode ? 'Update Package' : 'Add Package'}
-                        </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleDialogClose}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleAdd}
+                        className="flex-1 bg-[#FFA500] hover:bg-[#FF8C00]"
+                      >
+                        {editMode ? 'Update Package' : 'Add Package'}
+                      </Button>
                       </div>
                     </div>
                   </DialogContent>
@@ -345,19 +380,19 @@ export function PackagesPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="p-3 sm:p-4">
+              {/* <Card> */}
+                {/* <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center gap-2">
                     <Badge className="bg-[#FFA500] text-white">Popular</Badge>
                     <div>
-                      <p className="text-xs text-gray-600">Recommended</p>
+                       <p className="text-xs text-gray-600">Recommended</p>
                       <p className="text-xl sm:text-2xl text-gray-900">
                         {activePackages.filter(p => p.recommended).length}
-                      </p>
+                      </p> 
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </CardContent> */}
+              {/* </Card> */}
             </div>
 
             <Card className="hidden md:block">
@@ -381,7 +416,7 @@ export function PackagesPage() {
                       {activePackages.map((pkg) => (
                         <TableRow key={pkg.id}>
                           <TableCell className="text-xs sm:text-sm font-medium">{pkg.name}</TableCell>
-                          <TableCell className="text-xs sm:text-sm">{pkg.capacity}</TableCell>
+                          <TableCell className="text-xs sm:text-sm">{pkg.capacity}KW</TableCell>
                           <TableCell className="text-xs sm:text-sm">
                             <div className="flex items-center">
                               <IndianRupee className="h-3 w-3" />

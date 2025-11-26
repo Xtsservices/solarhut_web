@@ -80,10 +80,64 @@ export function PortalSidebar({
   console.log('Current User in Sidebar:', user);
   const permissions = user?.permissions || [];
   let menuItems = [];
+  
   if (role === 'admin') {
-
-    const allowedFeatures = permissions.map((p: any) => (p || '').toLowerCase());
-    menuItems = adminMenuItems.filter(item => allowedFeatures.includes(item.id.toLowerCase()));
+    // Handle permissions array - extract feature names safely
+    const allowedFeatures = permissions.map((p: any) => {
+      if (typeof p === 'string') {
+        return p.toLowerCase();
+      } else if (p && typeof p === 'object' && p.feature_name) {
+        return p.feature_name.toLowerCase();
+      } else if (p && typeof p === 'object' && p.name) {
+        return p.name.toLowerCase();
+      }
+      return '';
+    }).filter(Boolean);
+    
+    console.log('Allowed Features:', allowedFeatures);
+    
+    // Create a mapping between feature names and menu item IDs
+    const featureToMenuMapping: Record<string, string> = {
+      'enquiries': 'leads',
+      'leads': 'leads',
+      'employees': 'employees',
+      'packages': 'packages', 
+      'payments': 'payments',
+      'contacts': 'contacts',
+      'work_progress': 'work_progress',
+      'work progress': 'work_progress',
+      'masters': 'masters',
+      'my_tasks': 'my_tasks',
+      'my tasks': 'my_tasks',
+      'locations': 'locations',
+      'jobs': 'jobs',
+      'dashboard': 'dashboard',
+      'notifications': 'notifications',
+      'settings': 'settings',
+      'profile': 'profile'
+    };
+    
+    // Map allowed features to menu item IDs
+    const allowedMenuItems: string[] = allowedFeatures.map((feature: string) => 
+      featureToMenuMapping[feature] || feature
+    );
+    
+    console.log('Mapped Menu Items:', allowedMenuItems);
+    
+    // If no permissions or empty permissions, show all menu items (for admin)
+    if (allowedFeatures.length === 0) {
+      console.log('No permissions found, showing all menu items');
+      menuItems = adminMenuItems;
+    } else {
+      menuItems = adminMenuItems.filter(item => {
+        const itemId = item.id.toLowerCase();
+        const isAllowed = allowedMenuItems.includes(itemId) || allowedFeatures.includes(itemId);
+        console.log(`Menu item ${item.label} (${itemId}): ${isAllowed ? 'ALLOWED' : 'BLOCKED'}`);
+        return isAllowed;
+      });
+    }
+    
+    console.log('Final filtered menu items:', menuItems.map(item => item.label));
      
   } else if (role === 'sales') {
     menuItems = salesMenuItems;
@@ -93,7 +147,39 @@ export function PortalSidebar({
 
     const navigate = useNavigate();
     const handleNavigate = (page: string) => {
-      navigate('/' + page);
+      // Handle special routing cases where menu ID doesn't match route path
+      if (page === 'Leads') {
+        navigate('/enquiries');
+      } else if (page === 'Contacts') {
+        navigate('/contacts');
+      } else if (page === 'Work_Progress') {
+        navigate('/work-progress');
+      } else if (page === 'Masters') {
+        navigate('/masters');
+      } else if (page === 'My_Tasks') {
+        navigate('/my-tasks');
+      } else if (page === 'Dashboard') {
+        navigate('/dashboard');
+      } else if (page === 'Employees') {
+        navigate('/employees');
+      } else if (page === 'Packages') {
+        navigate('/packages');
+      } else if (page === 'Payments') {
+        navigate('/payments');
+      } else if (page === 'Locations') {
+        navigate('/locations');
+      } else if (page === 'Jobs') {
+        navigate('/jobs');
+      } else if (page === 'Notifications') {
+        navigate('/notifications');
+      } else if (page === 'Settings') {
+        navigate('/settings');
+      } else if (page === 'Profile') {
+        navigate('/profile');
+      } else {
+        navigate('/' + page.toLowerCase());
+      }
+      
       if (onMobileClose) {
         onMobileClose();
       }
@@ -113,24 +199,24 @@ export function PortalSidebar({
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentPage === item.id;
+            // Enhanced active state detection
+            let isActive = false;
+            if (item.id === 'Leads' && (currentPage === 'Leads' || currentPage === 'enquiries')) {
+              isActive = true;
+            } else if (item.id === 'Work_Progress' && (currentPage === 'Work_Progress' || currentPage === 'work-progress')) {
+              isActive = true;
+            } else if (item.id === 'My_Tasks' && (currentPage === 'My_Tasks' || currentPage === 'my-tasks')) {
+              isActive = true;
+            } else if (item.id === 'Masters' && (currentPage === 'Masters' || currentPage === 'masters')) {
+              isActive = true;
+            } else {
+              isActive = currentPage === item.id || currentPage.toLowerCase() === item.id.toLowerCase();
+            }
             
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => {
-                    if (item.id === 'Leads') {
-                      handleNavigate('enquiries');
-                    } else if (item.id === 'masters') {
-                      handleNavigate('masters');
-                    } else if (item.id === 'Contacts') {
-                      handleNavigate('contacts');
-                    } else if (item.id === 'Work_Progress') {
-                      handleNavigate('work-progress');
-                    } else {
-                      handleNavigate(item.id);
-                    }
-                  }}
+                  onClick={() => handleNavigate(item.id)}
                   className={cn(
                     'w-full flex items-center gap-2 sm:gap-3 px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-colors',
                     isActive

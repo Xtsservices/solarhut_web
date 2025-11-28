@@ -12,9 +12,17 @@ import { CheckCircle2, Clock, Eye, Search, IndianRupee } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function PaymentsPage() {
+  // FIXED: Default paymentStatus to 'pending' if not set + ensure paidAmount exists
   const [payments, setPayments] = useState(
-    mockEnquiries.filter((e) => e.quotationAmount && e.quotationAmount > 0)
+    mockEnquiries
+      .filter((e) => e.quotationAmount && e.quotationAmount > 0)
+      .map((enquiry) => ({
+        ...enquiry,
+        paymentStatus: enquiry.paymentStatus || 'pending', // ← CRITICAL FIX: Treat undefined as pending
+        paidAmount: enquiry.paidAmount || undefined,
+      }))
   );
+
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
@@ -22,12 +30,17 @@ export function PaymentsPage() {
   const [paidAmount, setPaidAmount] = useState('');
 
   const filteredPayments = payments.filter((payment) => {
-    const matchesStatus = statusFilter === 'all' || payment.paymentStatus === statusFilter;
+    // IMPROVED: Use !== 'paid' for pending to catch undefined cases too
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'paid' ? payment.paymentStatus === 'paid' : payment.paymentStatus !== 'paid');
+
     const matchesSearch =
       searchTerm === '' ||
       payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.mobile.includes(searchTerm);
+
     return matchesStatus && matchesSearch;
   });
 
@@ -39,24 +52,23 @@ export function PaymentsPage() {
 
     const paidAmountNum = amount ? Number(amount) : undefined;
 
-    setPayments(
-      payments.map((p) => 
-        p.id === id 
-          ? { ...p, paymentStatus: status, paidAmount: paidAmountNum } 
+    setPayments((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? { ...p, paymentStatus: status, paidAmount: paidAmountNum }
           : p
       )
     );
+
     toast.success(`Payment marked as ${status}${amount ? ` - ₹${Number(amount).toLocaleString()}` : ''}`);
-    
-    // Update selected payment if it's currently being viewed
+
     if (selectedPayment && selectedPayment.id === id) {
-      setSelectedPayment({ 
-        ...selectedPayment, 
+      setSelectedPayment({
+        ...selectedPayment,
         paymentStatus: status,
-        paidAmount: paidAmountNum 
+        paidAmount: paidAmountNum,
       });
     }
-    // Reset amount after marking as paid
     setPaidAmount('');
   };
 
@@ -73,12 +85,13 @@ export function PaymentsPage() {
     }
   };
 
+  // IMPROVED: More accurate paid/pending totals using !== 'paid' logic
   const totalPaid = payments
     .filter((p) => p.paymentStatus === 'paid')
-    .reduce((sum, p) => sum + (p.quotationAmount || 0), 0);
+    .reduce((sum, p) => sum + (p.paidAmount || p.quotationAmount || 0), 0);
 
   const totalPending = payments
-    .filter((p) => p.paymentStatus === 'pending')
+    .filter((p) => p.paymentStatus !== 'paid') // ← Includes undefined & 'pending'
     .reduce((sum, p) => sum + (p.quotationAmount || 0), 0);
 
   const getPaymentBadge = (status?: string) => {
@@ -95,7 +108,7 @@ export function PaymentsPage() {
         <p className="text-sm sm:text-base text-gray-600">Track and manage payment status</p>
       </div>
 
-      
+      {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-6">
         <Card>
           <CardContent className="p-4 sm:p-6">
@@ -131,7 +144,7 @@ export function PaymentsPage() {
               <div>
                 <p className="text-gray-600 text-xs sm:text-sm mb-1">Paid Count</p>
                 <p className="text-lg sm:text-xl text-gray-900">
-                  {payments.filter((p) => p.paymentStatus === 'paid').length}
+                  {payments.filter((p) => p.paymentStatus === 'paid').length} {/* FIXED: Now correct */}
                 </p>
               </div>
               <div className="h-10 w-10 sm:h-12 sm:w-12 bg-green-50 rounded-lg flex items-center justify-center">
@@ -147,7 +160,7 @@ export function PaymentsPage() {
               <div>
                 <p className="text-gray-600 text-xs sm:text-sm mb-1">Pending Count</p>
                 <p className="text-lg sm:text-xl text-gray-900">
-                  {payments.filter((p) => p.paymentStatus === 'pending').length}
+                  {payments.filter((p) => p.paymentStatus !== 'paid').length} {/* FIXED: Now shows correct count */}
                 </p>
               </div>
               <div className="h-10 w-10 sm:h-12 sm:w-12 bg-orange-50 rounded-lg flex items-center justify-center">
@@ -158,10 +171,9 @@ export function PaymentsPage() {
         </Card>
       </div>
 
-      
+      {/* Filters */}
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 sm:gap-4 sm:justify-end">
-          
           <div className="w-full sm:flex-none sm:w-64">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -174,7 +186,6 @@ export function PaymentsPage() {
             </div>
           </div>
 
-          
           <div className="w-full sm:flex-none sm:w-48">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="text-sm sm:text-base">
@@ -190,7 +201,6 @@ export function PaymentsPage() {
         </div>
       </div>
 
-      
       {/* Desktop Table */}
       <Card className="hidden lg:block">
         <CardHeader className="p-4 sm:p-6">
@@ -245,7 +255,9 @@ export function PaymentsPage() {
       {/* Mobile Cards */}
       <div className="lg:hidden space-y-3">
         <div className="mb-4">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Payment Records ({filteredPayments.length})</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+            Payment Records ({filteredPayments.length})
+          </h2>
         </div>
         {filteredPayments.map((payment) => (
           <Card key={payment.id}>
@@ -258,7 +270,7 @@ export function PaymentsPage() {
                   </div>
                   {getPaymentBadge(payment.paymentStatus)}
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
                     <p className="text-gray-500 mb-1">Mobile</p>
@@ -292,7 +304,7 @@ export function PaymentsPage() {
             </CardContent>
           </Card>
         ))}
-        
+
         {filteredPayments.length === 0 && (
           <Card>
             <CardContent className="p-8 text-center">
@@ -302,17 +314,18 @@ export function PaymentsPage() {
         )}
       </div>
 
-      
+      {/* View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="w-[95vw] max-w-[95vw] sm:w-[90vw] sm:max-w-2xl h-[90vh] max-h-[90vh] overflow-y-auto p-3 sm:p-6">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-lg sm:text-xl">Payment Details</DialogTitle>
-            <DialogDescription className="text-sm sm:text-base">Complete information about the payment</DialogDescription>
+            <DialogDescription className="text-sm sm:text-base">
+              Complete information about the payment
+            </DialogDescription>
           </DialogHeader>
 
           {selectedPayment && (
             <div className="space-y-6">
-              
               <div className="p-4 bg-gray-50 rounded-lg space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -321,8 +334,8 @@ export function PaymentsPage() {
                   </div>
                 </div>
 
-                
-                {selectedPayment.paymentStatus === 'pending' && (
+                {/* Mark as Paid Form */}
+                {selectedPayment.paymentStatus !== 'paid' && (
                   <div className="space-y-3">
                     <div>
                       <Label className="text-gray-600">Enter Paid Amount</Label>
@@ -350,7 +363,7 @@ export function PaymentsPage() {
                   </div>
                 )}
 
-                
+                {/* Paid Confirmation */}
                 {selectedPayment.paymentStatus === 'paid' && (
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between">
@@ -358,8 +371,8 @@ export function PaymentsPage() {
                         <p className="text-sm text-gray-600 mb-1">Amount Paid</p>
                         <div className="flex items-center gap-2">
                           <IndianRupee className="h-5 w-5 text-green-600" />
-                          <p className="text-green-600">
-                            {selectedPayment.paidAmount 
+                          <p className="text-green-600 font-medium">
+                            {selectedPayment.paidAmount
                               ? selectedPayment.paidAmount.toLocaleString()
                               : selectedPayment.quotationAmount?.toLocaleString() || '0'}
                           </p>
@@ -376,34 +389,18 @@ export function PaymentsPage() {
                 )}
               </div>
 
-              
+              {/* Rest of the dialog content remains unchanged */}
               <div>
                 <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Customer Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <Label className="text-xs sm:text-sm text-gray-600">Enquiry ID</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.id}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs sm:text-sm text-gray-600">Full Name</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.fullName}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs sm:text-sm text-gray-600">Mobile Number</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.mobile}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs sm:text-sm text-gray-600">Email</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.email}</p>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-xs sm:text-sm text-gray-600">Address</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.address}</p>
-                  </div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Enquiry ID</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.id}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Full Name</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.fullName}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Mobile Number</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.mobile}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Email</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.email}</p></div>
+                  <div className="sm:col-span-2"><Label className="text-xs sm:text-sm text-gray-600">Address</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.address}</p></div>
                 </div>
               </div>
 
-              
               <div>
                 <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Payment Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -425,7 +422,6 @@ export function PaymentsPage() {
                 </div>
               </div>
 
-              
               <div>
                 <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Work Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -464,7 +460,6 @@ export function PaymentsPage() {
                 </div>
               </div>
 
-              
               {(selectedPayment.salesPersonId || selectedPayment.fieldExecutiveId) && (
                 <div>
                   <h3 className="text-gray-900 mb-4">Assignment Information</h3>
@@ -478,9 +473,7 @@ export function PaymentsPage() {
                     {selectedPayment.fieldExecutiveId && (
                       <div>
                         <Label className="text-gray-600">Field Executive ID</Label>
-                        <p className="text-gray-900 mt-1">
-                          {selectedPayment.fieldExecutiveId}
-                        </p>
+                        <p className="text-gray-900 mt-1">{selectedPayment.fieldExecutiveId}</p>
                       </div>
                     )}
                   </div>

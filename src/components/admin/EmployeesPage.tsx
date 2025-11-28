@@ -141,6 +141,19 @@ export function EmployeesPage() {
     
     return false;
   };
+
+  // 🔹 Helper: Format role names from array of strings/objects
+  const getRoleNames = (roles: any[]): string => {
+    if (!roles || !Array.isArray(roles)) return '';
+    return roles
+      .map((r: any) =>
+        typeof r === 'object'
+          ? r.role_name || r.name || ''
+          : r
+      )
+      .filter(Boolean)
+      .join(', ');
+  };
   
   // Validation functions
   const validateField = (field: string, value: string) => {
@@ -290,6 +303,7 @@ export function EmployeesPage() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<{id: string, name: string, role: string} | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -349,7 +363,7 @@ export function EmployeesPage() {
       }
       
       // Try multiple possible response formats
-      let rolesArray = [];
+      let rolesArray: any[] = [];
       
       if (result.success && Array.isArray(result.data)) {
         rolesArray = result.data;
@@ -570,7 +584,7 @@ export function EmployeesPage() {
       }
 
       // Try multiple possible response formats
-      let employeesArray = [];
+      let employeesArray: any[] = [];
       
       if (result.success && Array.isArray(result.data)) {
         employeesArray = result.data;
@@ -700,25 +714,43 @@ export function EmployeesPage() {
 
   // Helper function to get employees by role
   const getEmployeesByRole = (role: string) => {
-    if (role === 'All') {
-      return employees;
+    let filtered = employees;
+
+    // Role Filter
+    if (role !== 'All') {
+      filtered = filtered.filter(emp => {
+        if (emp.role === role) return true;
+
+        if (emp.roles && Array.isArray(emp.roles)) {
+          return emp.roles.some((r: any) => {
+            const roleString = typeof r === 'object' ? (r.role_name || r.name) : r;
+            return roleString === role;
+          });
+        }
+        return false;
+      });
     }
-    
-    return employees.filter(emp => {
-      // Direct role match
-      if (emp.role === role) return true;
-      
-      // Check roles array if it exists
-      if (emp.roles && Array.isArray(emp.roles)) {
-        return emp.roles.some((r: any) => {
-          const roleString = typeof r === 'object' ? (r.role_name || r.name) : r;
-          return roleString === role;
-        });
-      }
-      
-      return false;
-    });
+
+    // 🔍 Search Filter (name + mobile)
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+
+      filtered = filtered.filter(emp => {
+        const fullName = `${emp.first_name} ${emp.last_name}`.toLowerCase();
+        const mobile = (emp.mobile || '').toLowerCase();
+
+        return (
+          fullName.includes(q) ||
+          emp.first_name?.toLowerCase().includes(q) ||
+          emp.last_name?.toLowerCase().includes(q) ||
+          mobile.includes(q)
+        );
+      });
+    }
+
+    return filtered;
   };
+
 
   // Helper function to get all unique roles from employees
   const getAllEmployeeRoles = () => {
@@ -821,17 +853,28 @@ export function EmployeesPage() {
 
     return (
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle>{title}</CardTitle>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4">
+          {/* LEFT SIDE → Search Bar */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Input
+              placeholder="Search by name or mobile..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full sm:w-64 border-gray-400"
+            />
+          </div>
+
+          {/* RIGHT SIDE → Filter by Role */}
           {title === 'All Employees' && (
             <div className="flex items-center gap-2">
-              <Label className="text-sm">Filter by Role:</Label>
+              <Label className="text-sm text-gray-700">Filter by Role:</Label>
               <Select value={selectedRoleFilter} onValueChange={handleRoleFilterChange}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="All roles" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All">All Roles ({employees.length})</SelectItem>
+
                   {getAllEmployeeRoles().map((role) => {
                     const count = getEmployeesByRole(role).length;
                     return (
@@ -876,7 +919,9 @@ export function EmployeesPage() {
                       <TableCell>{emp.email}</TableCell>
                       <TableCell>{emp.mobile}</TableCell>
                       <TableCell>
-                        <Badge className="bg-blue-100 text-blue-700">{emp.role}</Badge>
+                        <Badge className="bg-blue-100 text-blue-700">
+                          {Array.isArray(emp.roles) ? getRoleNames(emp.roles) : emp.role}
+                        </Badge>
                       </TableCell>
                       <TableCell>{emp.joining_date ? new Date(emp.joining_date).toLocaleDateString('en-GB') : 'N/A'}</TableCell>
                       <TableCell>{getStatusBadge(emp.status)}</TableCell>
@@ -933,7 +978,7 @@ export function EmployeesPage() {
                         </div>
                         <div className="text-right flex-shrink-0">
                           <Badge className="bg-blue-100 text-blue-700 text-xs">
-                            {emp.role}
+                            {Array.isArray(emp.roles) ? getRoleNames(emp.roles) : emp.role}
                           </Badge>
                           <div className="mt-1">
                             {getStatusBadge(emp.status)}
@@ -1407,29 +1452,35 @@ export function EmployeesPage() {
   };
 
   const handleEdit = (employee: any, role: string) => {
-    console.log('🔧 Edit button clicked for employee:', employee);
-    console.log('🔧 Employee role:', role);
-    try {
-      // Defensive: Ensure all fields are present and fallback to empty string
-      const safeEmployee = {
-        first_name: employee.first_name ?? '',
-        last_name: employee.last_name ?? '',
-        email: employee.email ?? '',
-        mobile: employee.mobile ?? '',
-        address: employee.address ?? '',
-        roles: Array.isArray(employee.roles) ? employee.roles : [role],
-        joining_date: employee.joining_date ?? '',
-      };
-      setFormData(safeEmployee);
-      setEditingId(employee.id ?? null);
-      setEditMode(true);
-      setDialogOpen(true);
-      console.log('✅ Edit dialog state set successfully', safeEmployee);
-    } catch (error) {
-      console.error('💥 Error in handleEdit:', error);
-      toast.error('Error opening edit dialog');
-    }
-  };
+  console.log('🔧 Edit button clicked for employee:', employee);
+
+  try {
+    // Convert joining_date to YYYY-MM-DD
+    const isoDate = employee.joining_date
+      ? new Date(employee.joining_date).toISOString().split('T')[0]
+      : '';
+
+    const safeEmployee = {
+      first_name: employee.first_name ?? '',
+      last_name: employee.last_name ?? '',
+      email: employee.email ?? '',
+      mobile: employee.mobile ?? '',
+      address: employee.address ?? '',
+      joining_date: isoDate, // ✅ FIX APPLIED HERE
+      roles: Array.isArray(employee.roles) ? employee.roles : [role],
+    };
+
+    setFormData(safeEmployee);
+    setEditingId(employee.id ?? null);
+    setEditMode(true);
+    setDialogOpen(true);
+
+  } catch (error) {
+    console.error('💥 Error in handleEdit:', error);
+    toast.error('Error opening edit dialog');
+  }
+};
+
 
   const handleDelete = (id: string, role: string) => {
     // Find the employee to get their name for the confirmation dialog
@@ -1612,7 +1663,7 @@ export function EmployeesPage() {
       } else if (typeof error === 'string') {
         errorMessage = error;
       } else if (error && typeof error === 'object' && 'message' in error) {
-        errorMessage = String(error.message);
+        errorMessage = String((error as any).message);
       }
 
       // Show user-friendly error message
@@ -1656,7 +1707,7 @@ export function EmployeesPage() {
       // Since your API returns role names as strings, try multiple delete approaches
       console.log('🗑️ Attempting to delete role:', { roleId, roleName, roleIdType: typeof roleId });
 
-      let response;
+      let response: Response | undefined;
       let deleteAttempted = false;
 
       // Method 1: Try DELETE with role name in URL (most common pattern)
@@ -1771,7 +1822,17 @@ export function EmployeesPage() {
   };
 
   const handleView = (employee: any, role: string) => {
-    setSelectedEmployee({ ...employee, role });
+    // Ensure we always keep roles array from backend (objects) if present
+    const rolesArray =
+      Array.isArray(employee.roles) && employee.roles.length > 0
+        ? employee.roles
+        : (role ? [{ role_name: role }] : []);
+
+    setSelectedEmployee({
+      ...employee,
+      role,
+      roles: rolesArray,
+    });
     setDetailsDialogOpen(true);
   };
 
@@ -1780,6 +1841,7 @@ export function EmployeesPage() {
       available: { label: 'Available', color: 'bg-green-100 text-green-700' },
       'on-job': { label: 'On Job', color: 'bg-blue-100 text-blue-700' },
       busy: { label: 'Busy', color: 'bg-orange-100 text-orange-700' },
+      Active: { label: 'Active', color: 'bg-green-100 text-green-700' },
     };
     const config = variants[status] || variants.available;
     return <Badge className={config.color}>{config.label}</Badge>;
@@ -1947,215 +2009,184 @@ export function EmployeesPage() {
           </Dialog>
 
           
-        {/* Create New Employee Button */}
-<Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
-  <DialogTrigger asChild>
-    <Button 
-      className="w-full sm:w-auto"
-      onClick={() => {
-        setEditMode(false);
-        setEditingId(null);
-        setFormData({
-          first_name: '',
-          last_name: '',
-          email: '',
-          mobile: '',
-          address: '',
-          joining_date: new Date().toISOString().split('T')[0],
-          roles: [],
-        });
-        setValidationErrors({});
-      }}
-    >
-      <UserPlus className="h-4 w-4 mr-2" />
-      Create New Employee
-    </Button>
-  </DialogTrigger>
+          {/* Create New Employee Button */}
+          <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
+            <DialogTrigger asChild>
+              <Button 
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setEditMode(false);
+                  setEditingId(null);
+                  setFormData({
+                    first_name: '',
+                    last_name: '',
+                    email: '',
+                    mobile: '',
+                    address: '',
+                    joining_date: new Date().toISOString().split('T')[0],
+                    roles: [],
+                  });
+                  setValidationErrors({});
+                }}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Create New Employee
+              </Button>
+            </DialogTrigger>
 
-  <DialogContent className="p-6 max-w-lg max-h-[90vh] ">
-    <DialogHeader>
-      <DialogTitle>{editMode ? 'Edit Employee' : 'Add Employee'}</DialogTitle>
-    </DialogHeader>
+            <DialogContent className="p-6 max-w-lg max-h-[90vh] ">
+              <DialogHeader>
+                <DialogTitle>{editMode ? 'Edit Employee' : 'Add Employee'}</DialogTitle>
+              </DialogHeader>
 
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleAdd();
-      }}
-      className="space-y-5"
-    >
-      <div className="grid grid-cols-2 gap-6">
-        <div>
-          <Label className="mb-2 block text-black">
-            First Name <span style={{ color: '#FF0000' }}>*</span>
-          </Label>
-          <Input
-            value={formData.first_name}
-            onChange={e => handleFieldChange('first_name', e.target.value)}
-            required
-            className="mb-1 border-black ring-0 text-black"
-            placeholder="Enter first name"
-          />
-          {validationErrors.first_name && (
-            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.first_name}</div>
-          )}
-        </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAdd();
+                }}
+                className="space-y-5"
+              >
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <Label className="mb-2 block text-black">
+                      First Name <span style={{ color: '#FF0000' }}>*</span>
+                    </Label>
+                    <Input
+                      value={formData.first_name}
+                      onChange={e => handleFieldChange('first_name', e.target.value)}
+                      required
+                      className="mb-1 border-black ring-0 text-black"
+                      placeholder="Enter first name"
+                    />
+                    {validationErrors.first_name && (
+                      <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.first_name}</div>
+                    )}
+                  </div>
 
-        <div>
-          <Label className="mb-2 block text-black">
-            Last Name <span style={{ color: '#FF0000' }}>*</span>
-          </Label>
-          <Input
-            value={formData.last_name}
-            onChange={e => handleFieldChange('last_name', e.target.value)}
-            required
-            className="mb-1 border-black ring-0 text-black"
-            placeholder="Enter last name"
-          />
-          {validationErrors.last_name && (
-            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.last_name}</div>
-          )}
-        </div>
+                  <div>
+                    <Label className="mb-2 block text-black">
+                      Last Name <span style={{ color: '#FF0000' }}>*</span>
+                    </Label>
+                    <Input
+                      value={formData.last_name}
+                      onChange={e => handleFieldChange('last_name', e.target.value)}
+                      required
+                      className="mb-1 border-black ring-0 text-black"
+                      placeholder="Enter last name"
+                    />
+                    {validationErrors.last_name && (
+                      <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.last_name}</div>
+                    )}
+                  </div>
 
-        <div>
-          <Label className="mb-2 block text-black">
-            Email <span style={{ color: '#FF0000' }}>*</span>
-          </Label>
-          <Input
-            type="email"
-            value={formData.email}
-            onChange={e => handleFieldChange('email', e.target.value)}
-            required
-            className="mb-1 border-black ring-0 text-black"
-            placeholder="Enter email address"
-          />
-          {validationErrors.email && (
-            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.email}</div>
-          )}
-        </div>
+                  <div>
+                    <Label className="mb-2 block text-black">
+                      Email <span style={{ color: '#FF0000' }}>*</span>
+                    </Label>
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={e => handleFieldChange('email', e.target.value)}
+                      required
+                      className="mb-1 border-black ring-0 text-black"
+                      placeholder="Enter email address"
+                    />
+                    {validationErrors.email && (
+                      <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.email}</div>
+                    )}
+                  </div>
 
-        <div>
-          <Label className="mb-2 block text-black">
-            Mobile <span style={{ color: '#FF0000' }}>*</span>
-          </Label>
-          <Input
-            value={formData.mobile}
-            onChange={e => handleFieldChange('mobile', e.target.value)}
-            required
-            className="mb-1 border-black ring-0 text-black"
-            placeholder="Enter mobile number"
-          />
-          {validationErrors.mobile && (
-            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.mobile}</div>
-          )}
-        </div>
+                  <div>
+                    <Label className="mb-2 block text-black">
+                      Mobile <span style={{ color: '#FF0000' }}>*</span>
+                    </Label>
+                    <Input
+                      value={formData.mobile}
+                      onChange={e => handleFieldChange('mobile', e.target.value)}
+                      required
+                      className="mb-1 border-black ring-0 text-black"
+                      placeholder="Enter mobile number"
+                    />
+                    {validationErrors.mobile && (
+                      <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.mobile}</div>
+                    )}
+                  </div>
 
-        <div className="col-span-2">
-          <Label className="mb-2 block text-black">
-            Address <span style={{ color: '#FF0000' }}>*</span>
-          </Label>
-          <Input
-            value={formData.address}
-            onChange={e => handleFieldChange('address', e.target.value)}
-            required
-            className="mb-1 border-black ring-0 text-black"
-            placeholder="Enter address"
-          />
-          {validationErrors.address && (
-            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.address}</div>
-          )}
-        </div>
+                  <div className="col-span-2">
+                    <Label className="mb-2 block text-black">
+                      Address <span style={{ color: '#FF0000' }}>*</span>
+                    </Label>
+                    <Input
+                      value={formData.address}
+                      onChange={e => handleFieldChange('address', e.target.value)}
+                      required
+                      className="mb-1 border-black ring-0 text-black"
+                      placeholder="Enter address"
+                    />
+                    {validationErrors.address && (
+                      <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.address}</div>
+                    )}
+                  </div>
 
-        <div>
-          <Label className="mb-2 block text-black">
-            Joining Date <span style={{ color: '#FF0000' }}>*</span>
-          </Label>
-          <Input
-            type="date"
-            value={formData.joining_date}
-            onChange={e => handleFieldChange('joining_date', e.target.value)}
-            required
-            className="mb-1 border-black ring-0 text-black"
-            placeholder="Select joining date"
-          />
-          {validationErrors.joining_date && (
-            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.joining_date}</div>
-          )}
-        </div>
+                  <div>
+                    <Label className="mb-2 block text-black">
+                      Joining Date <span style={{ color: '#FF0000' }}>*</span>
+                    </Label>
+                    <Input
+                      type="date"
+                      value={formData.joining_date}
+                      onChange={e => handleFieldChange('joining_date', e.target.value)}
+                      required
+                      className="mb-1 border-black ring-0 text-black"
+                      placeholder="Select joining date"
+                    />
+                    {validationErrors.joining_date && (
+                      <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.joining_date}</div>
+                    )}
+                  </div>
 
-        <div>
-          <Label className="mb-2 block text-black">
-            Roles <span style={{ color: '#FF0000' }}>*</span>
-          </Label>
-          <Select
-            value={formData.roles[0] ?? ''}
-            onValueChange={(value) => setFormData({ ...formData, roles: [value] })}
-          >
-            <SelectTrigger className="border-black ring-0 text-black">
-              <SelectValue placeholder="Select role" className="text-black" />
-            </SelectTrigger>
-            <SelectContent>
-              {roles.map(role => (
-                <SelectItem key={role} value={role} className="text-black">{role}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {validationErrors.roles && (
-            <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.roles}</div>
-          )}
+                  <div>
+                    <Label className="mb-2 block text-black">
+                      Roles <span style={{ color: '#FF0000' }}>*</span>
+                    </Label>
+                    <Select
+                      value={formData.roles[0] ?? ''}
+                      onValueChange={(value) => setFormData({ ...formData, roles: [value] })}
+                    >
+                      <SelectTrigger className="border-black ring-0 text-black">
+                        <SelectValue placeholder="Select role" className="text-black" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roles.map(role => (
+                          <SelectItem key={role} value={role} className="text-black">{role}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {validationErrors.roles && (
+                      <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.roles}</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 mt-8">
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    {editMode ? 'Update Employee' : 'Add Employee'}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
         </div>
       </div>
-
-      <div className="flex justify-end gap-2 mt-8">
-        <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-          Cancel
-        </Button>
-        <Button type="submit">
-          {editMode ? 'Update Employee' : 'Add Employee'}
-        </Button>
-      </div>
-    </form>
-  </DialogContent>
-</Dialog>
-
-        </div>
-      </div>
-
-      {/* <div className="grid md:grid-cols-4 gap-6 mb-6">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-gray-600 text-sm mb-1">Total Employees</p>
-            <p className="text-gray-900">{employees.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-gray-600 text-sm mb-1">Sales Team</p>
-            <p className="text-gray-900">{employees.filter(emp => isSalesRole(emp)).length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-gray-600 text-sm mb-1">Field Team</p>
-            <p className="text-gray-900">{employees.filter(emp => isFieldRole(emp)).length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-gray-600 text-sm mb-1">Available Executives</p>
-            <p className="text-gray-900">
-              {employees.filter(emp => isFieldRole(emp) && emp.status === 'available').length}
-            </p>
-          </CardContent>
-        </Card>
-      </div> */}
 
       <div className="space-y-6">
         {/* Role Selection Dropdown and Manage Roles Button */}
         <div className="flex items-center gap-4">
-        
-          
-          {/* Manage Roles Button */}
+          {/* Manage Roles Button (commented out) */}
           {/* <Button
             variant={activeTab === 'roles' ? 'default' : 'outline'}
             onClick={() => handleTabChange('roles')}
@@ -2218,7 +2249,11 @@ export function EmployeesPage() {
                 <span className="font-semibold text-lg text-gray-900">{selectedEmployee.first_name} {selectedEmployee.last_name}</span>
                 <span className="text-sm text-gray-600">{selectedEmployee.email}</span>
                 <span className="text-sm text-gray-600">Mobile: {selectedEmployee.mobile}</span>
-                <span className="text-sm text-gray-600">Role: {Array.isArray(selectedEmployee.roles) ? selectedEmployee.roles.join(', ') : selectedEmployee.role}</span>
+                <span className="text-sm text-gray-600">
+                  Role: {Array.isArray(selectedEmployee.roles)
+                    ? getRoleNames(selectedEmployee.roles)
+                    : selectedEmployee.role}
+                </span>
                 <span className="text-sm text-gray-600">Joining Date: {selectedEmployee.joining_date ? new Date(selectedEmployee.joining_date).toLocaleDateString('en-GB') : 'N/A'}</span>
                 <span className="text-sm text-gray-600">Status: {selectedEmployee.status}</span>
                 <span className="text-sm text-gray-600">Address: {selectedEmployee.address}</span>

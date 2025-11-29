@@ -270,7 +270,7 @@ console.log("loginuser", user);
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/profile" element={<ProfilePage role={auth.role} />} />
                 <Route path="/jobs" element={<JobsPage />} />
-                <Route path="/My_Tasks" element={<MyTasks />} />
+                <Route path="/My-Tasks" element={<MyTasks />} />
 
                 <Route path="*" element={<AdminDashboard />} />
               </>}

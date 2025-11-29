@@ -278,6 +278,27 @@ export const getUsers = async (
   return makeRequest(() => api.get<User[]>('/api/employees', { cancelToken }));
 };
 
+export const getProfile = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse<any>> => {
+  return makeRequest(() => api.get('/api/profile', { cancelToken }));
+};
+
+export const updateProfile = async (
+  data: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    mobile: string;
+  },
+  cancelToken?: CancelToken
+): Promise<ApiResponse<any>> => {
+  return makeRequest(
+    () => api.put('/api/profile', data, { cancelToken }),
+    'Profile updated successfully!'
+  );
+};
+
 export const apiCurrentUserData = async (
   cancelToken?: CancelToken
 ): Promise<ApiResponse<User[]>> => {
@@ -761,3 +782,26 @@ const customApiCall = async () => {
   }
 };
 */
+// ===========================================
+// STATS ENDPOINT
+// ===========================================
+
+export const getStats = async (cancelToken?: CancelToken) => {
+  return makeRequest(() => api.get('/api/stats', { cancelToken }));
+};
+
+
+// ⭐ CHANGED — ADD THIS FUNCTION
+export const getPaymentStats = async (cancelToken?: CancelToken) => {
+  return makeRequest(() =>
+    api.get('/api/payments/stats', { cancelToken })
+  );
+};
+
+
+export async function getSummaryGraph() {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3200";
+  const response = await fetch(`${API_BASE_URL}/api/summary/graph`);
+  return response.json();
+}
+

@@ -395,7 +395,7 @@ export function PackagesPage() {
                         <TableHead className="text-xs sm:text-sm">Capacity</TableHead>
                         <TableHead className="text-xs sm:text-sm">Price</TableHead>
                         <TableHead className="text-xs sm:text-sm">Monthly Gen.</TableHead>
-                        <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                        {/* <TableHead className="text-xs sm:text-sm">Status</TableHead> */}
                         <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -411,13 +411,13 @@ export function PackagesPage() {
                             </div>
                           </TableCell>
                           <TableCell className="text-xs sm:text-sm">{pkg.monthlyGeneration}</TableCell>
-                          <TableCell className="text-xs sm:text-sm">
+                          {/* <TableCell className="text-xs sm:text-sm">
                             {pkg.recommended && (
                               <Badge variant="secondary" className="bg-[#FFA500] text-white text-xs">
                                 Popular
                               </Badge>
                             )}
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell>
                             <div className="flex gap-2">
                               <Button

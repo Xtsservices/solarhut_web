@@ -2,12 +2,73 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { FileText, CheckCircle2, Clock, IndianRupee, Users, Wrench } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { getStats, getSummaryGraph } from '../../api/api';
 
 export function AdminDashboard() {
+    // ==========================
+  // 🔹 API States
+  // ==========================
+  const [stats, setStats] = useState({
+    pendingLeads: 0,
+    pendingJobs: 0,
+    pendingPayments: "0.00",
+    todayRevenue: "0.00",
+    weekRevenue: "0.00",
+    monthRevenue: "0.00",
+  });
+  // ⭐ CHANGED - Summary Graph State
+const [summaryGraph, setSummaryGraph] = useState({ leadCount: 0, jobCount: 0 });
+// ⭐ NEW — Monthly summary data
+const [monthlySummary, setMonthlySummary] = useState([]);
+
+
   // ...existing code...
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
   const monthOrder = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+
+
+
+useEffect(() => {
+  const fetchStats = async () => {
+    const result = await getStats();
+    if (result.ok && result.data?.data) {
+      setStats(result.data.data);
+    }
+  };
+
+  const fetchSummaryGraph = async () => {
+    const response = await getSummaryGraph();
+
+    if (response.success && response.data) {
+      const { leadsMonthly, jobsMonthly } = response.data;
+
+      // Convert leads data into { month: 'Nov', leads: 22, jobs: 0 }
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+      // Build a map for jobs count
+      const jobsMap = {};
+      jobsMonthly.forEach(j => {
+        jobsMap[`${j.year}-${j.month}`] = j.count;
+      });
+
+      const finalData = leadsMonthly.map(item => ({
+        month: monthNames[item.month - 1],
+        leads: item.count,
+        jobs: jobsMap[`${item.year}-${item.month}`] || 0
+      }));
+
+      setMonthlySummary(finalData);
+    }
+  };
+
+  fetchStats();
+  fetchSummaryGraph();
+}, []);
+
+
+
 
   // ...existing code...
 
@@ -20,44 +81,44 @@ export function AdminDashboard() {
 
   const metrics = [
     {
-      title: 'Total Enquiries',
-      value: '47',
+      title: 'Pending Leads',
+      value: stats.pendingLeads,
       icon: FileText,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
     },
     {
-      title: 'New Enquiries',
-      value: '12',
-      icon: Clock,
+      title: 'Pending Jobs',
+      value: stats.pendingJobs,
+      icon: Wrench,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
     },
     {
-      title: 'Completed Jobs',
-      value: '28',
-      icon: CheckCircle2,
+      title: 'Pending payments',
+      value: stats.pendingPayments,
+      icon: IndianRupee,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
     },
     {
       title: 'Total Revenue',
-      value: '₹42.5L',
+      value: `₹${stats.todayRevenue}`,
       icon: IndianRupee,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
     },
     {
-      title: 'Active Sales Persons',
-      value: '8',
-      icon: Users,
+      title: 'Week Revenue',
+      value: `₹${stats.weekRevenue}`,
+      icon: IndianRupee,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
     },
     {
-      title: 'Field Executives',
-      value: '12',
-      icon: Wrench,
+      title: 'Month Revenue',
+      value: `₹${stats.monthRevenue}`,
+      icon: IndianRupee,
       color: 'text-teal-600',
       bgColor: 'bg-teal-50',
     },
@@ -71,6 +132,12 @@ export function AdminDashboard() {
     { month: 'Sep', new: 25, assigned: 22, completed: 20 },
     { month: 'Oct', new: 22, assigned: 20, completed: 18 },
   ];
+  // ⭐ CHANGED — Summary Graph Data for Bar Chart
+const summaryGraphData = [
+  { name: "Leads", value: summaryGraph.leadCount },
+  { name: "Jobs", value: summaryGraph.jobCount },
+];
+
 
 
   const paymentData = [
@@ -144,47 +211,28 @@ export function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-        <Card>
-          <CardHeader className="p-3 sm:p-4 md:p-5">
-            <div className="flex flex-col gap-2 mt-2">
-              <CardTitle className="text-sm sm:text-base md:text-lg">Enquiry Overview</CardTitle>
-              <div className="grid grid-cols-2 gap-3 w-full">
-                <div className="flex flex-col w-full">
-                  <span className="text-xs text-gray-600 mb-1">Start Date</span>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={e => setStartDate(e.target.value)}
-                    className="border rounded px-2 py-1 text-xs min-w-[120px] w-full"
-                  />
-                </div>
-                <div className="flex flex-col w-full">
-                  <span className="text-xs text-gray-600 mb-1">End Date</span>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={e => setEndDate(e.target.value)}
-                    className="border rounded px-2 py-1 text-xs min-w-[120px] w-full"
-                  />
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={filteredEnquiryOverviewData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" stroke="#666" style={{ fontSize: '10px' }} />
-                <YAxis stroke="#666" style={{ fontSize: '10px' }} />
-                <Tooltip contentStyle={{ fontSize: '12px' }} />
-                <Legend wrapperStyle={{ fontSize: '10px' }} iconSize={10} />
-                <Bar dataKey="new" fill="#f59e0b" name="New" />
-                <Bar dataKey="assigned" fill="#3b82f6" name="Assigned" />
-                <Bar dataKey="completed" fill="#10b981" name="Completed" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+  <Card>
+  <CardHeader className="p-3 sm:p-4 md:p-5">
+    <CardTitle className="text-sm sm:text-base md:text-lg">Summary Graph (Monthly)</CardTitle>
+  </CardHeader>
+
+  <CardContent className="p-3 sm:p-4">
+    <ResponsiveContainer width="100%" height={260}>
+      <BarChart data={monthlySummary}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <XAxis dataKey="month" stroke="#666" style={{ fontSize: "12px" }} />
+        <YAxis stroke="#666" style={{ fontSize: "12px" }} />
+        <Tooltip />
+        <Legend />
+
+        <Bar dataKey="leads" fill="#3b82f6" name="Leads" />
+        <Bar dataKey="jobs" fill="#10b981" name="Jobs" />
+      </BarChart>
+    </ResponsiveContainer>
+  </CardContent>
+</Card>
+
+
 
         <Card>
           <CardHeader className="p-3 sm:p-4 md:p-5">
@@ -214,7 +262,7 @@ export function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader className="p-3 sm:p-4 md:p-5">
             <CardTitle className="text-sm sm:text-base md:text-lg">Sales Person Performance</CardTitle>
           </CardHeader>
@@ -231,7 +279,7 @@ export function AdminDashboard() {
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
-        </Card>
+        </Card> */}
 
        
       </div>

@@ -50,9 +50,9 @@ const adminMenuItems: MenuItem[] = [
    { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
   { id: 'Locations', label: 'Locations', icon: MapPin },
   { id: 'Jobs', label: 'Jobs', icon: Briefcase },
-  { id: 'Notifications', label: 'Notifications', icon: Bell },
+  // { id: 'Notifications', label: 'Notifications', icon: Bell },
   // { id: 'Settings', label: 'Settings', icon: Settings },
-  // { id: 'Profile', label: 'Profile', icon: User },
+  { id: 'Profile', label: 'Profile', icon: User },
  
 ];
 

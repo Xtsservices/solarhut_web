@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { FileText, CheckCircle2, Clock, IndianRupee, Users, Wrench } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { getStats, getSummaryGraph } from '../../api/api';
+import { getStats, getSummaryGraph,getPaymentSummary } from '../../api/api';
+
 
 export function AdminDashboard() {
     // ==========================
@@ -27,6 +28,9 @@ const [monthlySummary, setMonthlySummary] = useState([]);
   const [endDate, setEndDate] = useState('');
 
   const monthOrder = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+  // ⭐ ADD THIS — Payment summary state
+const [paymentSummary, setPaymentSummary] = useState({ paid: 0, pending: 0 });
+
 
 
 
@@ -58,6 +62,12 @@ useEffect(() => {
         leads: item.count,
         jobs: jobsMap[`${item.year}-${item.month}`] || 0
       }));
+      // ⭐ ADD THIS — Fetch payment summary
+const paymentRes = await getPaymentSummary();
+if (paymentRes.success) {
+  setPaymentSummary(paymentRes.data);
+}
+
 
       setMonthlySummary(finalData);
     }
@@ -140,10 +150,11 @@ const summaryGraphData = [
 
 
 
-  const paymentData = [
-    { name: 'Paid', value: 28, color: '#10b981' },
-    { name: 'Pending', value: 7, color: '#f59e0b' },
-  ];
+ // ⭐ REPLACE THIS EXISTING BLOCK
+const paymentData = [
+  { name: 'Paid', value: paymentSummary.paid, color: '#10b981' },
+  { name: 'Pending', value: paymentSummary.pending, color: '#f59e0b' },
+];
 
 
   const salesPerformanceData = [
@@ -236,7 +247,7 @@ const summaryGraphData = [
 
         <Card>
           <CardHeader className="p-3 sm:p-4 md:p-5">
-            <CardTitle className="text-sm sm:text-base md:text-lg">Payment Distribution</CardTitle>
+            <CardTitle className="text-sm sm:text-base md:text-lg">Payment Summary</CardTitle>
           </CardHeader>
           <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
             <ResponsiveContainer width="100%" height={220}>

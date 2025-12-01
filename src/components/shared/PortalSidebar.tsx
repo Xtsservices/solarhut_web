@@ -18,10 +18,11 @@ import {
   Handshake,
   ListChecks,
 } from 'lucide-react';
-  import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '../ui/sheet';
 import { useSelector } from 'react-redux';
+import { useEffect, useRef, useMemo } from 'react'; // ADDED: for scroll preservation
 
 interface MenuItem {
   id: string;
@@ -44,13 +45,13 @@ const adminMenuItems: MenuItem[] = [
   { id: 'Packages', label: 'Packages', icon: Package },
   { id: 'Payments', label: 'Payments', icon: IndianRupee },
   { id: 'Contacts', label: 'Contacts', icon: Handshake },
-  { id: 'Work_Progress', label: 'Work Progress', icon: TrendingUp },
+  // { id: 'Work_Progress', label: 'Work Progress', icon: TrendingUp },
   { id: 'Masters', label: 'Masters', icon: Shield },
    { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
   { id: 'Locations', label: 'Locations', icon: MapPin },
   { id: 'Jobs', label: 'Jobs', icon: Briefcase },
-  { id: 'Notifications', label: 'Notifications', icon: Bell },
-  { id: 'Settings', label: 'Settings', icon: Settings },
+  // { id: 'Notifications', label: 'Notifications', icon: Bell },
+  // { id: 'Settings', label: 'Settings', icon: Settings },
   { id: 'Profile', label: 'Profile', icon: User },
  
 ];
@@ -79,110 +80,126 @@ export function PortalSidebar({
   const user = useSelector((state: any) => state.currentUserData);
   console.log('Current User in Sidebar:', user);
   const permissions = user?.permissions || [];
-  let menuItems = [];
-  
-  if (role === 'admin') {
-    // Handle permissions array - extract feature names safely
-    const allowedFeatures = permissions.map((p: any) => {
-      if (typeof p === 'string') {
-        return p.toLowerCase();
-      } else if (p && typeof p === 'object' && p.feature_name) {
-        return p.feature_name.toLowerCase();
-      } else if (p && typeof p === 'object' && p.name) {
-        return p.name.toLowerCase();
-      }
-      return '';
-    }).filter(Boolean);
-    
-    console.log('Allowed Features:', allowedFeatures);
-    
-    // Create a mapping between feature names and menu item IDs
-    const featureToMenuMapping: Record<string, string> = {
-      'enquiries': 'leads',
-      'leads': 'leads',
-      'employees': 'employees',
-      'packages': 'packages', 
-      'payments': 'payments',
-      'contacts': 'contacts',
-      'work_progress': 'work_progress',
-      'work progress': 'work_progress',
-      'masters': 'masters',
-      'my_tasks': 'my_tasks',
-      'my tasks': 'my_tasks',
-      'locations': 'locations',
-      'jobs': 'jobs',
-      'dashboard': 'dashboard',
-      'notifications': 'notifications',
-      'settings': 'settings',
-      'profile': 'profile'
-    };
-    
-    // Map allowed features to menu item IDs
-    const allowedMenuItems: string[] = allowedFeatures.map((feature: string) => 
-      featureToMenuMapping[feature] || feature
-    );
-    
-    console.log('Mapped Menu Items:', allowedMenuItems);
-    
-    // If no permissions or empty permissions, show all menu items (for admin)
-    if (allowedFeatures.length === 0) {
-      console.log('No permissions found, showing all menu items');
-      menuItems = adminMenuItems;
-    } else {
-      menuItems = adminMenuItems.filter(item => {
-        const itemId = item.id.toLowerCase();
-        const isAllowed = allowedMenuItems.includes(itemId) || allowedFeatures.includes(itemId);
-        console.log(`Menu item ${item.label} (${itemId}): ${isAllowed ? 'ALLOWED' : 'BLOCKED'}`);
-        return isAllowed;
-      });
-    }
-    
-    console.log('Final filtered menu items:', menuItems.map(item => item.label));
-     
-  } else if (role === 'sales') {
-    menuItems = salesMenuItems;
-  } else {
-    menuItems = fieldMenuItems;
-  }
 
-    const navigate = useNavigate();
-    const handleNavigate = (page: string) => {
-      // Handle special routing cases where menu ID doesn't match route path
-      if (page === 'Leads') {
-        navigate('/enquiries');
-      } else if (page === 'Contacts') {
-        navigate('/contacts');
-      } else if (page === 'Work_Progress') {
-        navigate('/work-progress');
-      } else if (page === 'Masters') {
-        navigate('/masters');
-      } else if (page === 'My_Tasks') {
-        navigate('/my-tasks');
-      } else if (page === 'Dashboard') {
-        navigate('/dashboard');
-      } else if (page === 'Employees') {
-        navigate('/employees');
-      } else if (page === 'Packages') {
-        navigate('/packages');
-      } else if (page === 'Payments') {
-        navigate('/payments');
-      } else if (page === 'Locations') {
-        navigate('/locations');
-      } else if (page === 'Jobs') {
-        navigate('/jobs');
-      } else if (page === 'Notifications') {
-        navigate('/notifications');
-      } else if (page === 'Settings') {
-        navigate('/settings');
-      } else if (page === 'Profile') {
-        navigate('/profile');
+  // ADDED: Ref to track the scrollable nav container
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // ADDED: Memoize menuItems to prevent unnecessary re-creation on every render
+  const menuItems = useMemo(() => {
+    let items: MenuItem[] = [];
+    
+    if (role === 'admin') {
+      // Handle permissions array - extract feature names safely
+      const allowedFeatures = permissions.map((p: any) => {
+        if (typeof p === 'string') {
+          return p.toLowerCase();
+        } else if (p && typeof p === 'object' && p.feature_name) {
+          return p.feature_name.toLowerCase();
+        } else if (p && typeof p === 'object' && p.name) {
+          return p.name.toLowerCase();
+        }
+        return '';
+      }).filter(Boolean);
+      
+      console.log('Allowed Features:', allowedFeatures);
+      
+      // Create a mapping between feature names and menu item IDs
+      const featureToMenuMapping: Record<string, string> = {
+        'enquiries': 'leads',
+        'leads': 'leads',
+        'employees': 'employees',
+        'packages': 'packages', 
+        'payments': 'payments',
+        'contacts': 'contacts',
+        'work_progress': 'work_progress',
+        'work progress': 'work_progress',
+        'masters': 'masters',
+        'my_tasks': 'my_tasks',
+        'my tasks': 'my_tasks',
+        'locations': 'locations',
+        'jobs': 'jobs',
+        'dashboard': 'dashboard',
+        'notifications': 'notifications',
+        'settings': 'settings',
+        'profile': 'profile'
+      };
+      
+      // Map allowed features to menu item IDs
+      const allowedMenuItems: string[] = allowedFeatures.map((feature: string) => 
+        featureToMenuMapping[feature] || feature
+      );
+      
+      console.log('Mapped Menu Items:', allowedMenuItems);
+      
+      // If no permissions or empty permissions, show all menu items (for admin)
+      if (allowedFeatures.length === 0) {
+        console.log('No permissions found, showing all menu items');
+        items = adminMenuItems;
       } else {
-        navigate('/' + page.toLowerCase());
+        items = adminMenuItems.filter(item => {
+          const itemId = item.id.toLowerCase();
+          const isAllowed = allowedMenuItems.includes(itemId) || allowedFeatures.includes(itemId);
+          console.log(`Menu item ${item.label} (${itemId}): ${isAllowed ? 'ALLOWED' : 'BLOCKED'}`);
+          return isAllowed;
+        });
       }
       
-      if (onMobileClose) {
-        onMobileClose();
-      }
+      console.log('Final filtered menu items:', items.map(item => item.label));
+       
+    } else if (role === 'sales') {
+      items = salesMenuItems;
+    } else {
+      items = fieldMenuItems;
+    }
+
+    return items;
+  }, [role, permissions]); // Dependencies for memoization
+
+  const navigate = useNavigate();
+
+  // FIXED: Save scroll position before navigation
+  const handleNavigate = (page: string) => {
+    // Save scroll position before leaving
+    if (scrollRef.current) {
+      sessionStorage.setItem('sidebar_scroll_position', scrollRef.current.scrollTop.toString());
+    }
+
+    // Handle special routing cases where menu ID doesn't match route path
+    if (page === 'Leads') {
+      navigate('/enquiries');
+    } else if (page === 'Contacts') {
+      navigate('/contacts');
+    } else if (page === 'Work_Progress') {
+      navigate('/work-progress');
+    } else if (page === 'Masters') {
+      navigate('/masters');
+    } else if (page === 'My_Tasks') {
+      navigate('/my-tasks');
+    } else if (page === 'Dashboard') {
+      navigate('/dashboard');
+    } else if (page === 'Employees') {
+      navigate('/employees');
+    } else if (page === 'Packages') {
+      navigate('/packages');
+    } else if (page === 'Payments') {
+      navigate('/payments');
+    } else if (page === 'Locations') {
+      navigate('/locations');
+    } else if (page === 'Jobs') {
+      navigate('/jobs');
+    } else if (page === 'Notifications') {
+      navigate('/notifications');
+    } else if (page === 'Settings') {
+      navigate('/settings');
+    } else if (page === 'Profile') {
+      navigate('/profile');
+    } else {
+      navigate('/' + page.toLowerCase());
+    }
+    
+    if (onMobileClose) {
+      onMobileClose();
+    }
   };
 
   const handleLogout = () => {
@@ -192,10 +209,21 @@ export function PortalSidebar({
     }
   };
 
+  // ADDED: Restore scroll position when currentPage changes (after navigation)
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem('sidebar_scroll_position');
+    if (scrollRef.current && savedScroll !== null) {
+      scrollRef.current.scrollTop = parseInt(savedScroll, 10);
+    }
+  }, [currentPage]);
+
   const SidebarContent = () => (
     <div className="h-full bg-white flex flex-col">
-      {/* Menu Items */}
-      <nav className="flex-1 p-3 sm:p-4 overflow-y-auto">
+      {/* FIXED: Added ref to preserve scroll position */}
+      <nav 
+        ref={scrollRef}
+        className="flex-1 p-3 sm:p-4 overflow-y-auto"
+      >
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon;

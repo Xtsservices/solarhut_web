@@ -798,7 +798,7 @@ export function EnquiriesPage() {
                     <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">{getServiceType(enquiry)}</TableCell>
                     <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">{enquiry.kv || enquiry.system_size || enquiry.capacity || 'N/A'}</TableCell>
                     <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">
-                      <div className="flex items-center h-full">{getStatusBadge(enquiry.status || 'new')}</div>
+                      <div className="flex items-center h-full">{getStatusBadge((enquiry.status || 'new').toLowerCase())}</div>
                     </TableCell>
                     <TableCell className="text-xs sm:text-sm text-left px-3 py-2 whitespace-nowrap align-middle">{enquiry.createdAt || enquiry.created_at || enquiry.date_created 
                       ? (() => {
@@ -1039,7 +1039,7 @@ export function EnquiriesPage() {
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader className="space-y-1 sm:space-y-2">
-            <DialogTitle className="text-base sm:text-lg">Enquiry Details</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">Lead Details</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">View and manage enquiry information</DialogDescription>
           </DialogHeader>
           {selectedEnquiry && (() => {
@@ -1091,29 +1091,35 @@ export function EnquiriesPage() {
 
             // Get all fields from the enquiry object
             const excludeFields = [
-              'salesPersonId', 
-              'fieldExecutiveId',
-              // Exclude fields already shown in primary section
-              'id',
-              'lead_id', 
-              'status',
-              'mobile',
-              'phone',
-              'contact',
-              // Exclude name fields as they're handled by getFullName
-              'fullName',
-              'full_name',
-              'name',
-              'customer_name',
-              'firstName',
-              'first_name',
-              'lastName',
-              'last_name',
-              'fname',
-              'lname',
-              // Exclude channel field
-              'channel'
-            ];
+  'salesPersonId', 
+  'fieldExecutiveId',
+
+  // ❌ Hide assignment fields here
+  'assigned_to',
+  'assignedTo',
+  'assigned_to_email',
+  'assignedToEmail',
+
+  // Existing exclusions
+  'id',
+  'lead_id',
+  'status',
+  'mobile',
+  'phone',
+  'contact',
+  'fullName',
+  'full_name',
+  'name',
+  'customer_name',
+  'firstName',
+  'first_name',
+  'lastName',
+  'last_name',
+  'fname',
+  'lname',
+  'channel'
+];
+
             
             // Define custom field order
             const fieldOrder = [
@@ -1155,7 +1161,7 @@ export function EnquiriesPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Essential Fields First */}
                   <div>
-                    <Label className="text-xs sm:text-sm font-semibold text-orang-700">Enquiry ID</Label>
+                    <Label className="text-xs sm:text-sm font-semibold text-orang-700">Lead ID</Label>
                     <p className="text-sm sm:text-base text-gray-900 mt-1 font-medium">
                       {selectedEnquiry.id || selectedEnquiry.lead_id || 'N/A'}
                     </p>

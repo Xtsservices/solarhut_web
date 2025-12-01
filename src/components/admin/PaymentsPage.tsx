@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Button } from '../ui/button';
@@ -10,6 +10,9 @@ import { Label } from '../ui/label';
 import { mockEnquiries } from '../../lib/mockData';
 import { CheckCircle2, Clock, Eye, Search, IndianRupee } from 'lucide-react';
 import { toast } from 'sonner';
+// ⭐ CHANGED
+import { getPaymentStats } from '../../api/api';
+
 
 export function PaymentsPage() {
   // FIXED: Default paymentStatus to 'pending' if not set + ensure paidAmount exists
@@ -28,6 +31,14 @@ export function PaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [paidAmount, setPaidAmount] = useState('');
+  // ⭐ CHANGED
+  const [stats, setStats] = useState({
+  todayPayments: '0.00',
+  weekPayments: '0.00',
+  pendingPayments: 0,
+  });
+  
+
 
   const filteredPayments = payments.filter((payment) => {
     // IMPROVED: Use !== 'paid' for pending to catch undefined cases too
@@ -100,6 +111,18 @@ export function PaymentsPage() {
     }
     return <Badge className="bg-orange-100 text-orange-700">Pending</Badge>;
   };
+  // ⭐ CHANGED — Fetch stats on load
+useEffect(() => {
+  fetchStats();
+}, []);
+
+const fetchStats = async () => {
+  const result = await getPaymentStats();
+  if (result.ok && result.data?.data) {
+    setStats(result.data.data);
+  }
+};
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -109,67 +132,35 @@ export function PaymentsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-6">
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-xs sm:text-sm mb-1">Total Paid</p>
-                <p className="text-lg sm:text-xl text-gray-900">₹{(totalPaid / 100000).toFixed(2)}L</p>
-              </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* ⭐ CHANGED — STATS CARDS USING API */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
 
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-xs sm:text-sm mb-1">Total Pending</p>
-                <p className="text-lg sm:text-xl text-gray-900">₹{(totalPending / 100000).toFixed(2)}L</p>
-              </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-orange-50 rounded-lg flex items-center justify-center">
-                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+  {/* Today Payments */}
+  <Card>
+    <CardContent className="p-4 sm:p-6">
+      <p className="text-gray-600 text-sm mb-1">Today Payments</p>
+      <p className="text-xl font-semibold text-gray-900">₹{stats.todayPayments} </p>
+    </CardContent>
+  </Card>
 
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-xs sm:text-sm mb-1">Paid Count</p>
-                <p className="text-lg sm:text-xl text-gray-900">
-                  {payments.filter((p) => p.paymentStatus === 'paid').length} {/* FIXED: Now correct */}
-                </p>
-              </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+  {/* Week Payments */}
+  <Card>
+    <CardContent className="p-4 sm:p-6">
+      <p className="text-gray-600 text-sm mb-1">Week Payments</p>
+      <p className="text-xl font-semibold text-gray-900">₹{stats.weekPayments}</p>
+    </CardContent>
+  </Card>
 
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-xs sm:text-sm mb-1">Pending Count</p>
-                <p className="text-lg sm:text-xl text-gray-900">
-                  {payments.filter((p) => p.paymentStatus !== 'paid').length} {/* FIXED: Now shows correct count */}
-                </p>
-              </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-orange-50 rounded-lg flex items-center justify-center">
-                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+  {/* Pending Payments */}
+  <Card>
+    <CardContent className="p-4 sm:p-6">
+      <p className="text-gray-600 text-sm mb-1">Pending Payments</p>
+      <p className="text-xl font-semibold text-gray-900">{stats.pendingPayments}</p>
+    </CardContent>
+  </Card>
+
+</div>
+
 
       {/* Filters */}
       <div className="mb-4 sm:mb-6">

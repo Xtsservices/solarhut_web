@@ -56,7 +56,7 @@ export function PortalHeader({
       {/* Right: Actions */}
       <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
         {/* Notifications */}
-        <Button
+        {/* <Button
           variant="ghost"
           size="icon"
           className="relative h-8 w-8 sm:h-9 sm:w-9"
@@ -68,7 +68,7 @@ export function PortalHeader({
               {notificationCount}
             </Badge>
           )}
-        </Button>
+        </Button> */}
 
         {/* Profile */}
         <Button

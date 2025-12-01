@@ -1467,7 +1467,9 @@ export function EmployeesPage() {
       mobile: employee.mobile ?? '',
       address: employee.address ?? '',
       joining_date: isoDate, // ✅ FIX APPLIED HERE
-      roles: Array.isArray(employee.roles) ? employee.roles : [role],
+      roles: Array.isArray(employee.roles)
+  ? employee.roles.map((r: any) => typeof r === 'object' ? r.role_name || r.name : r)
+  : [role],
     };
 
     setFormData(safeEmployee);

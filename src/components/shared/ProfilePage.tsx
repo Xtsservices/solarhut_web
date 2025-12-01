@@ -1,71 +1,72 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
-import { Avatar, AvatarFallback } from '../ui/avatar';
 import { toast } from 'sonner';
 
-interface ProfilePageProps {
-  role: 'admin' | 'sales' | 'field';
-}
+import { getProfile, updateProfile } from '../../api/api'; // ⭐ UPDATE: Import updateProfile
 
-export function ProfilePage({ role }: ProfilePageProps) {
-  const roleNames = {
-    admin: 'Admin',
-    sales: 'Sales Person',
-    field: 'Field Executive',
-  };
+export function ProfilePage() {
+  const [loading, setLoading] = useState(true);
 
   const [profile, setProfile] = useState({
-    name: role === 'admin' ? '' : role === 'sales' ? 'Rahul Verma' : 'Manoj Kumar',
-    email:
-      role === 'admin'
-        ? 'admin@solarhut.com'
-        : role === 'sales'
-        ? 'rahul.verma@solarhut.com'
-        : 'manoj.kumar@solarhut.com',
-    mobile:
-      role === 'admin'
-        ? '+91 98765-43210'
-        : role === 'sales'
-        ? '+91 99887-76655'
-        : '+91 98765-56677',
-    role: roleNames[role],
+    firstname: '',
+    lastname: '',
+    email: '',
+    mobile: '',
+    role: '',
   });
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
+  // ⭐ FETCH PROFILE FROM API
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
 
-  const handleSaveProfile = () => {
-    toast.success('Profile updated successfully');
+      const result = await getProfile();
+
+      if (result.ok && result.data?.data) {
+        const u = result.data.data;
+
+        setProfile({
+          firstname: u.first_name,
+          lastname: u.last_name,
+          email: u.email,
+          mobile: u.mobile,
+          role: u.role_names_display,
+        });
+      } else {
+        toast.error(result.error || 'Failed to load profile');
+      }
+
+      setLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
+  // ⭐ UPDATE PROFILE API (PUT /api/profile)
+  const handleSaveProfile = async () => {
+    const payload = {
+      first_name: profile.firstname,
+      last_name: profile.lastname,
+      email: profile.email,
+      mobile: profile.mobile,
+    };
+
+    const result = await updateProfile(payload);
+
+    if (result.ok) {
+      toast.success('Profile updated successfully!');
+
+      // Optionally re-fetch updated profile
+      // Or just update state
+    } else {
+      toast.error(result.error);
+    }
   };
 
-  const handleChangePassword = () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-    if (passwordData.newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
-    toast.success('Password changed successfully');
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    });
-  };
-
-  const initials = profile.name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase();
+  if (loading) return <p className="p-8">Loading profile...</p>;
 
   return (
     <div className="p-8">
@@ -81,22 +82,30 @@ export function ProfilePage({ role }: ProfilePageProps) {
               <CardTitle>Personal Information</CardTitle>
               <CardDescription>Update your personal details</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex justify-center">
-                <Avatar className="h-24 w-24">
-                  <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-                </Avatar>
-              </div>
 
+            <CardContent className="space-y-6">
+
+              {/* First Name */}
               <div>
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="firstname">First Name</Label>
                 <Input
-                  id="name"
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                  id="firstname"
+                  value={profile.firstname}
+                  onChange={(e) => setProfile({ ...profile, firstname: e.target.value })}
                 />
               </div>
 
+              {/* Last Name */}
+              <div>
+                <Label htmlFor="lastname">Last Name</Label>
+                <Input
+                  id="lastname"
+                  value={profile.lastname}
+                  onChange={(e) => setProfile({ ...profile, lastname: e.target.value })}
+                />
+              </div>
+
+              {/* Email */}
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -107,6 +116,7 @@ export function ProfilePage({ role }: ProfilePageProps) {
                 />
               </div>
 
+              {/* Mobile */}
               <div>
                 <Label htmlFor="mobile">Mobile Number</Label>
                 <Input
@@ -117,6 +127,7 @@ export function ProfilePage({ role }: ProfilePageProps) {
                 />
               </div>
 
+              {/* Role */}
               <div>
                 <Label htmlFor="role">Role</Label>
                 <Input id="role" value={profile.role} disabled />
@@ -125,6 +136,7 @@ export function ProfilePage({ role }: ProfilePageProps) {
               <Button onClick={handleSaveProfile} className="w-full">
                 Save Changes
               </Button>
+
             </CardContent>
           </Card>
         </div>

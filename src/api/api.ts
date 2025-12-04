@@ -412,6 +412,22 @@ export const createLead = async (
   );
 };
 
+/**
+ * Update lead status
+ * PATCH /api/leads/:id/status
+ * body: { status: string }
+ */
+export const updateLeadStatus = async (
+  id: string | number,
+  status: string,
+  cancelToken?: CancelToken
+): Promise<ApiResponse<any>> => {
+  return makeRequest(
+    () => api.patch(`/api/leads/${id}/status`, { status }, { cancelToken }),
+    'Status updated'
+  );
+};
+
 export const getContacts = async (
   cancelToken?: CancelToken
 ): Promise<ApiResponse<Contact[]>> => {

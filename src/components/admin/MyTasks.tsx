@@ -36,6 +36,7 @@ import { Calendar } from "../ui/calendar";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { apiGet, apiPut } from "../../api/commonApi";
+import { updateLeadStatus } from "../../api/api";
 import {
   Dialog,
   DialogContent,
@@ -77,7 +78,7 @@ type Job = {
   estimated_cost: number;
   scheduled_date: string;
   job_priority: "Low" | "Medium" | "High";
-  status: "Assigned" | "In Progress" | "On Hold" | "Completed" | "Cancelled";
+  status: "Assigned" | "In Progress" | "On Hold" | "Complete" | "Cancelled";
 };
 
 type TaskSummary = {
@@ -100,7 +101,7 @@ type JobsResponse = { jobs: any[]; pagination: Pagination };
 const STATUS_OPTIONS = [
   "In Progress",
   "On Hold",
-  "Completed",
+  "Complete",
   "Cancelled",
 ] as const;
 const PAYMENT_METHODS = [
@@ -322,7 +323,7 @@ export function MyTasks() {
       return;
     }
 
-    if (actionType === "job" && newStatus === "Completed") {
+    if (actionType === "job" && newStatus === "Complete") {
       if (!completionData.status_reason.trim()) {
         toast.error("Status reason is required for completion");
         return;
@@ -339,47 +340,50 @@ export function MyTasks() {
 
     setActionLoading(true);
     try {
-      const endpoint =
-        actionType === "job"
-          ? `/jobs/${actionId}/status`
-          : `/leads/${actionId}/status`;
-      const payload: any = {
-        new_status: newStatus,
-        comments: comment.trim(),
-      };
-
-      if (actionType === "job" && newStatus === "Completed") {
-        payload.status_reason = completionData.status_reason.trim();
-        payload.payment_details = {
-          amount: completionData.amount,
-          discount_amount: completionData.discount_amount
-            ? Number(completionData.discount_amount)
-            : 0,
-          payment_method: completionData.payment_method,
-          payment_status: "Completed",
-          transaction_id: completionData.transaction_id.trim(),
-        };
-      }
-
-      const response = await apiPut(endpoint, payload);
-
-      if (response?.data?.success) {
-        toast.success(
-          `${
-            actionType === "job" ? "Job" : "Lead"
-          } status updated to ${newStatus}`
-        );
-        setActionOpen(false);
-        resetModal();
-        if (actionType === "lead") {
+      if (actionType === "lead") {
+        // Use the dedicated API endpoint for updating lead status (PATCH /api/leads/:id/status)
+        const result = await updateLeadStatus(actionId as number, newStatus);
+        if (result.ok) {
+          toast.success(`Lead status updated to ${newStatus}`);
+          setActionOpen(false);
+          resetModal();
           fetchMyLeads(leadPage);
           fetchOverview();
         } else {
-          fetchMyJobs(jobPage);
-          fetchOverview();
+          toast.error(result.error || "Failed to update lead status");
         }
       } else {
-        toast.error("Failed to update status");
+        // Jobs continue to use existing API (PUT) with additional payload
+        const endpoint = `/jobs/${actionId}/status`;
+        const payload: any = {
+          new_status: newStatus,
+          comments: comment.trim(),
+        };
+
+        if (actionType === "job" && newStatus === "Complete") {
+          payload.status_reason = completionData.status_reason.trim();
+          payload.payment_details = {
+            amount: completionData.amount,
+            discount_amount: completionData.discount_amount
+              ? Number(completionData.discount_amount)
+              : 0,
+            payment_method: completionData.payment_method,
+            payment_status: "Complete",
+            transaction_id: completionData.transaction_id.trim(),
+          };
+        }
+
+        const response = await apiPut(endpoint, payload);
+
+        if (response?.data?.success) {
+          toast.success(`Job status updated to ${newStatus}`);
+          setActionOpen(false);
+          resetModal();
+          fetchMyJobs(jobPage);
+          fetchOverview();
+        } else {
+          toast.error("Failed to update status");
+        }
       }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to update status");
@@ -459,7 +463,7 @@ export function MyTasks() {
       Assigned: "bg-blue-100 text-blue-700",
       "In Progress": "bg-purple-100 text-purple-700",
       "On Hold": "bg-yellow-100 text-yellow-700",
-      Completed: "bg-green-100 text-green-700",
+      Complete: "bg-green-100 text-green-700",
       Cancelled: "bg-red-100 text-red-700",
       Contacted: "bg-indigo-100 text-indigo-700",
       Qualified: "bg-cyan-100 text-cyan-700",
@@ -658,7 +662,7 @@ export function MyTasks() {
                             {getStatusBadge(lead.lead_status, "lead")}
                           </TableCell>
                           <TableCell>
-                            {lead.lead_status !== "Completed" && (
+                            {lead.lead_status !== "Complete" && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -790,7 +794,7 @@ export function MyTasks() {
                       "Assigned",
                       "In Progress",
                       "On Hold",
-                      "Completed",
+                      "Complete",
                       "Cancelled",
                     ].map((s) => (
                       <SelectItem key={s} value={s}>
@@ -918,7 +922,7 @@ export function MyTasks() {
                             {getStatusBadge(job.status, "job")}
                           </TableCell>
                           <TableCell>
-                            {job.status !== "Completed" && (
+                            {job.status !== "Complete" && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -1017,7 +1021,7 @@ export function MyTasks() {
               </Select>
             </div>
 
-            {actionType === "job" && newStatus === "Completed" && (
+            {actionType === "job" && newStatus === "Complete" && (
               <>
                 <div>
                   <Label>Status Reason</Label>

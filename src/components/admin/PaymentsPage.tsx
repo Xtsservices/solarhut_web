@@ -11,20 +11,13 @@ import { mockEnquiries } from '../../lib/mockData';
 import { CheckCircle2, Clock, Eye, Search, IndianRupee } from 'lucide-react';
 import { toast } from 'sonner';
 // ⭐ CHANGED
-import { getPaymentStats } from '../../api/api';
+import { getPaymentStats, getPaymentsList } from '../../api/api';
 
 
 export function PaymentsPage() {
-  // FIXED: Default paymentStatus to 'pending' if not set + ensure paidAmount exists
-  const [payments, setPayments] = useState(
-    mockEnquiries
-      .filter((e) => e.quotationAmount && e.quotationAmount > 0)
-      .map((enquiry) => ({
-        ...enquiry,
-        paymentStatus: enquiry.paymentStatus || 'pending', // ← CRITICAL FIX: Treat undefined as pending
-        paidAmount: enquiry.paidAmount || undefined,
-      }))
-  );
+  // Payments list from API
+  const [payments, setPayments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,24 +26,24 @@ export function PaymentsPage() {
   const [paidAmount, setPaidAmount] = useState('');
   // ⭐ CHANGED
   const [stats, setStats] = useState({
-  todayPayments: '0.00',
-  weekPayments: '0.00',
-  pendingPayments: 0,
+    today_payments: 0,
+    week_payments: 0,
+    pending_payments: 0,
   });
   
 
 
   const filteredPayments = payments.filter((payment) => {
-    // IMPROVED: Use !== 'paid' for pending to catch undefined cases too
     const matchesStatus =
       statusFilter === 'all' ||
-      (statusFilter === 'paid' ? payment.paymentStatus === 'paid' : payment.paymentStatus !== 'paid');
+      (statusFilter === 'paid' ? payment.paymentStatus === 'completed' : payment.paymentStatus !== 'completed');
 
     const matchesSearch =
       searchTerm === '' ||
       payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.mobile.includes(searchTerm);
+      payment.mobile.includes(searchTerm) ||
+      payment.jobCode?.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesStatus && matchesSearch;
   });
@@ -106,20 +99,73 @@ export function PaymentsPage() {
     .reduce((sum, p) => sum + (p.quotationAmount || 0), 0);
 
   const getPaymentBadge = (status?: string) => {
-    if (status === 'paid') {
-      return <Badge className="bg-green-100 text-green-700">Paid</Badge>;
+    if (status === 'completed') {
+      return <Badge className="bg-green-100 text-green-700">Completed</Badge>;
     }
-    return <Badge className="bg-orange-100 text-orange-700">Pending</Badge>;
+    if (status === 'pending') {
+      return <Badge className="bg-orange-100 text-orange-700">Pending</Badge>;
+    }
+    if (status === 'failed') {
+      return <Badge className="bg-red-100 text-red-700">Failed</Badge>;
+    }
+    return <Badge className="bg-gray-100 text-gray-700">{status || 'Pending'}</Badge>;
   };
   // ⭐ CHANGED — Fetch stats on load
 useEffect(() => {
   fetchStats();
+  fetchPaymentsList();
 }, []);
 
 const fetchStats = async () => {
   const result = await getPaymentStats();
   if (result.ok && result.data?.data) {
     setStats(result.data.data);
+  }
+};
+
+const fetchPaymentsList = async () => {
+  setIsLoading(true);
+  try {
+    const result = await getPaymentsList();
+    if (result.ok && result.data?.data) {
+      const mappedPayments = result.data.data.map((item: any) => ({
+        id: item.payment_info?.id?.toString() || '',
+        jobId: item.job_info?.job_id?.toString() || '',
+        jobCode: item.job_info?.job_code || '',
+        fullName: item.customer_info?.customer_name || '',
+        mobile: item.customer_info?.customer_mobile || '',
+        email: item.customer_info?.customer_email || '',
+        customerCode: item.customer_info?.customer_code || '',
+        paymentType: item.payment_info?.payment_type || '',
+        amount: parseFloat(item.payment_info?.amount) || 0,
+        quotationAmount: parseFloat(item.payment_info?.total_amount) || 0,
+        discountAmount: parseFloat(item.payment_info?.discount_amount) || 0,
+        taxableAmount: parseFloat(item.payment_info?.taxable_amount) || 0,
+        gstRate: parseFloat(item.payment_info?.gst_rate) || 0,
+        cgstAmount: parseFloat(item.payment_info?.cgst_amount) || 0,
+        sgstAmount: parseFloat(item.payment_info?.sgst_amount) || 0,
+        igstAmount: parseFloat(item.payment_info?.igst_amount) || 0,
+        totalTaxAmount: parseFloat(item.payment_info?.total_tax_amount) || 0,
+        paymentMethod: item.payment_info?.payment_method || '',
+        paymentStatus: item.payment_info?.payment_status?.toLowerCase() || 'pending',
+        transactionId: item.payment_info?.transaction_id || '',
+        paymentDate: item.payment_info?.payment_date || null,
+        dueDate: item.payment_info?.due_date || null,
+        serviceType: item.job_info?.service_type || '',
+        solarService: item.job_info?.solar_service || '',
+        jobStatus: item.job_info?.job_status || '',
+        createdBy: item.processed_by_info?.created_by || '',
+        processedBy: item.processed_by_info?.processed_by || '',
+        verifiedBy: item.processed_by_info?.verified_by || '',
+        createdAt: item.payment_info?.created_at || null,
+      }));
+      setPayments(mappedPayments);
+    }
+  } catch (err) {
+    console.error('Error fetching payments:', err);
+    toast.error('Error loading payments');
+  } finally {
+    setIsLoading(false);
   }
 };
 
@@ -139,7 +185,7 @@ const fetchStats = async () => {
   <Card>
     <CardContent className="p-4 sm:p-6">
       <p className="text-gray-600 text-sm mb-1">Today Payments</p>
-      <p className="text-xl font-semibold text-gray-900">₹{stats.todayPayments} </p>
+      <p className="text-xl font-semibold text-gray-900">₹{stats.today_payments.toLocaleString()}</p>
     </CardContent>
   </Card>
 
@@ -147,7 +193,7 @@ const fetchStats = async () => {
   <Card>
     <CardContent className="p-4 sm:p-6">
       <p className="text-gray-600 text-sm mb-1">Week Payments</p>
-      <p className="text-xl font-semibold text-gray-900">₹{stats.weekPayments}</p>
+      <p className="text-xl font-semibold text-gray-900">₹{stats.week_payments.toLocaleString()}</p>
     </CardContent>
   </Card>
 
@@ -155,7 +201,7 @@ const fetchStats = async () => {
   <Card>
     <CardContent className="p-4 sm:p-6">
       <p className="text-gray-600 text-sm mb-1">Pending Payments</p>
-      <p className="text-xl font-semibold text-gray-900">{stats.pendingPayments}</p>
+      <p className="text-xl font-semibold text-gray-900">{stats.pending_payments}</p>
     </CardContent>
   </Card>
 
@@ -202,28 +248,43 @@ const fetchStats = async () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs sm:text-sm">Enquiry ID</TableHead>
-                  <TableHead className="text-xs sm:text-sm">Client Name</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Job Code</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Customer Name</TableHead>
                   <TableHead className="text-xs sm:text-sm">Mobile</TableHead>
                   <TableHead className="text-xs sm:text-sm">Amount</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Payment Method</TableHead>
                   <TableHead className="text-xs sm:text-sm">Status</TableHead>
-                  <TableHead className="text-xs sm:text-sm">Work Date</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Payment Date</TableHead>
                   <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.map((payment) => (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      Loading payments...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredPayments.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      No payments found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredPayments.map((payment) => (
                   <TableRow key={payment.id}>
-                    <TableCell className="text-xs sm:text-sm">{payment.id}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">{payment.jobCode}</TableCell>
                     <TableCell className="text-xs sm:text-sm">{payment.fullName}</TableCell>
                     <TableCell className="text-xs sm:text-sm">{payment.mobile}</TableCell>
                     <TableCell className="text-xs sm:text-sm">
                       ₹{payment.quotationAmount?.toLocaleString()}
                     </TableCell>
+                    <TableCell className="text-xs sm:text-sm">{payment.paymentMethod}</TableCell>
                     <TableCell>{getPaymentBadge(payment.paymentStatus)}</TableCell>
                     <TableCell className="text-xs sm:text-sm">
-                      {payment.workDate
-                        ? new Date(payment.workDate).toLocaleDateString()
+                      {payment.paymentDate
+                        ? new Date(payment.paymentDate).toLocaleDateString()
                         : '-'}
                     </TableCell>
                     <TableCell>
@@ -236,7 +297,8 @@ const fetchStats = async () => {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -250,14 +312,28 @@ const fetchStats = async () => {
             Payment Records ({filteredPayments.length})
           </h2>
         </div>
-        {filteredPayments.map((payment) => (
+        
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-gray-500">Loading payments...</p>
+            </CardContent>
+          </Card>
+        ) : filteredPayments.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-gray-500">No payments found matching your criteria.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredPayments.map((payment) => (
           <Card key={payment.id}>
             <CardContent className="p-4">
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-sm font-medium text-gray-900">{payment.fullName}</p>
-                    <p className="text-xs text-gray-500">ID: {payment.id}</p>
+                    <p className="text-xs text-gray-500">{payment.jobCode}</p>
                   </div>
                   {getPaymentBadge(payment.paymentStatus)}
                 </div>
@@ -272,14 +348,18 @@ const fetchStats = async () => {
                     <p className="text-gray-900 font-medium">₹{payment.quotationAmount?.toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 mb-1">Work Date</p>
+                    <p className="text-gray-500 mb-1">Payment Method</p>
+                    <p className="text-gray-900">{payment.paymentMethod || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 mb-1">Payment Date</p>
                     <p className="text-gray-900">
-                      {payment.workDate
-                        ? new Date(payment.workDate).toLocaleDateString()
-                        : 'Not scheduled'}
+                      {payment.paymentDate
+                        ? new Date(payment.paymentDate).toLocaleDateString()
+                        : '-'}
                     </p>
                   </div>
-                  <div className="flex justify-end">
+                  <div className="col-span-2 flex justify-end">
                     <Button
                       size="sm"
                       variant="outline"
@@ -294,14 +374,7 @@ const fetchStats = async () => {
               </div>
             </CardContent>
           </Card>
-        ))}
-
-        {filteredPayments.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-gray-500">No payments found matching your criteria.</p>
-            </CardContent>
-          </Card>
+          ))
         )}
       </div>
 
@@ -323,39 +396,14 @@ const fetchStats = async () => {
                     <p className="text-sm text-gray-600 mb-1">Payment Status</p>
                     {getPaymentBadge(selectedPayment.paymentStatus)}
                   </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-600 mb-1">Total Amount</p>
+                    <p className="text-xl font-semibold text-gray-900">₹{selectedPayment.quotationAmount?.toLocaleString()}</p>
+                  </div>
                 </div>
 
-                {/* Mark as Paid Form */}
-                {selectedPayment.paymentStatus !== 'paid' && (
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-gray-600">Enter Paid Amount</Label>
-                      <div className="relative mt-1">
-                        <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          type="number"
-                          placeholder="Enter amount"
-                          value={paidAmount}
-                          onChange={(e) => setPaidAmount(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        updatePaymentStatus(selectedPayment.id, 'paid', paidAmount);
-                      }}
-                      disabled={!paidAmount || Number(paidAmount) <= 0}
-                      className="w-full"
-                    >
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Mark as Paid
-                    </Button>
-                  </div>
-                )}
-
-                {/* Paid Confirmation */}
-                {selectedPayment.paymentStatus === 'paid' && (
+                {/* Completed Payment Info */}
+                {selectedPayment.paymentStatus === 'completed' && (
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -363,9 +411,7 @@ const fetchStats = async () => {
                         <div className="flex items-center gap-2">
                           <IndianRupee className="h-5 w-5 text-green-600" />
                           <p className="text-green-600 font-medium">
-                            {selectedPayment.paidAmount
-                              ? selectedPayment.paidAmount.toLocaleString()
-                              : selectedPayment.quotationAmount?.toLocaleString() || '0'}
+                            {selectedPayment.quotationAmount?.toLocaleString()}
                           </p>
                         </div>
                       </div>
@@ -374,97 +420,116 @@ const fetchStats = async () => {
                       </div>
                     </div>
                     <p className="text-xs text-gray-500 mt-3">
-                      Payment has been completed. No further actions available.
+                      Payment has been completed.
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Rest of the dialog content remains unchanged */}
+              {/* Customer Information */}
               <div>
                 <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Customer Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div><Label className="text-xs sm:text-sm text-gray-600">Enquiry ID</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.id}</p></div>
-                  <div><Label className="text-xs sm:text-sm text-gray-600">Full Name</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.fullName}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Customer Code</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.customerCode || '-'}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Customer Name</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.fullName}</p></div>
                   <div><Label className="text-xs sm:text-sm text-gray-600">Mobile Number</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.mobile}</p></div>
-                  <div><Label className="text-xs sm:text-sm text-gray-600">Email</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.email}</p></div>
-                  <div className="sm:col-span-2"><Label className="text-xs sm:text-sm text-gray-600">Address</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.address}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Email</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.email || '-'}</p></div>
                 </div>
               </div>
 
+              {/* Job Information */}
+              <div>
+                <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Job Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Job Code</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.jobCode || '-'}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Service Type</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.serviceType || '-'}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Solar Service</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.solarService || '-'}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Job Status</Label><p className="text-sm sm:text-base text-gray-900 mt-1 capitalize">{selectedPayment.jobStatus || '-'}</p></div>
+                </div>
+              </div>
+
+              {/* Payment Information */}
               <div>
                 <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Payment Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Payment Type</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.paymentType || '-'}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Payment Method</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.paymentMethod || '-'}</p></div>
+                  <div><Label className="text-xs sm:text-sm text-gray-600">Transaction ID</Label><p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.transactionId || '-'}</p></div>
                   <div>
-                    <Label className="text-xs sm:text-sm text-gray-600">Quotation Amount</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <IndianRupee className="h-4 w-4 text-gray-600" />
-                      <p className="text-sm sm:text-base text-gray-900 font-medium">
-                        {selectedPayment.quotationAmount?.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs sm:text-sm text-gray-600">Payment Status</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1 capitalize">
-                      {selectedPayment.paymentStatus || 'Pending'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Work Information</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <Label className="text-xs sm:text-sm text-gray-600">Work Date</Label>
+                    <Label className="text-xs sm:text-sm text-gray-600">Payment Date</Label>
                     <p className="text-sm sm:text-base text-gray-900 mt-1">
-                      {selectedPayment.workDate
-                        ? new Date(selectedPayment.workDate).toLocaleDateString('en-IN', {
+                      {selectedPayment.paymentDate
+                        ? new Date(selectedPayment.paymentDate).toLocaleDateString('en-IN', {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric',
                           })
-                        : 'Not scheduled'}
+                        : '-'}
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Tax Breakdown */}
+              <div>
+                <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Tax Breakdown</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <Label className="text-xs sm:text-sm text-gray-600">Work Time</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">
-                      {selectedPayment.workTime || 'Not scheduled'}
-                    </p>
+                    <Label className="text-xs sm:text-sm text-gray-600">Taxable Amount</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">₹{selectedPayment.taxableAmount?.toLocaleString() || '0'}</p>
                   </div>
                   <div>
-                    <Label className="text-xs sm:text-sm text-gray-600">Status</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1 capitalize">{selectedPayment.status}</p>
+                    <Label className="text-xs sm:text-sm text-gray-600">GST Rate</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.gstRate || 0}%</p>
                   </div>
                   <div>
-                    <Label className="text-xs sm:text-sm text-gray-600">Type</Label>
-                    <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.installationType}</p>
+                    <Label className="text-xs sm:text-sm text-gray-600">CGST Amount</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">₹{selectedPayment.cgstAmount?.toLocaleString() || '0'}</p>
                   </div>
-                  {selectedPayment.remarks && (
-                    <div className="sm:col-span-2">
-                      <Label className="text-xs sm:text-sm text-gray-600">Remarks</Label>
-                      <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.remarks}</p>
+                  <div>
+                    <Label className="text-xs sm:text-sm text-gray-600">SGST Amount</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">₹{selectedPayment.sgstAmount?.toLocaleString() || '0'}</p>
+                  </div>
+                  {selectedPayment.igstAmount > 0 && (
+                    <div>
+                      <Label className="text-xs sm:text-sm text-gray-600">IGST Amount</Label>
+                      <p className="text-sm sm:text-base text-gray-900 mt-1">₹{selectedPayment.igstAmount?.toLocaleString()}</p>
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-xs sm:text-sm text-gray-600">Total Tax</Label>
+                    <p className="text-sm sm:text-base text-gray-900 mt-1">₹{selectedPayment.totalTaxAmount?.toLocaleString() || '0'}</p>
+                  </div>
+                  {selectedPayment.discountAmount > 0 && (
+                    <div>
+                      <Label className="text-xs sm:text-sm text-gray-600">Discount</Label>
+                      <p className="text-sm sm:text-base text-green-600 mt-1">-₹{selectedPayment.discountAmount?.toLocaleString()}</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              {(selectedPayment.salesPersonId || selectedPayment.fieldExecutiveId) && (
+              {/* Processed By Information */}
+              {(selectedPayment.createdBy || selectedPayment.processedBy || selectedPayment.verifiedBy) && (
                 <div>
-                  <h3 className="text-gray-900 mb-4">Assignment Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {selectedPayment.salesPersonId && (
+                  <h3 className="text-base sm:text-lg text-gray-900 mb-3 sm:mb-4">Processed By</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    {selectedPayment.createdBy && (
                       <div>
-                        <Label className="text-gray-600">Sales Person ID</Label>
-                        <p className="text-gray-900 mt-1">{selectedPayment.salesPersonId}</p>
+                        <Label className="text-xs sm:text-sm text-gray-600">Created By</Label>
+                        <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.createdBy}</p>
                       </div>
                     )}
-                    {selectedPayment.fieldExecutiveId && (
+                    {selectedPayment.processedBy && (
                       <div>
-                        <Label className="text-gray-600">Field Executive ID</Label>
-                        <p className="text-gray-900 mt-1">{selectedPayment.fieldExecutiveId}</p>
+                        <Label className="text-xs sm:text-sm text-gray-600">Processed By</Label>
+                        <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.processedBy}</p>
+                      </div>
+                    )}
+                    {selectedPayment.verifiedBy && (
+                      <div>
+                        <Label className="text-xs sm:text-sm text-gray-600">Verified By</Label>
+                        <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.verifiedBy}</p>
                       </div>
                     )}
                   </div>

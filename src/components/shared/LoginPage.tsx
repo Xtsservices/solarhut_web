@@ -197,11 +197,11 @@ export default function LoginPage({ onLogin }: { onLogin: (mobile: string, otp: 
             </form>
           )}
 
-          <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
+          {/* <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
             <p className="text-sm text-orange-900 mb-2">Demo Mobile Numbers:</p>
             <p className="text-xs text-orange-700">Admin: 9701646859</p>
             <p className="text-xs text-orange-600 mt-2">OTP: Use any 6-digit number (e.g., 123456)</p>
-          </div>
+          </div> */}
 
           <div className="mt-4 text-center">
             <Button variant="link" onClick={() => navigate('/')} className="text-[#FFA500] hover:text-[#FF8C00]">

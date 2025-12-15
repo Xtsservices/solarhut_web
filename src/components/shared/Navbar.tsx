@@ -153,6 +153,7 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
 
             {/* Get Quote Button - Right */}
             <div className="hidden lg:flex items-center gap-2 flex-shrink-0 justify-end">
+    
             <button
               onClick={handleDownloadBrochure}
               className="flex items-center gap-1 xl:gap-2 bg-black text-white px-2 xl:px-4 py-1.5 xl:py-2 rounded text-xs xl:text-sm hover:bg-black/90 transition-colors"
@@ -168,6 +169,14 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
               <Phone className="w-3 h-3 xl:w-4 xl:h-4" />
               <span>Get Quote</span>
             </button>
+            {/* Login Button */}
+  <button
+    type="button"
+    onClick={() => onNavigate('login')}
+    className="flex items-center gap-1 xl:gap-2 px-3 xl:px-4 py-1.5 xl:py-2 rounded-full border-2 border-[#FFA500] bg-white text-[#FFA500] hover:bg-[#FFA500] hover:text-white transition-colors text-xs xl:text-sm"
+  >
+    Login
+  </button>
             </div>
 
           {/* Mobile Menu Button */}

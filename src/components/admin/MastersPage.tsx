@@ -192,50 +192,50 @@ export default function MastersPage() {
   };
 
   // Fetch sidebar features for Add Feature dropdown
-  // const fetchSidebarFeatures = async () => {
-  //   const token = localStorage.getItem('authToken');
-  //   try {
-  //     const response = await fetch(`${API_BASE_URL}/api/features/allfeatures`, {
-  //       method: 'GET',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-  //       },
-  //     });
-  //     if (!response.ok) throw new Error('Failed to fetch sidebar features');
-  //     const result = await response.json();
-  //     console.log('Sidebar features API response:', result);
+  const fetchSidebarFeatures = async () => {
+    const token = localStorage.getItem('authToken');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/features/allfeatures`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch sidebar features');
+      const result = await response.json();
+      console.log('Sidebar features API response:', result);
       
-  //     let data = [];
-  //     if (Array.isArray(result)) {
-  //       data = result;
-  //     } else if (Array.isArray(result.data)) {
-  //       data = result.data;
-  //     } else if (result.features && Array.isArray(result.features)) {
-  //       data = result.features;
-  //     }
+      let data = [];
+      if (Array.isArray(result)) {
+        data = result;
+      } else if (Array.isArray(result.data)) {
+        data = result.data;
+      } else if (result.features && Array.isArray(result.features)) {
+        data = result.features;
+      }
       
-  //     console.log('Processed sidebar features:', data);
-  //     setSidebarFeatures(data);
-  //   } catch (err) {
-  //     console.error('Error loading sidebar features:', err);
-  //     toast.error('Error loading sidebar features');
-  //     // Fallback to predefined features if API fails
-  //     setSidebarFeatures([
-  //       'Dashboard',
-  //       'Enquiries', 
-  //       'Employees',
-  //       'Packages',
-  //       'Payments',
-  //       'Contacts',
-  //       'Work_Progress',
-  //       'Masters',
-  //       'Locations',
-  //       'Jobs',
-  //       'My_Tasks'
-  //     ]);
-  //   }
-  // };
+      console.log('Processed sidebar features:', data);
+      setSidebarFeatures(data);
+    } catch (err) {
+      console.error('Error loading sidebar features:', err);
+      toast.error('Error loading sidebar features');
+      // Fallback to predefined features if API fails
+      setSidebarFeatures([
+        'Dashboard',
+        'Enquiries', 
+        'Employees',
+        'Packages',
+        'Payments',
+        'Contacts',
+        'Work_Progress',
+        'Masters',
+        'Locations',
+        'Jobs',
+        'My_Tasks'
+      ]);
+    }
+  };
 
   // Fetch permissions from API
   const fetchPermissions = async () => {
@@ -322,7 +322,7 @@ export default function MastersPage() {
 
   const [isFeatureDialogOpen, setIsFeatureDialogOpen] = useState(false);
   const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
-  const [featureFormData, setFeatureFormData] = useState({ feature_name: '' });
+  const [featureFormData, setFeatureFormData] = useState({ feature_name: undefined,});
   const [featureFormErrors, setFeatureFormErrors] = useState({ feature_name: '' });
   const [featureToDelete, setFeatureToDelete] = useState<string | null>(null);
 
@@ -1244,18 +1244,22 @@ export default function MastersPage() {
                   <SelectValue placeholder="Select Feature" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sidebarFeatures.length > 0 ? (
-                    sidebarFeatures.map((feature, index) => (
-                      <SelectItem key={`${feature}-${index}`} value={feature}>
-                        {feature}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="" disabled>
-                      No features available
-                    </SelectItem>
-                  )}
-                </SelectContent>
+  {features.length > 0 ? (
+    features.map((feature) => (
+      <SelectItem
+        key={feature.id}
+        value={feature.feature_name}
+      >
+        {feature.feature_name}
+      </SelectItem>
+    ))
+  ) : (
+    <SelectItem value="__no_features__" disabled>
+      No features available
+    </SelectItem>
+  )}
+</SelectContent>
+
               </Select>
               {featureFormErrors.feature_name && (
                 <p style={{ fontSize: '0.875rem', color: '#EF4444', margin: 0 }}>

@@ -65,41 +65,13 @@ interface District {
   created_date: string;
 }
 
-// Initial mock data
-const initialCountries: Country[] = [
-  { id: '1', country_code: 'IN', name: 'India', currency_format: '₹', created_date: '2025-11-14' },
-];
-const initialStates: State[] = [
-  { id: '1', country_id: '1', state_code: 'TN', name: 'Tamil Nadu', type: 'State', created_date: '2025-01-10' },
-  { id: '2', country_id: '1', state_code: 'MH', name: 'Maharashtra', type: 'State', created_date: '2025-01-10' },
-  { id: '3', country_id: '1', state_code: 'DL', name: 'Delhi', type: 'Union Territory', created_date: '2025-01-11' },
-  { id: '4', country_id: '1', state_code: 'KA', name: 'Karnataka', type: 'State', created_date: '2025-01-11' },
-  { id: '5', country_id: '1', state_code: 'TG', name: 'Telangana', type: 'State', created_date: '2025-01-12' },
-  { id: '6', country_id: '1', state_code: 'GJ', name: 'Gujarat', type: 'State', created_date: '2025-01-12' },
-  { id: '7', country_id: '1', state_code: 'RJ', name: 'Rajasthan', type: 'State', created_date: '2025-01-13' },
-  { id: '8', country_id: '1', state_code: 'AP', name: 'Andhra Pradesh', type: 'State', created_date: '2025-01-13' },
-];
-
-const initialDistricts: District[] = [
-  { id: '1', state_id: '1', district_code: 'CHN', name: 'Chennai', created_date: '2025-01-10' },
-  { id: '2', state_id: '1', district_code: 'CBE', name: 'Coimbatore', created_date: '2025-01-10' },
-  { id: '3', state_id: '2', district_code: 'MUM', name: 'Mumbai', created_date: '2025-01-11' },
-  { id: '4', state_id: '2', district_code: 'PUN', name: 'Pune', created_date: '2025-01-11' },
-  { id: '5', state_id: '3', district_code: 'CD', name: 'Central Delhi', created_date: '2025-01-12' },
-  { id: '6', state_id: '4', district_code: 'BLR', name: 'Bangalore Urban', created_date: '2025-01-12' },
-  { id: '7', state_id: '5', district_code: 'HYD', name: 'Hyderabad', created_date: '2025-01-13' },
-  { id: '8', state_id: '6', district_code: 'AMD', name: 'Ahmedabad', created_date: '2025-01-13' },
-  { id: '9', state_id: '7', district_code: 'JPR', name: 'Jaipur', created_date: '2025-01-14' },
-  { id: '10', state_id: '8', district_code: 'WG', name: 'West Godavari', created_date: '2025-01-14' },
-];
-
 type TabType = 'country' | 'state' | 'district';
 
 export function LocationsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('country');
   
   // Country state
-  const [countries, setCountries] = useState<Country[]>(initialCountries);
+  const [countries, setCountries] = useState<Country[]>([]);
   const [isCountryDialogOpen, setIsCountryDialogOpen] = useState(false);
   const [editingCountry, setEditingCountry] = useState<Country | null>(null);
   const [countryFormData, setCountryFormData] = useState({
@@ -116,7 +88,7 @@ export function LocationsPage() {
   const [countrySearchQuery, setCountrySearchQuery] = useState('');
 
   // State state
-  const [states, setStates] = useState<State[]>(initialStates);
+  const [states, setStates] = useState<State[]>([]);
   const [isStateDialogOpen, setIsStateDialogOpen] = useState(false);
   const [editingState, setEditingState] = useState<State | null>(null);
   const [stateFormData, setStateFormData] = useState({
@@ -135,7 +107,7 @@ export function LocationsPage() {
   const [stateSearchQuery, setStateSearchQuery] = useState('');
 
   // District state
-  const [districts, setDistricts] = useState<District[]>(initialDistricts);
+  const [districts, setDistricts] = useState<District[]>([]);
   const [isDistrictDialogOpen, setIsDistrictDialogOpen] = useState(false);
   const [editingDistrict, setEditingDistrict] = useState<District | null>(null);
   const [districtFormData, setDistrictFormData] = useState({

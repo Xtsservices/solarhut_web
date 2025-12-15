@@ -216,24 +216,23 @@ export default function MastersPage() {
       }
       
       console.log('Processed sidebar features:', data);
-      setSidebarFeatures(data);
     } catch (err) {
       console.error('Error loading sidebar features:', err);
       toast.error('Error loading sidebar features');
       // Fallback to predefined features if API fails
-      setSidebarFeatures([
-        'Dashboard',
-        'Enquiries', 
-        'Employees',
-        'Packages',
-        'Payments',
-        'Contacts',
-        'Work_Progress',
-        'Masters',
-        'Locations',
-        'Jobs',
-        'My_Tasks'
-      ]);
+      // setSidebarFeatures([
+      //   'Dashboard',
+      //   'Enquiries',
+      //   'Employees',
+      //   'Packages',
+      //   'Payments',
+      //   'Contacts',
+      //   'Work_Progress',
+      //   'Masters',
+      //   'Locations',
+      //   'Jobs',
+      //   'My_Tasks'
+      // ]);
     }
   };
 
@@ -312,7 +311,7 @@ export default function MastersPage() {
     fetchRoles();
     fetchFeatures();
     fetchPermissions();
-    // fetchSidebarFeatures();
+    fetchSidebarFeatures();
   }, []);
 
   // Debug logging for sidebarFeatures
@@ -1244,13 +1243,13 @@ export default function MastersPage() {
                   <SelectValue placeholder="Select Feature" />
                 </SelectTrigger>
                 <SelectContent>
-  {features.length > 0 ? (
-    features.map((feature) => (
+  {sidebarFeatures.length > 0 ? (
+    sidebarFeatures.map((featureName, index) => (
       <SelectItem
-        key={feature.id}
-        value={feature.feature_name}
+        key={index}
+        value={featureName}
       >
-        {feature.feature_name}
+        {featureName}
       </SelectItem>
     ))
   ) : (

@@ -206,7 +206,7 @@ export default function MastersPage() {
       const result = await response.json();
       console.log('Sidebar features API response:', result);
       
-      let data = [];
+      let data: string[] = [];
       if (Array.isArray(result)) {
         data = result;
       } else if (Array.isArray(result.data)) {
@@ -216,23 +216,24 @@ export default function MastersPage() {
       }
       
       console.log('Processed sidebar features:', data);
+      setSidebarFeatures(data);
     } catch (err) {
       console.error('Error loading sidebar features:', err);
       toast.error('Error loading sidebar features');
       // Fallback to predefined features if API fails
-      // setSidebarFeatures([
-      //   'Dashboard',
-      //   'Enquiries',
-      //   'Employees',
-      //   'Packages',
-      //   'Payments',
-      //   'Contacts',
-      //   'Work_Progress',
-      //   'Masters',
-      //   'Locations',
-      //   'Jobs',
-      //   'My_Tasks'
-      // ]);
+      setSidebarFeatures([
+        'Dashboard',
+        'Enquiries',
+        'Employees',
+        'Packages',
+        'Payments',
+        'Contacts',
+        'Work_Progress',
+        'Masters',
+        'Locations',
+        'Jobs',
+        'My_Tasks'
+      ]);
     }
   };
 

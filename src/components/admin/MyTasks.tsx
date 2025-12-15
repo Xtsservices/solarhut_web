@@ -78,7 +78,7 @@ type Job = {
   estimated_cost: number;
   scheduled_date: string;
   job_priority: "Low" | "Medium" | "High";
-  status: "Assigned" | "In Progress" | "On Hold" | "Complete" | "Cancelled";
+  status: "Assigned" | "In Progress" | "On Hold" | "Completed" | "Cancelled";
 };
 
 type TaskSummary = {
@@ -101,7 +101,7 @@ type JobsResponse = { jobs: any[]; pagination: Pagination };
 const STATUS_OPTIONS = [
   "In Progress",
   "On Hold",
-  "Complete",
+  "Completed",
   "Cancelled",
 ] as const;
 const PAYMENT_METHODS = [
@@ -323,7 +323,7 @@ export function MyTasks() {
       return;
     }
 
-    if (actionType === "job" && newStatus === "Complete") {
+    if (actionType === "job" && newStatus === "Completed") {
       if (!completionData.status_reason.trim()) {
         toast.error("Status reason is required for completion");
         return;
@@ -360,7 +360,7 @@ export function MyTasks() {
           comments: comment.trim(),
         };
 
-        if (actionType === "job" && newStatus === "Complete") {
+        if (actionType === "job" && newStatus === "Completed") {
           payload.status_reason = completionData.status_reason.trim();
           payload.payment_details = {
             amount: completionData.amount,
@@ -368,7 +368,7 @@ export function MyTasks() {
               ? Number(completionData.discount_amount)
               : 0,
             payment_method: completionData.payment_method,
-            payment_status: "Complete",
+            payment_status: "Completed",
             transaction_id: completionData.transaction_id.trim(),
           };
         }
@@ -463,7 +463,7 @@ export function MyTasks() {
       Assigned: "bg-blue-100 text-blue-700",
       "In Progress": "bg-purple-100 text-purple-700",
       "On Hold": "bg-yellow-100 text-yellow-700",
-      Complete: "bg-green-100 text-green-700",
+      Completed: "bg-green-100 text-green-700",
       Cancelled: "bg-red-100 text-red-700",
       Contacted: "bg-indigo-100 text-indigo-700",
       Qualified: "bg-cyan-100 text-cyan-700",
@@ -662,7 +662,7 @@ export function MyTasks() {
                             {getStatusBadge(lead.lead_status, "lead")}
                           </TableCell>
                           <TableCell>
-                            {lead.lead_status !== "Complete" && (
+                            {lead.lead_status !== "Completed" && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -794,7 +794,7 @@ export function MyTasks() {
                       "Assigned",
                       "In Progress",
                       "On Hold",
-                      "Complete",
+                      "Completed",
                       "Cancelled",
                     ].map((s) => (
                       <SelectItem key={s} value={s}>
@@ -922,7 +922,7 @@ export function MyTasks() {
                             {getStatusBadge(job.status, "job")}
                           </TableCell>
                           <TableCell>
-                            {job.status !== "Complete" && (
+                            {job.status !== "Completed" && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -1021,12 +1021,12 @@ export function MyTasks() {
               </Select>
             </div>
 
-            {actionType === "job" && newStatus === "Complete" && (
+            {actionType === "job" && newStatus === "Completed" && (
               <>
                 <div>
                   <Label>Status Reason</Label>
                   <Input
-                    placeholder="e.g., Job completed successfully"
+                    placeholder="e.g., Job Completed successfully"
                     value={completionData.status_reason}
                     onChange={(e) =>
                       setCompletionData({

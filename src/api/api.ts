@@ -814,6 +814,13 @@ export const getPaymentStats = async (cancelToken?: CancelToken) => {
   );
 };
 
+// Get payments list
+export const getPaymentsList = async (cancelToken?: CancelToken) => {
+  return makeRequest(() =>
+    api.get('/api/payments/stats/list', { cancelToken })
+  );
+};
+
 
 export async function getSummaryGraph() {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3200";

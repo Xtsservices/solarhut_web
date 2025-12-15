@@ -206,7 +206,7 @@ export default function MastersPage() {
       const result = await response.json();
       console.log('Sidebar features API response:', result);
       
-      let data = [];
+      let data: string[] = [];
       if (Array.isArray(result)) {
         data = result;
       } else if (Array.isArray(result.data)) {
@@ -223,7 +223,7 @@ export default function MastersPage() {
       // Fallback to predefined features if API fails
       setSidebarFeatures([
         'Dashboard',
-        'Enquiries', 
+        'Enquiries',
         'Employees',
         'Packages',
         'Payments',
@@ -312,7 +312,7 @@ export default function MastersPage() {
     fetchRoles();
     fetchFeatures();
     fetchPermissions();
-    // fetchSidebarFeatures();
+    fetchSidebarFeatures();
   }, []);
 
   // Debug logging for sidebarFeatures
@@ -1244,13 +1244,13 @@ export default function MastersPage() {
                   <SelectValue placeholder="Select Feature" />
                 </SelectTrigger>
                 <SelectContent>
-  {features.length > 0 ? (
-    features.map((feature) => (
+  {sidebarFeatures.length > 0 ? (
+    sidebarFeatures.map((featureName, index) => (
       <SelectItem
-        key={feature.id}
-        value={feature.feature_name}
+        key={index}
+        value={featureName}
       >
-        {feature.feature_name}
+        {featureName}
       </SelectItem>
     ))
   ) : (

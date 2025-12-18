@@ -53,6 +53,7 @@ const adminMenuItems: MenuItem[] = [
   // { id: 'Notifications', label: 'Notifications', icon: Bell },
   // { id: 'Settings', label: 'Settings', icon: Settings },
   { id: 'Profile', label: 'Profile', icon: User },
+  { id: 'Estimations', label: 'Estimations', icon: ClipboardCheck },
  
 ];
 
@@ -90,6 +91,7 @@ export function PortalSidebar({
     
     if (role === 'admin') {
       // Handle permissions array - extract feature names safely
+      console.log('User Permissions:', permissions);
       const allowedFeatures = permissions.map((p: any) => {
         if (typeof p === 'string') {
           return p.toLowerCase();
@@ -121,7 +123,8 @@ export function PortalSidebar({
         'dashboard': 'dashboard',
         'notifications': 'notifications',
         'settings': 'settings',
-        'profile': 'profile'
+        'profile': 'profile',
+        'estimations':'estimations',
       };
       
       // Map allowed features to menu item IDs
@@ -193,6 +196,8 @@ export function PortalSidebar({
       navigate('/settings');
     } else if (page === 'Profile') {
       navigate('/profile');
+    } else if (page === 'Estimations') {
+      navigate('/estimations');
     } else {
       navigate('/' + page.toLowerCase());
     }
@@ -209,6 +214,7 @@ export function PortalSidebar({
     }
   };
 
+  console.log("menuItems in Sidebar:", menuItems);
   // ADDED: Restore scroll position when currentPage changes (after navigation)
   useEffect(() => {
     const savedScroll = sessionStorage.getItem('sidebar_scroll_position');

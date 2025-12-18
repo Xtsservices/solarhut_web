@@ -268,6 +268,38 @@ export const logout = async (): Promise<ApiResponse> => {
   };
 };
 
+
+// ===========estimations with token in headers===============================
+export const createEstimation = async (
+  data: any,
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.post('/api/estimations', data, { cancelToken }),
+    'Estimation created successfully!'
+  );
+};
+
+export const getEstimations = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.get('/api/estimations', { cancelToken }),
+    'Estimations fetched successfully!'
+  );
+};
+
+export const updateEstimation = async (
+  id: string | number,
+  data: any,
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.put(`/api/estimations/${id}`, data, { cancelToken }),
+    'Estimation updated successfully!'
+  );
+};
+
 // ===========================================
 // USER/EMPLOYEE ENDPOINTS
 // ===========================================

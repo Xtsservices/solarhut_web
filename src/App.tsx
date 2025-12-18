@@ -53,6 +53,7 @@ import { apiCurrentUserData } from './api';
 import { LocationsPage } from './components/admin/LocationsPage';
 import { JobsPage } from './components/admin/JobsPage';
 import { MyTasks } from './components/admin/MyTasks';
+import { RequirementsCapture } from './components/admin/RequirementsCapture';
 
 interface RootState {
   currentUserData: any;
@@ -271,6 +272,7 @@ console.log("loginuser", user);
                 <Route path="/profile" element={<ProfilePage role={auth.role} />} />
                 <Route path="/jobs" element={<JobsPage />} />
                 <Route path="/My-Tasks" element={<MyTasks />} />
+                <Route path="/estimations" element={<RequirementsCapture />} />
 
                 <Route path="*" element={<AdminDashboard />} />
               </>}

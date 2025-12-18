@@ -361,11 +361,11 @@ export function RequirementsCapture() {
   };
 
   const validateForm = (): boolean => {
-    if (!formData.customerName.trim()) {
+    if (!formData.customerName?.trim()) {
       toast.error("Customer name is required");
       return false;
     }
-    if (!formData.mobile.trim()) {
+    if (!formData?.mobile?.trim()) {
       toast.error("Mobile number is required");
       return false;
     }
@@ -373,7 +373,7 @@ export function RequirementsCapture() {
       toast.error("Please enter a valid 10-digit mobile number");
       return false;
     }
-    if (!formData.city.trim()) {
+    if (!formData.city?.trim()) {
       toast.error("City is required");
       return false;
     }
@@ -385,7 +385,7 @@ export function RequirementsCapture() {
       toast.error("State is required");
       return false;
     }
-    if (!formData.pincode.trim()) {
+    if (!formData.pincode?.trim()) {
       toast.error("Pincode is required");
       return false;
     }
@@ -393,11 +393,11 @@ export function RequirementsCapture() {
       toast.error("Capacity is required");
       return false;
     }
-    if (formData.amount <= 0) {
+    if (formData.amount && formData.amount <= 0) {
       toast.error("Amount must be greater than 0");
       return false;
     }
-    if (formData.gstPercentage < 0 || formData.gstPercentage > 100) {
+    if (formData.gstPercentage && formData.gstPercentage < 0 || formData.gstPercentage && formData.gstPercentage > 100) {
       toast.error("GST percentage must be between 0 and 100");
       return false;
     }
@@ -861,7 +861,7 @@ export function RequirementsCapture() {
                   </div>
                 </div>
 
-                {formData.amount > 0 && formData.gstPercentage > 0 && (
+                {formData.amount && formData.amount > 0 && formData.gstPercentage && formData.gstPercentage > 0 && (
                   <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
                     <p className="text-sm font-semibold text-blue-900">
                       Amount: ₹

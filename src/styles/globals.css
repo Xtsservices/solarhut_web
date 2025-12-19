@@ -127,6 +127,16 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Fix: Ensure all buttons are clickable */
+  button, 
+  [role="button"], 
+  a, 
+  input[type="submit"], 
+  input[type="button"] {
+    cursor: pointer;
+    pointer-events: auto;
+  }
 }
 
 /**

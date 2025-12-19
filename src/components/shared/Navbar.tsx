@@ -229,6 +229,17 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
                 <Phone className="w-4 h-4" />
                 <span>Get Quote</span>
               </button>
+              {/* Login Button for Mobile */}
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate('login');
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-full border-2 border-[#FFA500] bg-white text-[#FFA500] hover:bg-[#FFA500] hover:text-white transition-colors w-full"
+              >
+                Login
+              </button>
             </div>
 
             <button

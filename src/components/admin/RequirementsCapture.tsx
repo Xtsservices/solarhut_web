@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { Plus, Search, Loader, Edit2, X, Download } from "lucide-react";
 import { createEstimation, getEstimations, updateEstimation } from "../../api";
+import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
 // Add this type declaration at the top of your file (or in a global .d.ts file)
 interface ImportMetaEnv {
@@ -376,6 +377,14 @@ export function RequirementsCapture() {
       toast.error("Please enter a valid 10-digit mobile number");
       return false;
     }
+    if (!formData.doorNo?.trim()) {
+      toast.error("Door No / House No is required");
+      return false;
+    }
+    if (!formData.area?.trim()) {
+      toast.error("Area / Street Name is required");
+      return false;
+    }
     if (!formData.city?.trim()) {
       toast.error("City is required");
       return false;
@@ -393,15 +402,23 @@ export function RequirementsCapture() {
       return false;
     }
     if (!formData.capacityKw || formData.capacityKw.toString().trim() === "") {
-      toast.error("Capacity is required");
+      toast.error("Capacity Required (kW) is required");
       return false;
     }
-    if (formData.amount && formData.amount <= 0) {
-      toast.error("Amount must be greater than 0");
+    if (!formData.productDescription?.trim()) {
+      toast.error("Product Description is required");
       return false;
     }
-    if (formData.gstPercentage && formData.gstPercentage < 0 || formData.gstPercentage && formData.gstPercentage > 100) {
-      toast.error("GST percentage must be between 0 and 100");
+    if (!formData.structure?.trim()) {
+      toast.error("Structure is required");
+      return false;
+    }
+    if (!formData.amount || formData.amount <= 0) {
+      toast.error("Estimated Amount is required and must be greater than 0");
+      return false;
+    }
+    if (!formData.gstPercentage || formData.gstPercentage < 0 || formData.gstPercentage > 100) {
+      toast.error("GST percentage is required and must be between 0 and 100");
       return false;
     }
     return true;
@@ -605,28 +622,29 @@ export function RequirementsCapture() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2 bg-orange-500 hover:bg-orange-600 text-white cursor-pointer">
               <Plus className="h-4 w-4" />
               New Requirement
             </Button>
           </DialogTrigger>
           <DialogContent
             style={{
-              width: "75vw", // 75% of the viewport width
-              maxWidth: "75vw", // prevent exceeding 75%
-              minWidth: "75vw", // maintain consistent width
-              maxHeight: "90vh", // limit height to 90% of viewport
-              overflowY: "auto", // enable vertical scrolling
-              margin: "0 auto", // center horizontally
+              width: "90vw",
+              maxWidth: "90vw",
+              minWidth: "90vw",
+              maxHeight: "98vh",
+              overflowY: "auto",
+              margin: "0 auto",
+              padding: "16px",
             }}
           >
-            <DialogHeader>
+            <DialogHeader className="pb-1">
               <div className="flex justify-between items-center w-full">
                 <div>
                   <DialogTitle>
                     {editingId ? "Edit Requirement" : "Capture Customer Requirements"}
                   </DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription className="text-xs">
                     {editingId 
                       ? "Update the customer details and solar capacity requirements"
                       : "Enter the customer details and solar capacity requirements"}
@@ -644,16 +662,16 @@ export function RequirementsCapture() {
               </div>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-3">
               {/* Customer Information Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg text-blue-600">
+              <div className="space-y-1">
+                <h3 className="font-semibold text-sm text-blue-600">
                   Customer Information
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="customerName">Customer Name *</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="customerName" className="text-xs text-black">Customer Name *</Label>
                     <Input
                       id="customerName"
                       name="customerName"
@@ -661,11 +679,12 @@ export function RequirementsCapture() {
                       value={formData.customerName}
                       onChange={handleInputChange}
                       required
+                      className="h-8"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="mobile">Mobile Number *</Label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="mobile" className="text-xs text-black">Mobile Number *</Label>
                     <Input
                       id="mobile"
                       name="mobile"
@@ -674,50 +693,55 @@ export function RequirementsCapture() {
                       onChange={handleInputChange}
                       maxLength={10}
                       required
+                      className="h-8"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Address Information Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg text-blue-600">
+              <div className="space-y-1">
+                <h3 className="font-semibold text-sm text-blue-600">
                   Address Information
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="doorNo">Door No / House No</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="doorNo" className="text-xs text-black">Door No / House No *</Label>
                     <Input
                       id="doorNo"
                       name="doorNo"
-                      placeholder="E.g., 45-B, Plot No. 10"
+                      placeholder="E.g., 45-B"
                       value={formData.doorNo}
                       onChange={handleInputChange}
+                      className="h-8"
+                      required
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="area">Area / Street Name</Label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="area" className="text-xs text-black">Area / Street Name *</Label>
                     <Input
                       id="area"
                       name="area"
-                      placeholder="E.g., Secunderabad, Lakshmi Nagar"
+                      placeholder="E.g., Lakshmi Nagar"
                       value={formData.area}
                       onChange={handleInputChange}
+                      className="h-8"
+                      required
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State *</Label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="state" className="text-xs text-black">State *</Label>
                     <Select
                       value={formData.state}
                       onValueChange={(value) => {
                         handleSelectChange("state", value);
-                        handleSelectChange("district", ""); // Reset district when state changes
+                        handleSelectChange("district", "");
                       }}
                     >
-                      <SelectTrigger id="state">
+                      <SelectTrigger id="state" className="h-8">
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>
@@ -730,8 +754,8 @@ export function RequirementsCapture() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="district">District *</Label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="district" className="text-xs text-black">District *</Label>
                     <Select
                       value={formData.district}
                       onValueChange={(value) =>
@@ -739,7 +763,7 @@ export function RequirementsCapture() {
                       }
                       disabled={!formData.state}
                     >
-                      <SelectTrigger id="district">
+                      <SelectTrigger id="district" className="h-8">
                         <SelectValue placeholder="Select district" />
                       </SelectTrigger>
                       <SelectContent>
@@ -753,181 +777,163 @@ export function RequirementsCapture() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City *</Label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="city" className="text-xs text-black">City *</Label>
                     <Input
                       id="city"
                       name="city"
-                      placeholder="Enter city name"
+                      placeholder="Enter city"
                       value={formData.city}
                       onChange={handleInputChange}
                       required
+                      className="h-8"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="pincode">Pincode *</Label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="pincode" className="text-xs text-black">Pincode *</Label>
                     <Input
                       id="pincode"
                       name="pincode"
-                      placeholder="Enter 6-digit pincode"
+                      placeholder="6-digit pincode"
                       value={formData.pincode}
                       onChange={handleInputChange}
                       maxLength={6}
                       required
+                      className="h-8"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Solar Capacity Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg text-blue-600">
+              <div className="space-y-1">
+                <h3 className="font-semibold text-sm text-blue-600">
                   Solar Capacity Requirement
                 </h3>
 
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="capacityKw">Capacity Required (kW) *</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="capacityKw" className="text-xs text-black">Inverter type *</Label>
                     <Select
                       value={formData.capacityKw?.toString() || ""}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, capacityKw: value }))}
                     >
-                      <SelectTrigger id="capacityKw">
+                      <SelectTrigger id="capacityKw" className="h-8">
                         <SelectValue placeholder="Select inverter type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="GroWatt TL-X2 (Pro) On Grid Tied Solar Invertor">GroWatt TL-X2 (Pro) On Grid Tied Solar Invertor</SelectItem>
-                        <SelectItem value="WAAREE On Grid Tied Solar Inverter">WAAREE On Grid Tied Solar Inverter</SelectItem>
-                        <SelectItem value="MicroTek On Grid Tied Solar Inverter">MicroTek On Grid Tied Solar Inverter</SelectItem>
+                        {inverterOptions.map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="productDescription">Product Description</Label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="productDescription" className="text-xs text-black">Product Description (KW) *</Label>
                     <Select
                       value={formData.productDescription || ""}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, productDescription: value }))}
                     >
-                      <SelectTrigger id="productDescription">
+                      <SelectTrigger id="productDescription" className="h-8">
                         <SelectValue placeholder="Select solar panel product" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (3 KW)">Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (3 KW)</SelectItem>
-                        <SelectItem value="Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (4 KW)">Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (4 KW)</SelectItem>
-                        <SelectItem value="Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (5 KW)">Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (5 KW)</SelectItem>
-                        <SelectItem value="Tata Solar Panels 560w+ Bifacial DCR (3 KW)">Tata Solar Panels 560w+ Bifacial DCR (3 KW)</SelectItem>
-                        <SelectItem value="Tata Solar Panels 560w+ Bifacial DCR (4 KW)">Tata Solar Panels 560w+ Bifacial DCR (4 KW)</SelectItem>
-                        <SelectItem value="Tata Solar Panels 560w+ Bifacial DCR (5 KW)">Tata Solar Panels 560w+ Bifacial DCR (5 KW)</SelectItem>
-                        <SelectItem value="Premier Energies Panels 525w+ Bifacial DCR (3 KW)">Premier Energies Panels 525w+ Bifacial DCR (3 KW)</SelectItem>
-                        <SelectItem value="Premier Energies Panels 525w+ Bifacial DCR (4 KW)">Premier Energies Panels 525w+ Bifacial DCR (4 KW)</SelectItem>
-                        <SelectItem value="Premier Energies Panels 525w+ Bifacial DCR (5 KW)">Premier Energies Panels 525w+ Bifacial DCR (5 KW)</SelectItem>
+                        {solarPanelOptions.map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                    <div className="space-y-2">
-                    <Label htmlFor="structure">Structure</Label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="structure" className="text-xs text-black">Structure *</Label>
                     <Select
                       value={formData.structure || ""}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, structure: value }))}
                     >
-                      <SelectTrigger id="structure">
-                      <SelectValue placeholder="Select structure type" />
+                      <SelectTrigger id="structure" className="h-8">
+                        <SelectValue placeholder="Select structure type" />
                       </SelectTrigger>
                       <SelectContent>
-                      <SelectItem value="Structure for the 3 KW Roof Top Solar Plant">Structure for the 3 KW Roof Top Solar Plant</SelectItem>
-                      <SelectItem value="Structure for the 4 KW Roof Top Solar Plant">Structure for the 4 KW Roof Top Solar Plant</SelectItem>
-                      <SelectItem value="Structure for the 5 KW Roof Top Solar Plant">Structure for the 5 KW Roof Top Solar Plant</SelectItem>
+                        {structureOptions.map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Amount and GST Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg text-blue-600">
+              <div className="space-y-1">
+                <h3 className="font-semibold text-sm text-blue-600">
                   Quotation Details
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Estimated Amount (₹) *</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="amount" className="text-xs text-black">Total Amount (₹) (Inclusive of GST) *</Label>
                     <Input
                       id="amount"
                       name="amount"
                       type="number"
-                      placeholder="Enter estimated amount"
+                      placeholder="Enter total amount inclusive of GST"
                       value={formData.amount || ""}
                       onChange={handleInputChange}
                       step="0.01"
                       min="0"
                       required
+                      className="h-8"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Enter the estimated project cost in Indian Rupees
-                    </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="gstPercentage">GST Percentage (%) *</Label>
-                    <Input
-                      id="gstPercentage"
-                      name="gstPercentage"
-                      type="number"
-                      placeholder="Enter GST percentage (e.g., 5, 12, 18)"
-                      value={formData.gstPercentage || ""}
-                      onChange={handleInputChange}
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Enter applicable GST percentage (typical: 5%, 12%, 18%)
-                    </p>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="gstPercentage" className="text-xs text-black">GST Percentage (%) *</Label>
+                    <Select
+                      value={formData.gstPercentage?.toString() || ""}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, gstPercentage: parseFloat(value) }))}
+                    >
+                      <SelectTrigger id="gstPercentage" className="h-8">
+                        <SelectValue placeholder="Select GST %" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {gstOptions.map((option) => (
+                          <SelectItem key={option} value={option.toString()}>{option}%</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  {formData.amount && formData.amount > 0 && formData.gstPercentage && formData.gstPercentage > 0 && (
+                    <div className="bg-blue-50 p-2 rounded-md border border-blue-200">
+                      <p className="text-xs font-semibold text-blue-900">
+                        Total (Inclusive of GST): ₹{formData.amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-xs text-blue-800">
+                        Base Amount: ₹{(formData.amount / (1 + formData.gstPercentage / 100)).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-xs text-blue-800 border-t border-blue-200 pt-1 mt-1">
+                        GST ({formData.gstPercentage}%): ₹{(formData.amount - (formData.amount / (1 + formData.gstPercentage / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  )}
                 </div>
-
-                {formData.amount && formData.amount > 0 && formData.gstPercentage && formData.gstPercentage > 0 && (
-                  <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
-                    <p className="text-sm font-semibold text-blue-900">
-                      Amount: ₹
-                      {formData.amount.toLocaleString("en-IN", {
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                    <p className="text-sm text-blue-800">
-                      GST ({formData.gstPercentage}%): ₹
-                      {(
-                        (formData.amount * formData.gstPercentage) /
-                        100
-                      ).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-sm font-semibold text-blue-900 border-t border-blue-200 pt-2 mt-2">
-                      Total (with GST): ₹
-                      {(
-                        formData.amount *
-                        (1 + formData.gstPercentage / 100)
-                      ).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                )}
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
+              <div className="flex justify-end gap-2 pt-2 border-t">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleCancelEdit}
                   disabled={isLoading}
+                  className="h-8 border-orange-300 text-orange-600 hover:bg-orange-50 cursor-pointer"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading} className="h-8 bg-orange-500 hover:bg-orange-600 text-white cursor-pointer">
                   {isLoading 
                     ? (editingId ? "Updating..." : "Saving...") 
                     : (editingId ? "Update Requirement" : "Save Requirements")}
@@ -951,7 +957,7 @@ export function RequirementsCapture() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1"
             />
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="cursor-pointer">
               <Search className="h-4 w-4" />
             </Button>
           </div>
@@ -985,11 +991,10 @@ export function RequirementsCapture() {
                   <thead>
                     <tr className="bg-blue-50">
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Customer Name</th>
-                      <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Mobile</th>
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Address & Location</th>
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Capacity</th>
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Product</th>
-                      <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Amount (₹)</th>
+                      <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Base Amount (₹)</th>
                       <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">GST%</th>
                       <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Total (₹)</th>
                       <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Actions</th>
@@ -999,10 +1004,8 @@ export function RequirementsCapture() {
                     {paginatedRequirements.map((req, index) => (
                       <tr key={req.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                         <td className="border border-gray-300 px-4 py-3 text-sm font-medium">
-                          {req.customerName || req.customer_name}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm">
-                          {req.mobile}
+                          <span>{req.customerName || req.customer_name}</span>
+                          <span className="block text-xs text-gray-500 mt-1">{req.mobile}</span>
                         </td>
                         <td className="border border-gray-300 px-4 py-3 text-sm">
                           <div className="space-y-1">
@@ -1010,7 +1013,7 @@ export function RequirementsCapture() {
                             <p className="text-xs text-muted-foreground">{req.city}, {req.district}, {req.state} - {req.pincode}</p>
                           </div>
                         </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm text-blue-600 font-semibold">
+                        <td className="border border-gray-300 px-4 py-3 text-sm text-black font-semibold">
                           {req.capacityKw || "N/A"}
                         </td>
                         <td className="border border-gray-300 px-4 py-3 text-sm">
@@ -1023,13 +1026,13 @@ export function RequirementsCapture() {
                           )}
                         </td>
                         <td className="border border-gray-300 px-4 py-3 text-sm text-right text-green-600 font-semibold">
-                          {(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
+                          {(req.amount || 0) > 0 ? `₹${((req.amount || 0) / (1 + ((req.gstPercentage || req.gst || 0) / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
                         </td>
                         <td className="border border-gray-300 px-4 py-3 text-sm text-right text-orange-600">
                           {(req.gstPercentage || req.gst) || 0}%
                         </td>
                         <td className="border border-gray-300 px-4 py-3 text-sm text-right text-purple-600 font-semibold">
-                          {(req.amount || 0) > 0 ? `₹${((req.amount || 0) * (1 + ((req.gstPercentage || req.gst || 0) / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
+                          {(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
                         </td>
                         <td className="border border-gray-300 px-4 py-3 text-center">
                           <div className="flex justify-center gap-2">
@@ -1037,8 +1040,9 @@ export function RequirementsCapture() {
                               size="sm"
                               variant="ghost"
                               onClick={() => handleDownload(req)}
-                              className="h-8 w-8 p-0 hover:bg-green-100"
+                              className="h-8 w-8 p-0 hover:bg-green-100 cursor-pointer"
                               title="Download"
+                              style={{ pointerEvents: 'auto' }}
                             >
                               <Download className="h-4 w-4 text-green-600" />
                             </Button>
@@ -1046,8 +1050,9 @@ export function RequirementsCapture() {
                               size="sm"
                               variant="ghost"
                               onClick={() => handleEditClick(req)}
-                              className="h-8 w-8 p-0 hover:bg-blue-100"
+                              className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer"
                               title="Edit"
+                              style={{ pointerEvents: 'auto' }}
                             >
                               <Edit2 className="h-4 w-4 text-blue-600" />
                             </Button>
@@ -1060,7 +1065,7 @@ export function RequirementsCapture() {
               </div>
 
               {/* Pagination Controls */}
-              <div className="flex items-center justify-between mt-4 px-4 py-3 bg-gray-50 rounded border">
+              <div className="flex items-center justify-between mt-4 px-4 py-3 bg-orange-50 rounded border border-orange-200">
                 <div className="text-sm text-muted-foreground">
                   Showing {startIndex + 1} to {Math.min(endIndex, filteredRequirements.length)} of {filteredRequirements.length} requirements
                 </div>
@@ -1070,6 +1075,7 @@ export function RequirementsCapture() {
                     size="sm"
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
+                    className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer"
                   >
                     Previous
                   </Button>
@@ -1081,7 +1087,7 @@ export function RequirementsCapture() {
                         variant={currentPage === page ? "default" : "outline"}
                         size="sm"
                         onClick={() => setCurrentPage(page)}
-                        className="w-8 h-8 p-0"
+                        className={`w-8 h-8 p-0 cursor-pointer ${currentPage === page ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-orange-300 text-orange-600 hover:bg-orange-100"}`}
                       >
                         {page}
                       </Button>
@@ -1093,6 +1099,7 @@ export function RequirementsCapture() {
                     size="sm"
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
+                    className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer"
                   >
                     Next
                   </Button>

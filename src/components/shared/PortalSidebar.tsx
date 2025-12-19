@@ -17,12 +17,14 @@ import {
   MapPin,
   Handshake,
   ListChecks,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '../ui/sheet';
 import { useSelector } from 'react-redux';
-import { useEffect, useRef, useMemo } from 'react'; // ADDED: for scroll preservation
+import { useEffect, useRef, useMemo, useState } from 'react'; // ADDED: for scroll preservation
 
 interface MenuItem {
   id: string;
@@ -81,6 +83,9 @@ export function PortalSidebar({
   const user = useSelector((state: any) => state.currentUserData);
   console.log('Current User in Sidebar:', user);
   const permissions = user?.permissions || [];
+
+  // ADDED: Sidebar collapsed state
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // ADDED: Ref to track the scrollable nav container
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -223,12 +228,12 @@ export function PortalSidebar({
     }
   }, [currentPage]);
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ collapsed = false }: { collapsed?: boolean }) => (
     <div className="h-full bg-white flex flex-col">
       {/* FIXED: Added ref to preserve scroll position */}
       <nav 
         ref={scrollRef}
-        className="flex-1 p-3 sm:p-4 overflow-y-auto"
+        className={cn("flex-1 overflow-y-auto", collapsed ? "p-2" : "p-3 sm:p-4")}
       >
         <ul className="space-y-1">
           {menuItems.map((item) => {
@@ -251,15 +256,18 @@ export function PortalSidebar({
               <li key={item.id}>
                 <button
                   onClick={() => handleNavigate(item.id)}
+                  title={collapsed ? item.label : undefined}
                   className={cn(
-                    'w-full flex items-center gap-2 sm:gap-3 px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-colors',
+                    'w-full flex items-center rounded-lg text-xs sm:text-sm transition-colors cursor-pointer',
+                    collapsed ? 'justify-center p-2' : 'gap-2 sm:gap-3 px-3 py-2 sm:py-2.5',
                     isActive
                       ? 'bg-orange-50 text-orange-600'
                       : 'text-gray-600 hover:bg-gray-50'
                   )}
+                  style={{ pointerEvents: 'auto' }}
                 >
                   <Icon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                  <span className="truncate">{item.label}</span>
+                  {!collapsed && <span className="truncate">{item.label}</span>}
                 </button>
               </li>
             );
@@ -268,13 +276,18 @@ export function PortalSidebar({
       </nav>
 
       {/* Logout */}
-      <div className="p-3 sm:p-4 border-t">
+      <div className={cn("border-t", collapsed ? "p-2" : "p-3 sm:p-4")}>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2 sm:gap-3 px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 transition-colors mb-10"
+          title={collapsed ? "Logout" : undefined}
+          className={cn(
+            "w-full flex items-center rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 transition-colors mb-10 cursor-pointer",
+            collapsed ? "justify-center p-2" : "gap-2 sm:gap-3 px-3 py-2 sm:py-2.5"
+          )}
+          style={{ pointerEvents: 'auto' }}
         >
           <LogOut className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-          <span>Logout</span>
+          {!collapsed && <span>Logout</span>}
         </button>
       </div>
     </div>
@@ -283,8 +296,27 @@ export function PortalSidebar({
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block w-56 xl:w-64 bg-white border-r flex-shrink-0" style={{ height: 'calc(100vh - 3.5rem)' }}>
-        <SidebarContent />
+      <div 
+        className={cn(
+          "hidden lg:flex flex-col bg-white border-r flex-shrink-0 transition-all duration-300",
+          isCollapsed ? "w-16" : "w-56 xl:w-64"
+        )} 
+        style={{ height: 'calc(100vh - 3.5rem)', position: 'relative', zIndex: 1 }}
+      >
+        {/* Toggle Button */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3 top-6 z-50 bg-orange-500 hover:bg-orange-600 text-white rounded-full p-1 shadow-md transition-colors cursor-pointer"
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          style={{ pointerEvents: 'auto' }}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
+        <SidebarContent collapsed={isCollapsed} />
       </div>
 
       {/* Mobile Sidebar (Sheet) */}
@@ -294,7 +326,7 @@ export function PortalSidebar({
           <SheetDescription className="sr-only">
             Access dashboard, notifications, and other menu items
           </SheetDescription>
-          <SidebarContent />
+          <SidebarContent collapsed={false} />
         </SheetContent>
       </Sheet>
     </>

@@ -14,6 +14,15 @@ interface PortalHeaderProps {
   onMenuToggle?: () => void;
 }
 
+// Helper function to get initials from name
+const getInitials = (name: string): string => {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length === 0) return 'U';
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
 export function PortalHeader({ 
   role, 
   userName, 
@@ -26,6 +35,8 @@ export function PortalHeader({
     role === 'admin' ? 'Admin Portal' : 
     role === 'sales' ? 'Sales Portal' : 
     'Field Executive Portal';
+
+  const initials = getInitials(userName);
 
   return (
   <header className="bg-white border-b min-h-[64px] sm:min-h-[80px] flex items-center justify-between px-3 sm:px-4 md:px-6 sticky top-0 z-50">
@@ -70,13 +81,16 @@ export function PortalHeader({
           )}
         </Button> */}
 
-        {/* Profile */}
+        {/* Profile with Avatar */}
         <Button
           variant="ghost"
-          className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3"
+          className="gap-2 sm:gap-3 h-8 sm:h-10 px-2 sm:px-3"
           onClick={onProfileClick}
         >
-          <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+          {/* Avatar with Initials */}
+          <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm sm:text-base">
+            {initials}
+          </div>
           <span className="hidden sm:inline text-gray-700 text-xs sm:text-sm truncate max-w-[100px] md:max-w-[150px]">
             {userName}
           </span>

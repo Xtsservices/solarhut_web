@@ -54,6 +54,7 @@ interface Requirement {
   gstPercentage?: number;
   product_description?: string;
   productDescription?: string;
+  structure?: string;
   requested_watts?: number | string;
   created_at?: string;
   updated_at?: string;
@@ -85,6 +86,7 @@ export function RequirementsCapture() {
     amount: 0,
     gstPercentage: 0,
     productDescription: "",
+    structure: "",
   });
 
   // Fetch estimations on component mount
@@ -290,6 +292,7 @@ export function RequirementsCapture() {
       amount: 0,
       gstPercentage: 0,
       productDescription: "",
+      structure: "",
     });
     setIsDialogOpen(false);
   };
@@ -430,10 +433,11 @@ export function RequirementsCapture() {
             requested_watts: formData.capacityKw,
             gst: formData.gstPercentage,
             amount: formData.amount,
+           
           };
           
-          console.log("Update API Payload:", apiPayload);
-          
+         
+
           const response = await updateEstimation(editingId, apiPayload);
           console.log("Update Response:", response);
 
@@ -501,12 +505,11 @@ export function RequirementsCapture() {
             requested_watts: formData.capacityKw ,
             gst: formData.gstPercentage,
             amount: formData.amount,
+             structure: formData.structure,
           };
           
-          console.log("API Payload:", apiPayload);
           
           const response = await createEstimation(apiPayload);
-          console.log("API Response:", response);
 
           if (response.ok) {
             toast.success("Requirements captured successfully!");
@@ -558,6 +561,7 @@ export function RequirementsCapture() {
         amount: 0,
         gstPercentage: 0,
         productDescription: "",
+        structure: "",
       });
 
       setEditingId(null);
@@ -785,34 +789,60 @@ export function RequirementsCapture() {
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="capacityKw">Capacity Required (kW) *</Label>
-                    <Input
-                      id="capacityKw"
-                      name="capacityKw"
-                      type="text"
-                      placeholder="ex:(GroWatt 3KW TL-X2 (Pro) Solar Invertor- 1)"
-                      value={formData.capacityKw || ""}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Enter the solar capacity needed (e.g., 5, 10.5, 3-5 kW, typical residential: 3-10 kW, commercial: 10-50 kW)
-                    </p>
+                    <Select
+                      value={formData.capacityKw?.toString() || ""}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, capacityKw: value }))}
+                    >
+                      <SelectTrigger id="capacityKw">
+                        <SelectValue placeholder="Select inverter type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="GroWatt TL-X2 (Pro) On Grid Tied Solar Invertor">GroWatt TL-X2 (Pro) On Grid Tied Solar Invertor</SelectItem>
+                        <SelectItem value="WAAREE On Grid Tied Solar Inverter">WAAREE On Grid Tied Solar Inverter</SelectItem>
+                        <SelectItem value="MicroTek On Grid Tied Solar Inverter">MicroTek On Grid Tied Solar Inverter</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="productDescription">Product Description</Label>
-                    <Textarea
-                      id="productDescription"
-                      name="productDescription"
-                      placeholder="Describe the solar product/system (e.g., On-grid system with 5kW capacity, 330W panels, ABB inverter)"
+                    <Select
                       value={formData.productDescription || ""}
-                      onChange={handleInputChange}
-                      className="min-h-[100px]"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Enter details about the solar system, components, or specific product information
-                    </p>
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, productDescription: value }))}
+                    >
+                      <SelectTrigger id="productDescription">
+                        <SelectValue placeholder="Select solar panel product" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (3 KW)">Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (3 KW)</SelectItem>
+                        <SelectItem value="Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (4 KW)">Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (4 KW)</SelectItem>
+                        <SelectItem value="Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (5 KW)">Vikram Solar Panels 550w+ M10 Bifacial G2G HC DCR (5 KW)</SelectItem>
+                        <SelectItem value="Tata Solar Panels 560w+ Bifacial DCR (3 KW)">Tata Solar Panels 560w+ Bifacial DCR (3 KW)</SelectItem>
+                        <SelectItem value="Tata Solar Panels 560w+ Bifacial DCR (4 KW)">Tata Solar Panels 560w+ Bifacial DCR (4 KW)</SelectItem>
+                        <SelectItem value="Tata Solar Panels 560w+ Bifacial DCR (5 KW)">Tata Solar Panels 560w+ Bifacial DCR (5 KW)</SelectItem>
+                        <SelectItem value="Premier Energies Panels 525w+ Bifacial DCR (3 KW)">Premier Energies Panels 525w+ Bifacial DCR (3 KW)</SelectItem>
+                        <SelectItem value="Premier Energies Panels 525w+ Bifacial DCR (4 KW)">Premier Energies Panels 525w+ Bifacial DCR (4 KW)</SelectItem>
+                        <SelectItem value="Premier Energies Panels 525w+ Bifacial DCR (5 KW)">Premier Energies Panels 525w+ Bifacial DCR (5 KW)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                    <div className="space-y-2">
+                    <Label htmlFor="structure">Structure</Label>
+                    <Select
+                      value={formData.structure || ""}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, structure: value }))}
+                    >
+                      <SelectTrigger id="structure">
+                      <SelectValue placeholder="Select structure type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                      <SelectItem value="Structure for the 3 KW Roof Top Solar Plant">Structure for the 3 KW Roof Top Solar Plant</SelectItem>
+                      <SelectItem value="Structure for the 4 KW Roof Top Solar Plant">Structure for the 4 KW Roof Top Solar Plant</SelectItem>
+                      <SelectItem value="Structure for the 5 KW Roof Top Solar Plant">Structure for the 5 KW Roof Top Solar Plant</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    </div>
                 </div>
               </div>
 

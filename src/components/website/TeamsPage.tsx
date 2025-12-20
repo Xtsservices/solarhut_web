@@ -101,7 +101,8 @@ const TeamsPage: React.FC = () => {
     }
   ];
 
-  // Department Teams
+  // Department Teams 
+  
   const teamMembers: TeamMember[] = [
     // Sales Team
     {

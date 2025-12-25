@@ -29,92 +29,100 @@ const TeamsPage: React.FC = () => {
   const directors: TeamMember[] = [
     {
       id: 'dir-1',
-      name: 'KISHORE KODALI',
+      name: 'Kishore Kodali',
       role: 'Managing Partner & Head IT & Marketing',
       department: 'Leadership',
       image: kishoreImg, 
-      bio: 'With over 15 years of experience in renewable energy sector, Rajesh leads Solar Hut Solutions with a vision to make solar energy accessible to every household and business in India.',
-      email: 'rajesh@solarhut.com',
-      phone: '+91 98765 43210',
-      linkedin: 'https://linkedin.com/in/rajeshkumar',
-      specialties: ['Strategic Planning', 'Business Development', 'Renewable Energy'],
+      bio: 'Kishore brings extensive expertise in IT and marketing, driving Solar Hut Solutions\' digital transformation and brand presence in the renewable energy sector.',
+      email: 'kishore@solarhut.com',
+      phone: '+91 9052647474',
+      linkedin: 'https://linkedin.com/in/kishorekodali',
+      specialties: ['IT Strategy', 'Digital Marketing', 'Brand Development'],
       experience: '15+ Years',
       achievements: [
-        'Led 500+ successful solar installations',
-        'Green Energy Leadership Award 2023',
-        'Sustainable Business Excellence Award'
+        'Digital transformation leader',
+        'Marketing excellence in solar industry',
+        'IT infrastructure optimization'
+      ]
+    },
+    {
+      id: 'dir-4',
+      name: 'Phani Devunipally',
+      role: 'Managing Partner and AP State Head',
+      department: 'Leadership',
+      image: DevunipallyPhaniImg,
+      bio: 'Phani leads sales operations across Andhra Pradesh, driving sustainable energy adoption with strategic planning and customer-centric approach.',
+      email: 'phani@solarhut.com',
+      phone: '+91 9052647474',
+      linkedin: 'https://linkedin.com/in/devunipallyPhani',
+      specialties: ['Sales Leadership', 'Regional Strategy', 'Client Relations'],
+      experience: '12+ Years',
+      achievements: [
+        'Regional sales leadership in Andhra Pradesh',
+        'Customer satisfaction excellence',
+        'Strategic market expansion'
       ]
     },
     {
       id: 'dir-2',
-      name: 'SAMPATH KUMAR GRANDHI',
+      name: 'Sampath Kumar Grandhi',
       role: 'Managing Partner & CFO',
       department: 'Leadership',
       image: sampathImg,
-      bio: 'Priya oversees all operational aspects of Solar Hut Solutions, ensuring quality delivery and customer satisfaction across all projects.',
-      email: 'priya@solarhut.com',
-      phone: '+91 98765 43211',
-      linkedin: 'https://linkedin.com/in/priyasharma',
-      specialties: ['Operations Management', 'Quality Assurance', 'Project Management'],
+      bio: 'Sampath oversees financial operations and strategic planning, ensuring sustainable growth and operational excellence at Solar Hut Solutions.',
+      email: 'sampath@solarhut.com',
+      phone: '+91 9052647474',
+      linkedin: 'https://linkedin.com/in/sampathkumargrandhi',
+      specialties: ['Financial Management', 'Strategic Planning', 'Business Growth'],
       experience: '12+ Years',
       achievements: [
-        '99.8% customer satisfaction rate',
-        'Operational Excellence Award',
-        'ISO 9001 implementation leader'
+        'Financial excellence in renewable sector',
+        'Strategic business expansion',
+        'Operational efficiency leader'
       ]
     },
     {
       id: 'dir-3',
-      name: 'SUBBU',
+      name: 'Subbu',
       role: 'Managing Director',
       department: 'Leadership',
       image: SubbuImg,
-      bio: 'Amit brings deep technical expertise in solar technology and engineering, driving innovation and technical excellence in all our solutions.',
-      email: 'amit@solarhut.com',
-      phone: '+91 98765 43212',
-      linkedin: 'https://linkedin.com/in/amitpatel',
-      specialties: ['Solar Engineering', 'Technical Innovation', 'System Design'],
+      bio: 'Subbu leads Solar Hut Solutions with a vision for innovation and excellence in solar energy, driving the company towards sustainable growth.',
+      email: 'subbu@solarhut.com',
+      phone: '+91 9052647474',
+      linkedin: 'https://linkedin.com/in/subbu',
+      specialties: ['Leadership', 'Business Strategy', 'Solar Innovation'],
       experience: '18+ Years',
       achievements: [
-        'Solar Technology Innovation Award',
-        '25+ patents in solar technology',
-        'Technical Excellence in Renewable Energy'
+        'Pioneering solar solutions in India',
+        'Industry leadership award',
+        'Sustainable energy advocate'
       ]
     }
   ];
 
-  // Department Teams
+  // Department Teams 
+  
   const teamMembers: TeamMember[] = [
     // Sales Team
     {
-        id: 'sales-1',
-        name: 'DEVUNIPALLY PHANI',
-        role: 'Managing Partner and Ap state head ',
-        department: 'Sales',
-        image: DevunipallyPhaniImg,
-        bio: 'Arjun drives our sales strategy with a focus on sustainable energy solutions and customer satisfaction.',
-        email: 'arjun@solarhut.com',
-        specialties: ['Sales Leadership', 'Market Strategy', 'Client Relations'],
-        experience: '12+ Years'
-    },
-    {
         id: 'sales-2',
-        name: 'Gowtham raju Suklaboina',
-        role: 'Ap Marketing',
+        name: 'Gowtham Raju Suklaboina',
+        role: 'AP Marketing',
         department: 'Sales',
         image: GowthamRajuImg,
-        bio: 'Deepika specializes in large-scale commercial solar projects and enterprise solutions.',
-        specialties: ['Enterprise Sales', 'Commercial Projects', 'Business Development'],
+        bio: 'Gowtham Raju drives marketing initiatives across Andhra Pradesh, focusing on brand awareness and customer engagement in the solar sector.',
+        specialties: ['Marketing Strategy', 'Brand Development', 'Customer Outreach'],
         experience: '9+ Years'
     },
     {
         id: 'sales-3',
         name: 'Siram Venkata Gowtham',
-        role: 'Manager operations',
+        role: 'Manager Operations',
         department: 'Sales',
         image: SiramVenkataGowthamImg,
-        bio: 'Karan helps families transition to solar energy with personalized consultation and support.',
-        specialties: ['Residential Solar', 'Home Consultation', 'Energy Planning'],
+        bio: 'Venkata Gowtham manages operational excellence, ensuring seamless project execution and customer satisfaction.',
+        specialties: ['Operations Management', 'Project Coordination', 'Quality Delivery'],
         experience: '6+ Years'
     },
 
@@ -240,7 +248,7 @@ const TeamsPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {directors.map((director) => (
               <Card key={director.id} className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 <div className="relative">
@@ -353,7 +361,7 @@ const TeamsPage: React.FC = () => {
                   <div className="flex-1 h-px bg-gray-200" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {deptMembers.map((member) => (
                     <Card key={member.id} className="hover:shadow-lg transition-shadow duration-300">
                       <CardContent className="p-6">

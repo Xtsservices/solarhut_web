@@ -301,6 +301,16 @@ export const updateEstimation = async (
 };
 
 // ===========================================
+// INVOICES
+// ===========================================
+
+export const getInvoices = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(() => api.get('/api/invoices', { cancelToken }), 'Invoices fetched successfully!');
+};
+
+// ===========================================
 // USER/EMPLOYEE ENDPOINTS
 // ===========================================
 

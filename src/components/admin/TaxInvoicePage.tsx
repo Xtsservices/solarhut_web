@@ -20,7 +20,7 @@ import {
 } from "../ui/select";
 import { toast } from "sonner";
 import { Search, Loader, Edit2, X, Download } from "lucide-react";
-import { getInvoices } from "../../api";
+import { getInvoices, downloadInvoice } from "../../api";
 import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
 // Add this type declaration at the top of your file (or in a global .d.ts file)
@@ -284,8 +284,42 @@ export function TaxInvoicePage() {
   };
 
   const handleDownload = async (requirement: Requirement) => {
-    // UI-only mode: downloading disabled
-    toast.error("Download disabled in UI-only mode");
+    try {
+      toast.loading('Preparing download...');
+      const resp = await downloadInvoice(requirement.id || '');
+
+      const blob = resp.data as Blob;
+      const contentDisposition = resp.headers['content-disposition'] || resp.headers['Content-Disposition'];
+      let filename = `invoice_${requirement.id || 'file'}_${Date.now()}`;
+      if (contentDisposition) {
+        const match = /filename\*=UTF-8''([^;\n]+)/.exec(contentDisposition) || /filename="?([^";\n]+)"?/.exec(contentDisposition);
+        if (match && match[1]) filename = decodeURIComponent(match[1]);
+      }
+
+      if (!filename.includes('.')) {
+        const type = blob.type || '';
+        if (type.includes('pdf')) filename += '.pdf';
+        else if (type.includes('sheet') || type.includes('excel')) filename += '.xlsx';
+        else if (type.includes('csv') || type === 'text/csv') filename += '.csv';
+        else filename += '.bin';
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.dismiss();
+      toast.success('Invoice download started');
+    } catch (err: any) {
+      console.error('Invoice download error', err);
+      toast.dismiss();
+      toast.error(err?.message || 'Failed to download invoice');
+    }
   };
 
   const validateForm = (): boolean => {
@@ -419,7 +453,7 @@ export function TaxInvoicePage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Tax Invoice</h1>
-          <p className="text-muted-foreground mt-2">Create and manage tax invoices</p>
+          <p className="text-muted-foreground mt-2">manage tax invoices</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent

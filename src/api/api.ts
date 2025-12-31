@@ -310,6 +310,21 @@ export const getInvoices = async (
   return makeRequest(() => api.get('/api/invoices', { cancelToken }), 'Invoices fetched successfully!');
 };
 
+export const createInvoice = async (
+  data: any,
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(() => api.post('/api/invoices', data, { cancelToken }), 'Invoice created successfully!');
+};
+
+// Download invoice as blob and return full Axios response (headers + data)
+export const downloadInvoice = async (
+  id: string | number,
+  cancelToken?: CancelToken
+): Promise<import('axios').AxiosResponse<Blob>> => {
+  return api.get(`/api/invoices/${id}/download`, { cancelToken, responseType: 'blob' });
+};
+
 // ===========================================
 // USER/EMPLOYEE ENDPOINTS
 // ===========================================

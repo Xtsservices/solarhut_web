@@ -21,7 +21,7 @@ import {
 } from "../ui/select";
 import { toast } from "sonner";
 import { Plus, Search, Loader, Edit2, X, Download } from "lucide-react";
-import { createEstimation, getEstimations, updateEstimation } from "../../api";
+import { createEstimation, getEstimations, updateEstimation, createInvoice } from "../../api";
 import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
 // Add this type declaration at the top of your file (or in a global .d.ts file)
@@ -73,6 +73,7 @@ export function RequirementsCapture() {
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [generateTarget, setGenerateTarget] = useState<Requirement | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generateForm, setGenerateForm] = useState<{ amount: number; productDescription: string }>({ amount: 0, productDescription: '' });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -283,8 +284,60 @@ export function RequirementsCapture() {
 
   const openGenerateDialog = (requirement: Requirement) => {
     setGenerateTarget(requirement);
+    setGenerateForm({ amount: requirement.amount || 0, productDescription: requirement.productDescription || requirement.product_description || '' });
     setIsGenerateDialogOpen(true);
     toast.info(`Prepare to generate invoice for ${requirement.customerName || requirement.customer_name || requirement.id}`);
+  };
+
+  const handleGenerateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!generateTarget) return;
+    setIsGenerating(true);
+    try {
+      const payload = {
+        estimationId: generateTarget.id,
+        amount: generateForm.amount,
+        product_description: generateForm.productDescription,
+      };
+
+      const resp = await createInvoice(payload);
+      if (resp.ok) {
+        toast.success('Invoice generated successfully');
+        // refresh list
+        const refreshResponse = await getEstimations();
+        if (refreshResponse.ok && refreshResponse.data) {
+          const formattedRequirements = Array.isArray(refreshResponse.data.data)
+            ? refreshResponse.data.data.map((item: any) => ({
+                id: item.id,
+                customerName: item.customer_name,
+                doorNo: item.door_no,
+                area: item.area,
+                city: item.city,
+                district: item.district,
+                state: item.state,
+                pincode: item.pincode,
+                mobile: item.mobile,
+                capacityKw: item.requested_watts,
+                amount: parseFloat(item.amount) || 0,
+                gstPercentage: parseFloat(item.gst) || 0,
+                productDescription: item.product_description,
+                createdAt: item.created_at,
+                status: item.status,
+              }))
+            : [];
+          setRequirements(formattedRequirements);
+        }
+        setIsGenerateDialogOpen(false);
+        setGenerateTarget(null);
+      } else {
+        toast.error(resp.error || 'Failed to create invoice');
+      }
+    } catch (err) {
+      console.error('Invoice creation error', err);
+      toast.error('Failed to create invoice');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -951,6 +1004,79 @@ export function RequirementsCapture() {
             </form>
           </DialogContent>
         </Dialog>
+        {/* Generate Invoice Dialog */}
+        <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
+          <DialogContent style={{ width: 640, maxWidth: '90vw', padding: 16 }}>
+            <DialogHeader>
+              <DialogTitle>Generate Tax Invoice</DialogTitle>
+              <DialogDescription className="text-xs">Verify invoice details and submit</DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleGenerateSubmit} className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Customer Name</Label>
+                  <Input value={generateTarget?.customerName || generateTarget?.customer_name || ''} readOnly disabled className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">Mobile</Label>
+                  <Input value={generateTarget?.mobile || ''} readOnly disabled className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">Door No</Label>
+                  <Input value={generateTarget?.doorNo || generateTarget?.door_no || ''} readOnly disabled className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">Area</Label>
+                  <Input value={generateTarget?.area || ''} readOnly disabled className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">City</Label>
+                  <Input value={generateTarget?.city || ''} readOnly disabled className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">District</Label>
+                  <Input value={generateTarget?.district || ''} readOnly disabled className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">State</Label>
+                  <Input value={generateTarget?.state || ''} readOnly disabled className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">Pincode</Label>
+                  <Input value={generateTarget?.pincode || ''} readOnly disabled className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">Capacity</Label>
+                  <Input value={generateTarget?.capacityKw || generateTarget?.requested_watts || ''} readOnly disabled className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">Structure</Label>
+                  <Input value={generateTarget?.structure || ''} readOnly disabled className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">GST %</Label>
+                  <Input value={generateTarget?.gstPercentage || generateTarget?.gst || 0} readOnly disabled className="h-8" />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="genAmount" className="text-xs">Amount (₹)</Label>
+                <Input id="genAmount" name="amount" type="number" value={generateForm.amount} onChange={(e) => setGenerateForm(p => ({ ...p, amount: parseFloat(e.target.value) || 0 }))} className="h-8" />
+              </div>
+
+              <div>
+                <Label htmlFor="genProduct" className="text-xs">Product Description</Label>
+                <Textarea id="genProduct" name="productDescription" value={generateForm.productDescription} onChange={(e) => setGenerateForm(p => ({ ...p, productDescription: e.target.value }))} className="h-24" />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button type="button" variant="outline" onClick={() => { setIsGenerateDialogOpen(false); setGenerateTarget(null); }} disabled={isGenerating}>Cancel</Button>
+                <Button type="submit" className="bg-indigo-600 text-white" disabled={isGenerating}>{isGenerating ? 'Generating...' : 'Generate Invoice'}</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search Bar */}
@@ -1049,10 +1175,9 @@ export function RequirementsCapture() {
                             <button
                               type="button"
                               onClick={() => openGenerateDialog(req)}
-                              className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 flex items-center rounded"
-                              style={{ pointerEvents: 'auto' }}
+                              className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-black font-medium inline-flex items-center justify-center rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border border-transparent"
                             >
-                              <span className="text-sm text-black">Generate</span>
+                              <span className="text-sm">Generate</span>
                             </button>
                           </div>
                         </td>

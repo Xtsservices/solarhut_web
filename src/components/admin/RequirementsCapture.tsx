@@ -118,6 +118,7 @@ export function RequirementsCapture() {
                 amount: parseFloat(item.amount) || 0,
                 gstPercentage: parseFloat(item.gst) || 0,
                 productDescription: item.product_description,
+                structure: item.structure,
                 createdAt: item.created_at,
                 status: item.status,
               }))
@@ -278,6 +279,7 @@ export function RequirementsCapture() {
       amount: requirement.amount || 0,
       gstPercentage: requirement.gstPercentage || requirement.gst || 0,
       productDescription: requirement.productDescription || requirement.product_description || "",
+      structure: requirement.structure || "",
     });
     setIsDialogOpen(true);
   };
@@ -321,6 +323,7 @@ export function RequirementsCapture() {
                 amount: parseFloat(item.amount) || 0,
                 gstPercentage: parseFloat(item.gst) || 0,
                 productDescription: item.product_description,
+                structure: item.structure,
                 createdAt: item.created_at,
                 status: item.status,
               }))
@@ -540,6 +543,7 @@ export function RequirementsCapture() {
                     amount: parseFloat(item.amount) || 0,
                     gstPercentage: parseFloat(item.gst) || 0,
                     productDescription: item.product_description,
+                    structure: item.structure,
                     createdAt: item.created_at,
                     status: item.status,
                   }))
@@ -610,6 +614,7 @@ export function RequirementsCapture() {
                     amount: parseFloat(item.amount) || 0,
                     gstPercentage: parseFloat(item.gst) || 0,
                     productDescription: item.product_description,
+                    structure: item.structure,
                     createdAt: item.created_at,
                     status: item.status,
                   }))
@@ -1072,7 +1077,7 @@ export function RequirementsCapture() {
 
               <div className="flex justify-end gap-2 pt-2 border-t">
                 <Button type="button" variant="outline" onClick={() => { setIsGenerateDialogOpen(false); setGenerateTarget(null); }} disabled={isGenerating}>Cancel</Button>
-                <Button type="submit" className="bg-indigo-600 text-white" disabled={isGenerating}>{isGenerating ? 'Generating...' : 'Generate Invoice'}</Button>
+                <Button type="submit" className="bg-orange-500 hover:bg-orange-600 text-white cursor-pointer" disabled={isGenerating}>{isGenerating ? 'Generating...' : 'Generate Invoice'}</Button>
               </div>
             </form>
           </DialogContent>

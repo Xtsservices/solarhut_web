@@ -56,6 +56,7 @@ const adminMenuItems: MenuItem[] = [
   // { id: 'Settings', label: 'Settings', icon: Settings },
   { id: 'Profile', label: 'Profile', icon: User },
   { id: 'Estimations', label: 'Estimations', icon: ClipboardCheck },
+  { id: 'Tax_Invoice', label: 'Tax Invoice', icon: FileText },
  
 ];
 
@@ -130,6 +131,19 @@ export function PortalSidebar({
         'settings': 'settings',
         'profile': 'profile',
         'estimations':'estimations',
+        'tax_invoice':'tax_invoice',
+        'tax invoices':'tax_invoice',
+        'tax_invoices':'tax_invoice',
+        'tax invoice':'tax_invoice',
+        'taxinvoice':'tax_invoice',
+        'taxinvoices':'tax_invoice',
+        'invoice':'tax_invoice',
+        'invoices':'tax_invoice',
+        'invoice_view':'tax_invoice',
+        'invoices_view':'tax_invoice',
+        'tax_invoice_view':'tax_invoice',
+        'taxinvoice_view':'tax_invoice',
+        'tax':'tax_invoice',
       };
       
       // Map allowed features to menu item IDs
@@ -203,6 +217,8 @@ export function PortalSidebar({
       navigate('/profile');
     } else if (page === 'Estimations') {
       navigate('/estimations');
+    } else if (page === 'Tax_Invoice') {
+      navigate('/tax-invoice');
     } else {
       navigate('/' + page.toLowerCase());
     }

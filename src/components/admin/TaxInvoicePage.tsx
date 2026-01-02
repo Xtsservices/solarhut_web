@@ -10,7 +10,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "../ui/dialog";
 import {
   Select,
@@ -20,21 +19,12 @@ import {
   SelectValue,
 } from "../ui/select";
 import { toast } from "sonner";
-import { Plus, Search, Loader, Edit2, X, Download } from "lucide-react";
-import { createEstimation, getEstimations, updateEstimation, createInvoice } from "../../api";
+import { Search, Loader, Edit2, X, Download } from "lucide-react";
+import { getInvoices, downloadInvoice } from "../../api";
 import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
 // Add this type declaration at the top of your file (or in a global .d.ts file)
-interface ImportMetaEnv {
-  VITE_API_BASE_URL: string;
-  // add other env variables here if needed
-}
-
-interface ImportMeta {
-  env: ImportMetaEnv;
-}
-
-const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL;
+// UI-only mode: no API base or network calls
 
 interface Requirement {
   id?: string | number;
@@ -63,17 +53,13 @@ interface Requirement {
   status?: string;
 }
 
-export function RequirementsCapture() {
+export function TaxInvoicePage() {
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingId, setEditingId] = useState<string | number | null>(null);
-  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
-  const [generateTarget, setGenerateTarget] = useState<Requirement | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generateForm, setGenerateForm] = useState<{ amount: number; productDescription: string }>({ amount: 0, productDescription: '' });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -94,46 +80,41 @@ export function RequirementsCapture() {
     structure: "",
   });
 
-  // Fetch estimations on component mount
+  // Fetch invoices
   useEffect(() => {
-    const fetchEstimations = async () => {
+    const fetchInvoices = async () => {
       try {
         setIsFetching(true);
-        const response = await getEstimations();
-        
-        if (response.ok && response.data) {
-          // Convert API response to component format
-          const formattedRequirements = Array.isArray(response.data.data) 
-            ? response.data.data.map((item: any) => ({
-                id: item.id,
-                customerName: item.customer_name,
-                doorNo: item.door_no,
-                area: item.area,
-                city: item.city,
-                district: item.district,
-                state: item.state,
-                pincode: item.pincode,
-                mobile: item.mobile,
-                capacityKw: item.requested_watts,
-                amount: parseFloat(item.amount) || 0,
-                gstPercentage: parseFloat(item.gst) || 0,
-                productDescription: item.product_description,
-                createdAt: item.created_at,
-                status: item.status,
-              }))
-            : [];
-          setRequirements(formattedRequirements);
-        } else {
-          console.warn("Failed to fetch estimations:", response.error);
+        const res = await getInvoices();
+        if (res.ok && res.data) {
+          const dataArray = Array.isArray(res.data) ? res.data : (res.data.data && Array.isArray(res.data.data) ? res.data.data : []);
+          const formatted = dataArray.map((item: any) => ({
+            id: item.id,
+            customerName: item.customer_name,
+            doorNo: item.door_no,
+            area: item.area,
+            city: item.city,
+            district: item.district,
+            state: item.state,
+            pincode: item.pincode,
+            mobile: item.mobile,
+            capacityKw: item.requested_watts,
+            amount: parseFloat(item.amount) || 0,
+            gstPercentage: parseFloat(item.gst) || 0,
+            productDescription: item.product_description,
+            createdAt: item.created_at || item.invoiceDate,
+            status: item.status,
+          }));
+          setRequirements(formatted);
         }
-      } catch (error) {
-        console.error("Error fetching estimations:", error);
+      } catch (err) {
+        console.error("Error fetching invoices", err);
       } finally {
         setIsFetching(false);
       }
     };
 
-    fetchEstimations();
+    fetchInvoices();
   }, []);
 
   const states = [
@@ -282,64 +263,6 @@ export function RequirementsCapture() {
     setIsDialogOpen(true);
   };
 
-  const openGenerateDialog = (requirement: Requirement) => {
-    setGenerateTarget(requirement);
-    setGenerateForm({ amount: requirement.amount || 0, productDescription: requirement.productDescription || requirement.product_description || '' });
-    setIsGenerateDialogOpen(true);
-    toast.info(`Prepare to generate invoice for ${requirement.customerName || requirement.customer_name || requirement.id}`);
-  };
-
-  const handleGenerateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!generateTarget) return;
-    setIsGenerating(true);
-    try {
-      const payload = {
-        estimationId: generateTarget.id,
-        amount: generateForm.amount,
-        product_description: generateForm.productDescription,
-      };
-
-      const resp = await createInvoice(payload);
-      if (resp.ok) {
-        toast.success('Invoice generated successfully');
-        // refresh list
-        const refreshResponse = await getEstimations();
-        if (refreshResponse.ok && refreshResponse.data) {
-          const formattedRequirements = Array.isArray(refreshResponse.data.data)
-            ? refreshResponse.data.data.map((item: any) => ({
-                id: item.id,
-                customerName: item.customer_name,
-                doorNo: item.door_no,
-                area: item.area,
-                city: item.city,
-                district: item.district,
-                state: item.state,
-                pincode: item.pincode,
-                mobile: item.mobile,
-                capacityKw: item.requested_watts,
-                amount: parseFloat(item.amount) || 0,
-                gstPercentage: parseFloat(item.gst) || 0,
-                productDescription: item.product_description,
-                createdAt: item.created_at,
-                status: item.status,
-              }))
-            : [];
-          setRequirements(formattedRequirements);
-        }
-        setIsGenerateDialogOpen(false);
-        setGenerateTarget(null);
-      } else {
-        toast.error(resp.error || 'Failed to create invoice');
-      }
-    } catch (err) {
-      console.error('Invoice creation error', err);
-      toast.error('Failed to create invoice');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   const handleCancelEdit = () => {
     setEditingId(null);
     setFormData({
@@ -362,52 +285,25 @@ export function RequirementsCapture() {
 
   const handleDownload = async (requirement: Requirement) => {
     try {
-      toast.loading("Downloading requirement...");
-      
-      const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || "http://localhost:3200";
-      const downloadUrl = `${API_BASE_URL}/api/estimations/${requirement.id}/download`;
-      
-      console.log("Download URL:", downloadUrl);
-      
-      // Make API call to download
-      const response = await fetch(downloadUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/pdf, application/vnd.ms-excel, text/csv',
-        },
-      });
+      toast.loading('Preparing download...');
+      const resp = await downloadInvoice(requirement.id || '');
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Get the blob from response
-      const blob = await response.blob();
-      
-      // Extract filename from Content-Disposition header if available
-      const contentDisposition = response.headers.get('content-disposition');
-      let filename = `Requirement_${requirement.customerName || requirement.customer_name || "Unknown"}_${new Date().getTime()}`;
-      
+      const blob = resp.data as Blob;
+      const contentDisposition = resp.headers['content-disposition'] || resp.headers['Content-Disposition'];
+      let filename = `invoice_${requirement.id || 'file'}_${Date.now()}`;
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (filenameMatch && filenameMatch[1]) {
-          filename = filenameMatch[1];
-        }
-      }
-
-      // Determine file extension from blob type
-      let extension = '.pdf';
-      if (blob.type.includes('sheet') || blob.type.includes('excel') || blob.type.includes('csv')) {
-        extension = '.xlsx';
-      } else if (blob.type.includes('text/csv')) {
-        extension = '.csv';
+        const match = /filename\*=UTF-8''([^;\n]+)/.exec(contentDisposition) || /filename="?([^";\n]+)"?/.exec(contentDisposition);
+        if (match && match[1]) filename = decodeURIComponent(match[1]);
       }
 
       if (!filename.includes('.')) {
-        filename = filename + extension;
+        const type = blob.type || '';
+        if (type.includes('pdf')) filename += '.pdf';
+        else if (type.includes('sheet') || type.includes('excel')) filename += '.xlsx';
+        else if (type.includes('csv') || type === 'text/csv') filename += '.csv';
+        else filename += '.bin';
       }
 
-      // Create URL and trigger download
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -418,11 +314,11 @@ export function RequirementsCapture() {
       window.URL.revokeObjectURL(url);
 
       toast.dismiss();
-      toast.success("Requirement downloaded successfully!");
-    } catch (error) {
-      console.error("Error downloading requirement:", error);
+      toast.success('Invoice download started');
+    } catch (err: any) {
+      console.error('Invoice download error', err);
       toast.dismiss();
-      toast.error("Failed to download requirement");
+      toast.error(err?.message || 'Failed to download invoice');
     }
   };
 
@@ -490,140 +386,21 @@ export function RequirementsCapture() {
     e.preventDefault();
 
     if (!validateForm()) return;
-
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-
       if (editingId) {
-        // EDIT MODE - Update existing requirement
-        try {
-          console.log("Updating requirement:", editingId, formData);
-          
-          const apiPayload = {
-            customer_name: formData.customerName,
-            door_no: formData.doorNo,
-            area: formData.area,
-            city: formData.city,
-            district: formData.district,
-            state: formData.state,
-            pincode: formData.pincode,
-            mobile: formData.mobile,
-            product_description: formData.productDescription,
-            requested_watts: formData.capacityKw,
-            gst: formData.gstPercentage,
-            amount: formData.amount,
-           
-          };
-          
-         
-
-          const response = await updateEstimation(editingId, apiPayload);
-          console.log("Update Response:", response);
-
-          if (response.ok) {
-            toast.success("Requirement updated successfully!");
-            // Refresh the requirements list
-            const refreshResponse = await getEstimations();
-            if (refreshResponse.ok && refreshResponse.data) {
-              const formattedRequirements = Array.isArray(refreshResponse.data.data) 
-                ? refreshResponse.data.data.map((item: any) => ({
-                    id: item.id,
-                    customerName: item.customer_name,
-                    doorNo: item.door_no,
-                    area: item.area,
-                    city: item.city,
-                    district: item.district,
-                    state: item.state,
-                    pincode: item.pincode,
-                    mobile: item.mobile,
-                    capacityKw: item.requested_watts,
-                    amount: parseFloat(item.amount) || 0,
-                    gstPercentage: parseFloat(item.gst) || 0,
-                    productDescription: item.product_description,
-                    createdAt: item.created_at,
-                    status: item.status,
-                  }))
-                : [];
-              setRequirements(formattedRequirements);
-            }
-          } else {
-            console.warn("API update warning:", response.error);
-            toast.error("Failed to update requirement");
-          }
-        } catch (apiError) {
-          console.error("API error during update:", apiError);
-          toast.error("Error updating requirement");
-        }
+        setRequirements((prev) =>
+          prev.map((r) => (r.id === editingId ? { ...r, ...(formData as any), updated_at: new Date().toISOString() } : r))
+        );
+        toast.success("Invoice updated (UI only)");
       } else {
-        // CREATE MODE - Add new requirement
-        // Save to state first
         const newRequirement: Requirement = {
           ...formData,
           id: Date.now().toString(),
           createdAt: new Date().toISOString(),
         };
-
         setRequirements((prev) => [newRequirement, ...prev]);
-       
-
-        // Try to save to API
-        try {
-          console.log("Saving requirement to API:", formData);
-          
-          // Transform data to match API payload format
-          const apiPayload = {
-            customer_name: formData.customerName,
-            door_no: formData.doorNo,
-            area: formData.area,
-            city: formData.city,
-            district: formData.district,
-            state: formData.state,
-            pincode: formData.pincode,
-            mobile: formData.mobile,
-            product_description: formData.productDescription,
-            requested_watts: formData.capacityKw ,
-            gst: formData.gstPercentage,
-            amount: formData.amount,
-             structure: formData.structure,
-          };
-          
-          
-          const response = await createEstimation(apiPayload);
-
-          if (response.ok) {
-            toast.success("Requirements captured successfully!");
-            // Refresh the requirements list
-            const refreshResponse = await getEstimations();
-            if (refreshResponse.ok && refreshResponse.data) {
-              const formattedRequirements = Array.isArray(refreshResponse.data.data) 
-                ? refreshResponse.data.data.map((item: any) => ({
-                    id: item.id,
-                    customerName: item.customer_name,
-                    doorNo: item.door_no,
-                    area: item.area,
-                    city: item.city,
-                    district: item.district,
-                    state: item.state,
-                    pincode: item.pincode,
-                    mobile: item.mobile,
-                    capacityKw: item.requested_watts ,
-                    amount: parseFloat(item.amount) || 0,
-                    gstPercentage: parseFloat(item.gst) || 0,
-                    productDescription: item.product_description,
-                    createdAt: item.created_at,
-                    status: item.status,
-                  }))
-                : [];
-              setRequirements(formattedRequirements);
-            }
-          } else {
-            console.warn("API save warning:", response.error);
-            toast.success("Requirements captured (local save)");
-          }
-        } catch (apiError) {
-          console.warn("API error, but requirement saved locally:", apiError);
-          toast.success("Requirements captured (local save)");
-        }
+        toast.success("Invoice created (UI only)");
       }
 
       // Reset form
@@ -675,20 +452,10 @@ export function RequirementsCapture() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Requirements Capture
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Capture customer solar requirements
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">Tax Invoice</h1>
+          <p className="text-muted-foreground mt-2">manage tax invoices</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 bg-orange-500 hover:bg-orange-600 text-white cursor-pointer">
-              <Plus className="h-4 w-4" />
-              New Requirement
-            </Button>
-          </DialogTrigger>
           <DialogContent
             style={{
               width: "90vw",
@@ -704,12 +471,12 @@ export function RequirementsCapture() {
               <div className="flex justify-between items-center w-full">
                 <div>
                   <DialogTitle>
-                    {editingId ? "Edit Requirement" : "Capture Customer Requirements"}
+                    {editingId ? "Edit Tax Invoice" : "Create Tax Invoice"}
                   </DialogTitle>
                   <DialogDescription className="text-xs">
-                    {editingId 
-                      ? "Update the customer details and solar capacity requirements"
-                      : "Enter the customer details and solar capacity requirements"}
+                    {editingId
+                      ? "Update the invoice details"
+                      : "Enter invoice details and customer information"}
                   </DialogDescription>
                 </div>
                 {editingId && (
@@ -727,9 +494,7 @@ export function RequirementsCapture() {
             <form onSubmit={handleSubmit} className="space-y-3">
               {/* Customer Information Section */}
               <div className="space-y-1">
-                <h3 className="font-semibold text-sm text-blue-600">
-                  Customer Information
-                </h3>
+                <h3 className="font-semibold text-sm text-blue-600">Customer Information</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div className="space-y-0.5">
@@ -763,9 +528,7 @@ export function RequirementsCapture() {
 
               {/* Address Information Section */}
               <div className="space-y-1">
-                <h3 className="font-semibold text-sm text-blue-600">
-                  Address Information
-                </h3>
+                <h3 className="font-semibold text-sm text-blue-600">Address Information</h3>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   <div className="space-y-0.5">
@@ -870,9 +633,7 @@ export function RequirementsCapture() {
 
               {/* Solar Capacity Section */}
               <div className="space-y-1">
-                <h3 className="font-semibold text-sm text-blue-600">
-                  Solar Capacity Requirement
-                </h3>
+                <h3 className="font-semibold text-sm text-blue-600">Solar Capacity Requirement</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <div className="space-y-0.5">
@@ -930,9 +691,7 @@ export function RequirementsCapture() {
 
               {/* Amount and GST Section */}
               <div className="space-y-1">
-                <h3 className="font-semibold text-sm text-blue-600">
-                  Quotation Details
-                </h3>
+                <h3 className="font-semibold text-sm text-blue-600">Quotation Details</h3>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   <div className="space-y-0.5">
@@ -970,15 +729,9 @@ export function RequirementsCapture() {
 
                   {formData.amount && formData.amount > 0 && formData.gstPercentage && formData.gstPercentage > 0 && (
                     <div className="bg-blue-50 p-2 rounded-md border border-blue-200">
-                      <p className="text-xs font-semibold text-blue-900">
-                        Total (Inclusive of GST): ₹{formData.amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                      </p>
-                      <p className="text-xs text-blue-800">
-                        Base Amount: ₹{(formData.amount / (1 + formData.gstPercentage / 100)).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                      </p>
-                      <p className="text-xs text-blue-800 border-t border-blue-200 pt-1 mt-1">
-                        GST ({formData.gstPercentage}%): ₹{(formData.amount - (formData.amount / (1 + formData.gstPercentage / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                      </p>
+                      <p className="text-xs font-semibold text-blue-900">Total (Inclusive of GST): ₹{formData.amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</p>
+                      <p className="text-xs text-blue-800">Base Amount: ₹{(formData.amount / (1 + formData.gstPercentage / 100)).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</p>
+                      <p className="text-xs text-blue-800 border-t border-blue-200 pt-1 mt-1">GST ({formData.gstPercentage}%): ₹{(formData.amount - (formData.amount / (1 + formData.gstPercentage / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</p>
                     </div>
                   )}
                 </div>
@@ -996,83 +749,8 @@ export function RequirementsCapture() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isLoading} className="h-8 bg-orange-500 hover:bg-orange-600 text-white cursor-pointer">
-                  {isLoading 
-                    ? (editingId ? "Updating..." : "Saving...") 
-                    : (editingId ? "Update Requirement" : "Save Requirements")}
+                  {isLoading ? (editingId ? "Updating..." : "Saving...") : (editingId ? "Update Invoice" : "Save Invoice")}
                 </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-        {/* Generate Invoice Dialog */}
-        <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
-          <DialogContent style={{ width: 640, maxWidth: '90vw', padding: 16 }}>
-            <DialogHeader>
-              <DialogTitle>Generate Tax Invoice</DialogTitle>
-              <DialogDescription className="text-xs">Verify invoice details and submit</DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleGenerateSubmit} className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs">Customer Name</Label>
-                  <Input value={generateTarget?.customerName || generateTarget?.customer_name || ''} readOnly disabled className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">Mobile</Label>
-                  <Input value={generateTarget?.mobile || ''} readOnly disabled className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">Door No</Label>
-                  <Input value={generateTarget?.doorNo || generateTarget?.door_no || ''} readOnly disabled className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">Area</Label>
-                  <Input value={generateTarget?.area || ''} readOnly disabled className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">City</Label>
-                  <Input value={generateTarget?.city || ''} readOnly disabled className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">District</Label>
-                  <Input value={generateTarget?.district || ''} readOnly disabled className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">State</Label>
-                  <Input value={generateTarget?.state || ''} readOnly disabled className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">Pincode</Label>
-                  <Input value={generateTarget?.pincode || ''} readOnly disabled className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">Capacity</Label>
-                  <Input value={generateTarget?.capacityKw || generateTarget?.requested_watts || ''} readOnly disabled className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">Structure</Label>
-                  <Input value={generateTarget?.structure || ''} readOnly disabled className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">GST %</Label>
-                  <Input value={generateTarget?.gstPercentage || generateTarget?.gst || 0} readOnly disabled className="h-8" />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="genAmount" className="text-xs">Amount (₹)</Label>
-                <Input id="genAmount" name="amount" type="number" value={generateForm.amount} onChange={(e) => setGenerateForm(p => ({ ...p, amount: parseFloat(e.target.value) || 0 }))} className="h-8" />
-              </div>
-
-              <div>
-                <Label htmlFor="genProduct" className="text-xs">Product Description</Label>
-                <Textarea id="genProduct" name="productDescription" value={generateForm.productDescription} onChange={(e) => setGenerateForm(p => ({ ...p, productDescription: e.target.value }))} className="h-24" />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t">
-                <Button type="button" variant="outline" onClick={() => { setIsGenerateDialogOpen(false); setGenerateTarget(null); }} disabled={isGenerating}>Cancel</Button>
-                <Button type="submit" className="bg-indigo-600 text-white" disabled={isGenerating}>{isGenerating ? 'Generating...' : 'Generate Invoice'}</Button>
               </div>
             </form>
           </DialogContent>
@@ -1082,7 +760,7 @@ export function RequirementsCapture() {
       {/* Search Bar */}
       <Card>
         <CardHeader>
-          <CardTitle>Search Requirements</CardTitle>
+          <CardTitle>Search Invoices</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
@@ -1099,25 +777,21 @@ export function RequirementsCapture() {
         </CardContent>
       </Card>
 
-      {/* Requirements List */}
+      {/* Requirements List (Invoices) */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Captured Requirements ({filteredRequirements.length})
-          </CardTitle>
+          <CardTitle>Captured Invoices ({filteredRequirements.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isFetching ? (
             <div className="flex justify-center items-center py-12">
               <Loader className="h-6 w-6 animate-spin text-blue-600 mr-2" />
-              <p className="text-muted-foreground">Loading requirements...</p>
+              <p className="text-muted-foreground">Loading invoices...</p>
             </div>
           ) : filteredRequirements.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>No requirements captured yet</p>
-              <p className="text-sm">
-                Click "New Requirement" to add customer requirements
-              </p>
+              <p>No invoices created yet</p>
+              <p className="text-sm">Click "New Tax Invoice" to add an invoice</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -1132,7 +806,6 @@ export function RequirementsCapture() {
                       <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Base Amount (₹)</th>
                       <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">GST%</th>
                       <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Total (₹)</th>
-                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Tax Invoice</th>
                       <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Actions</th>
                     </tr>
                   </thead>
@@ -1149,58 +822,17 @@ export function RequirementsCapture() {
                             <p className="text-xs text-muted-foreground">{req.city}, {req.district}, {req.state} - {req.pincode}</p>
                           </div>
                         </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm text-black font-semibold">
-                          {req.capacityKw || "N/A"}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm">
-                          {(req.productDescription || req.product_description) ? (
-                            <span title={req.productDescription || req.product_description} className="truncate block max-w-xs">
-                              {req.productDescription || req.product_description}
-                            </span>
-                          ) : (
-                            "-"
-                          )}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm text-right text-green-600 font-semibold">
-                          {(req.amount || 0) > 0 ? `₹${((req.amount || 0) / (1 + ((req.gstPercentage || req.gst || 0) / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm text-right text-orange-600">
-                          {(req.gstPercentage || req.gst) || 0}%
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm text-right text-purple-600 font-semibold">
-                          {(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-center">
-                          <div className="flex justify-center">
-                            <button
-                              type="button"
-                              onClick={() => openGenerateDialog(req)}
-                              className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-black font-medium inline-flex items-center justify-center rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border border-transparent"
-                            >
-                              <span className="text-sm">Generate</span>
-                            </button>
-                          </div>
-                        </td>
+                        <td className="border border-gray-300 px-4 py-3 text-sm text-black font-semibold">{req.capacityKw || "N/A"}</td>
+                        <td className="border border-gray-300 px-4 py-3 text-sm">{(req.productDescription || req.product_description) ? (<span title={req.productDescription || req.product_description} className="truncate block max-w-xs">{req.productDescription || req.product_description}</span>) : ("-")}</td>
+                        <td className="border border-gray-300 px-4 py-3 text-sm text-right text-green-600 font-semibold">{(req.amount || 0) > 0 ? `₹${((req.amount || 0) / (1 + ((req.gstPercentage || req.gst || 0) / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}</td>
+                        <td className="border border-gray-300 px-4 py-3 text-sm text-right text-orange-600">{(req.gstPercentage || req.gst) || 0}%</td>
+                        <td className="border border-gray-300 px-4 py-3 text-sm text-right text-purple-600 font-semibold">{(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}</td>
                         <td className="border border-gray-300 px-4 py-3 text-center">
                           <div className="flex justify-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDownload(req)}
-                              className="h-8 w-8 p-0 hover:bg-green-100 cursor-pointer"
-                              title="Download"
-                              style={{ pointerEvents: 'auto' }}
-                            >
+                            <Button size="sm" variant="ghost" onClick={() => handleDownload(req)} className="h-8 w-8 p-0 hover:bg-green-100 cursor-pointer" title="Download" style={{ pointerEvents: 'auto' }}>
                               <Download className="h-4 w-4 text-green-600" />
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEditClick(req)}
-                              className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer"
-                              title="Edit"
-                              style={{ pointerEvents: 'auto' }}
-                            >
+                            <Button size="sm" variant="ghost" onClick={() => handleEditClick(req)} className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer" title="Edit" style={{ pointerEvents: 'auto' }}>
                               <Edit2 className="h-4 w-4 text-blue-600" />
                             </Button>
                           </div>
@@ -1213,43 +845,15 @@ export function RequirementsCapture() {
 
               {/* Pagination Controls */}
               <div className="flex items-center justify-between mt-4 px-4 py-3 bg-orange-50 rounded border border-orange-200">
-                <div className="text-sm text-muted-foreground">
-                  Showing {startIndex + 1} to {Math.min(endIndex, filteredRequirements.length)} of {filteredRequirements.length} requirements
-                </div>
+                <div className="text-sm text-muted-foreground">Showing {startIndex + 1} to {Math.min(endIndex, filteredRequirements.length)} of {filteredRequirements.length} invoices</div>
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer"
-                  >
-                    Previous
-                  </Button>
-                  
+                  <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer">Previous</Button>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 p-0 cursor-pointer ${currentPage === page ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-orange-300 text-orange-600 hover:bg-orange-100"}`}
-                      >
-                        {page}
-                      </Button>
+                      <Button key={page} variant={currentPage === page ? "default" : "outline"} size="sm" onClick={() => setCurrentPage(page)} className={`w-8 h-8 p-0 cursor-pointer ${currentPage === page ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-orange-300 text-orange-600 hover:bg-orange-100"}`}>{page}</Button>
                     ))}
                   </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer"
-                  >
-                    Next
-                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer">Next</Button>
                 </div>
               </div>
             </div>
@@ -1259,3 +863,5 @@ export function RequirementsCapture() {
     </div>
   );
 }
+
+export default TaxInvoicePage;

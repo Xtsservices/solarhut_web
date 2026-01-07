@@ -21,7 +21,7 @@ import {
 } from "../ui/select";
 import { toast } from "sonner";
 import { Plus, Search, Loader, Edit2, X, Download } from "lucide-react";
-import { createEstimation, getEstimations, updateEstimation, createInvoice } from "../../api";
+import { createEstimation, getEstimations, updateEstimation, createInvoice,createTaxInvoice  } from "../../api";
 import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
 // Add this type declaration at the top of your file (or in a global .d.ts file)
@@ -74,9 +74,21 @@ export function RequirementsCapture() {
   const [generateTarget, setGenerateTarget] = useState<Requirement | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateForm, setGenerateForm] = useState<{ amount: number; productDescription: string }>({ amount: 0, productDescription: '' });
+  const [isTaxDialogOpen, setIsTaxDialogOpen] = useState(false);
+const [taxTarget, setTaxTarget] = useState<Requirement | null>(null);
+const [isTaxGenerating, setIsTaxGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const [taxForm, setTaxForm] = useState<{
+  amount: number;
+  product_description: string;
+  gst_percentage: number;
+}>({
+  amount: 0,
+  product_description: '',
+  gst_percentage: 0,
+});
   // Form states
   const [formData, setFormData] = useState<Requirement>({
     customerName: "",
@@ -136,6 +148,35 @@ export function RequirementsCapture() {
 
     fetchEstimations();
   }, []);
+   const handleTaxInvoiceSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!taxTarget) return;
+
+  setIsTaxGenerating(true);
+  try {
+    const payload = {
+      estimationId: taxTarget.id,
+      amount: taxForm.amount,
+      product_description: taxForm.product_description,
+      gst_percentage: taxForm.gst_percentage,
+    };
+
+    const resp = await createTaxInvoice(payload);
+
+    if (resp.ok) {
+      toast.success('Tax Invoice generated successfully');
+      setIsTaxDialogOpen(false);
+      setTaxTarget(null);
+    } else {
+      toast.error(resp.error || 'Failed to generate tax invoice');
+    }
+  } catch (err) {
+    console.error('Tax invoice error', err);
+    toast.error('Failed to generate tax invoice');
+  } finally {
+    setIsTaxGenerating(false);
+  }
+};
 
   const states = [
     "Andhra Pradesh",
@@ -256,6 +297,16 @@ export function RequirementsCapture() {
           : value,
     }));
   };
+  const openTaxInvoiceDialog = (req: Requirement) => {
+  setTaxTarget(req);
+  setTaxForm({
+    amount: req.amount || 0,
+    product_description: req.productDescription || req.product_description || '',
+    gst_percentage: req.gstPercentage || req.gst || 0,
+  });
+  setIsTaxDialogOpen(true);
+};
+
 
   const handleSelectChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -1013,7 +1064,7 @@ export function RequirementsCapture() {
         <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
           <DialogContent style={{ width: 640, maxWidth: '90vw', padding: 16 }}>
             <DialogHeader>
-              <DialogTitle>Generate Tax Invoice</DialogTitle>
+              <DialogTitle>Generate Invoice</DialogTitle>
               <DialogDescription className="text-xs">Verify invoice details and submit</DialogDescription>
             </DialogHeader>
 
@@ -1083,6 +1134,117 @@ export function RequirementsCapture() {
           </DialogContent>
         </Dialog>
       </div>
+      <Dialog open={isTaxDialogOpen} onOpenChange={setIsTaxDialogOpen}>
+  <DialogContent style={{ width: 640, maxWidth: '90vw', padding: 16 }}>
+    <DialogHeader>
+      <DialogTitle>Generate Tax Invoice</DialogTitle>
+      <DialogDescription className="text-xs">
+        Review and edit tax invoice details
+      </DialogDescription>
+    </DialogHeader>
+
+    <form onSubmit={handleTaxInvoiceSubmit} className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs">Customer</Label>
+          <Input value={taxTarget?.customerName || taxTarget?.customer_name || ''} disabled />
+        </div>
+        <div>
+    <Label className="text-xs">Mobile</Label>
+    <Input value={taxTarget?.mobile || ''} disabled />
+  </div>
+  <div>
+    <Label className="text-xs">Door No</Label>
+    <Input value={taxTarget?.doorNo || taxTarget?.door_no || ''} disabled />
+  </div>
+  <div>
+    <Label className="text-xs">Area</Label>
+    <Input value={taxTarget?.area || ''} disabled />
+  </div>
+  <div>
+    <Label className="text-xs">City</Label>
+    <Input value={taxTarget?.city || ''} disabled />
+  </div>
+  <div>
+    <Label className="text-xs">District</Label>
+    <Input value={taxTarget?.district || ''} disabled />
+  </div>
+  <div>
+    <Label className="text-xs">State</Label>
+    <Input value={taxTarget?.state || ''} disabled />
+  </div>
+  <div>
+    <Label className="text-xs">Pincode</Label>
+    <Input value={taxTarget?.pincode || ''} disabled />
+  </div>
+  <div>
+    <Label className="text-xs">Capacity</Label>
+    <Input
+      value={taxTarget?.capacityKw || taxTarget?.requested_watts || ''}
+      disabled
+    />
+  </div>
+  <div>
+    <Label className="text-xs">Structure</Label>
+    <Input value={taxTarget?.structure || ''} disabled />
+  </div>
+</div>
+
+        <div>
+          <Label className="text-xs">GST %</Label>
+          <Input
+            type="number"
+            value={taxForm.gst_percentage}
+            onChange={(e) =>
+              setTaxForm(p => ({ ...p, gst_percentage: Number(e.target.value) || 0 }))
+            }
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Amount (₹)</Label>
+        <Input
+          type="number"
+          value={taxForm.amount}
+          onChange={(e) =>
+            setTaxForm(p => ({ ...p, amount: Number(e.target.value) || 0 }))
+          }
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Product Description</Label>
+        <Textarea
+          value={taxForm.product_description}
+          onChange={(e) =>
+            setTaxForm(p => ({ ...p, product_description: e.target.value }))
+          }
+          className="h-24"
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-2 border-t">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setIsTaxDialogOpen(false)}
+          disabled={isTaxGenerating}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={isTaxGenerating}
+          className="bg-orange-500 hover:bg-orange-600 text-white"
+        >
+          {isTaxGenerating ? 'Generating...' : 'Generate Tax Invoice'}
+        </Button>
+      </div>
+    </form>
+  </DialogContent>
+</Dialog>
+
 
       {/* Search Bar */}
       <Card>
@@ -1137,7 +1299,7 @@ export function RequirementsCapture() {
                       <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Base Amount (₹)</th>
                       <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">GST%</th>
                       <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Total (₹)</th>
-                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Tax Invoice</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Invoices</th>
                       <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Actions</th>
                     </tr>
                   </thead>
@@ -1176,13 +1338,20 @@ export function RequirementsCapture() {
                           {(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
                         </td>
                         <td className="border border-gray-300 px-4 py-3 text-center">
-                          <div className="flex justify-center">
+                          <div className="flex flex-col items-center gap-2">
                             <button
                               type="button"
                               onClick={() => openGenerateDialog(req)}
                               className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-black font-medium inline-flex items-center justify-center rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border border-transparent"
                             >
-                              <span className="text-sm">Generate</span>
+                              <span className="text-sm">Invoice</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openTaxInvoiceDialog(req)}
+                              className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-black font-medium inline-flex items-center justify-center rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border border-transparent"
+                            >
+                              <span className="text-sm">TaxInvoice</span>
                             </button>
                           </div>
                         </td>

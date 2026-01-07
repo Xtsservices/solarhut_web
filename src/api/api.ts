@@ -891,3 +891,47 @@ export async function getPaymentSummary() {
   return response.json();
 }
 
+// ===========================================
+// TAX INVOICES
+// ===========================================
+
+export const getTaxInvoices = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse<any[]>> => {
+  return makeRequest(
+    () => api.get('/api/taxinvoices', { cancelToken }),
+    'Tax invoices fetched successfully!'
+  );
+};
+
+// ===========================================
+// TAX INVOICE DOWNLOAD
+// ===========================================
+
+export const downloadTaxInvoice = async (
+  id: string | number,
+  cancelToken?: CancelToken
+): Promise<import('axios').AxiosResponse<Blob>> => {
+  return api.get(`/api/taxinvoices/${id}/download`, {
+    cancelToken,
+    responseType: 'blob',
+  });
+};
+// ===========================================
+// TAX INVOICES
+// ===========================================
+
+export const createTaxInvoice = async (
+  data: {
+    estimationId: number | string;
+    amount: number;
+    product_description: string;
+    gst_percentage: number;
+  },
+  cancelToken?: CancelToken
+): Promise<ApiResponse<any>> => {
+  return makeRequest(
+    () => api.post('/api/taxinvoices', data, { cancelToken }),
+    'Tax Invoice created successfully!'
+  );
+};

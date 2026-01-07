@@ -57,6 +57,7 @@ const adminMenuItems: MenuItem[] = [
   { id: 'Profile', label: 'Profile', icon: User },
   { id: 'Estimations', label: 'Estimations', icon: ClipboardCheck },
   { id: 'Tax_Invoice', label: 'Tax Invoice', icon: FileText },
+  { id: 'Invoices', label: 'Invoices', icon: FileText },
  
 ];
 
@@ -137,8 +138,8 @@ export function PortalSidebar({
         'tax invoice':'tax_invoice',
         'taxinvoice':'tax_invoice',
         'taxinvoices':'tax_invoice',
-        'invoice':'tax_invoice',
-        'invoices':'tax_invoice',
+        'invoice':'invoices',
+        'invoices':'invoices',
         'invoice_view':'tax_invoice',
         'invoices_view':'tax_invoice',
         'tax_invoice_view':'tax_invoice',

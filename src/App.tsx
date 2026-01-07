@@ -55,7 +55,7 @@ import { JobsPage } from './components/admin/JobsPage';
 import { MyTasks } from './components/admin/MyTasks';
 import { RequirementsCapture } from './components/admin/RequirementsCapture';
 import { TaxInvoicePage } from './components/admin/TaxInvoicePage';
-
+import { InvoicePage } from './components/admin/InvoicePage';
 interface RootState {
   currentUserData: any;
 }
@@ -275,6 +275,7 @@ console.log("loginuser", user);
                 <Route path="/My-Tasks" element={<MyTasks />} />
                 <Route path="/estimations" element={<RequirementsCapture />} />
                 <Route path="/tax-invoice" element={<TaxInvoicePage />} />
+                <Route path="/invoices" element={<InvoicePage />} />
 
                 <Route path="*" element={<AdminDashboard />} />
               </>}

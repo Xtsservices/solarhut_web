@@ -20,7 +20,7 @@ import {
 } from "../ui/select";
 import { toast } from "sonner";
 import { Search, Loader, Edit2, X, Download } from "lucide-react";
-import { getTaxInvoices, downloadTaxInvoice } from "../../api";
+import { getInvoices, downloadInvoice } from "../../api";
 import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
 // Add this type declaration at the top of your file (or in a global .d.ts file)
@@ -53,7 +53,7 @@ interface Requirement {
   status?: string;
 }
 
-export function TaxInvoicePage() {
+export function InvoicePage() {
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -82,44 +82,29 @@ export function TaxInvoicePage() {
 
   // Fetch invoices
   useEffect(() => {
-    const fetchTaxInvoices = async () => {
+    const fetchInvoices = async () => {
       try {
         setIsFetching(true);
-        const res = await getTaxInvoices();
+        const res = await getInvoices();
         if (res.ok && res.data) {
           const dataArray = Array.isArray(res.data) ? res.data : (res.data.data && Array.isArray(res.data.data) ? res.data.data : []);
           const formatted = dataArray.map((item: any) => ({
-  id: item.id,
-  customerName: item.customer_name,
-  doorNo: item.door_no,
-  area: item.area,
-  city: item.city,
-  district: item.district,
-  state: item.state,
-  pincode: item.pincode,
-  mobile: item.mobile,
-
-  // IMPORTANT mappings
-  capacityKw: item.structure, // "3kW", "10kW"
-  productDescription: item.product_description,
-  requestedWatts: item.requested_watts,
-
-  amount: parseFloat(item.amount) || 0,
-  gstPercentage: parseFloat(item.gst) || 0,
-
-  // Tax breakup (future use)
-  cgstValue: item.cgst_value,
-  cgstPercentage: item.cgst_percentage,
-  sgstValue: item.sgst_value,
-  sgstPercentage: item.sgst_percentage,
-  igstValue: item.igst_value,
-  igstPercentage: item.igst_percentage,
-
-  invoiceDate: item.invoiceDate,
-  status: item.status,
-  createdAt: item.created_at,
-}));
-
+            id: item.id,
+            customerName: item.customer_name,
+            doorNo: item.door_no,
+            area: item.area,
+            city: item.city,
+            district: item.district,
+            state: item.state,
+            pincode: item.pincode,
+            mobile: item.mobile,
+            capacityKw: item.requested_watts,
+            amount: parseFloat(item.amount) || 0,
+            gstPercentage: parseFloat(item.gst) || 0,
+            productDescription: item.product_description,
+            createdAt: item.created_at || item.invoiceDate,
+            status: item.status,
+          }));
           setRequirements(formatted);
         }
       } catch (err) {
@@ -129,7 +114,7 @@ export function TaxInvoicePage() {
       }
     };
 
-    fetchTaxInvoices();
+    fetchInvoices();
   }, []);
 
   const states = [
@@ -301,7 +286,7 @@ export function TaxInvoicePage() {
   const handleDownload = async (requirement: Requirement) => {
     try {
       toast.loading('Preparing download...');
-      const resp = await downloadTaxInvoice(requirement.id || '');
+      const resp = await downloadInvoice(requirement.id || '');
 
       const blob = resp.data as Blob;
       const contentDisposition = resp.headers['content-disposition'] || resp.headers['Content-Disposition'];
@@ -467,8 +452,8 @@ export function TaxInvoicePage() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tax Invoice</h1>
-          <p className="text-muted-foreground mt-2">manage tax invoices</p>
+          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
+          <p className="text-muted-foreground mt-2">manage invoices</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent
@@ -879,4 +864,4 @@ export function TaxInvoicePage() {
   );
 }
 
-export default TaxInvoicePage;
+export default InvoicePage;

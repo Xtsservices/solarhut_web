@@ -19,8 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, Search, Loader, Edit2, X, Download } from "lucide-react";
+import { Plus, Search, Loader, Edit2, X, Download, ChevronDown } from "lucide-react";
 import { createEstimation, getEstimations, updateEstimation, createInvoice,createTaxInvoice  } from "../../api";
 import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
@@ -1062,7 +1068,7 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
         </Dialog>
         {/* Generate Invoice Dialog */}
         <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
-          <DialogContent style={{ width: 640, maxWidth: '90vw', padding: 16 }}>
+          <DialogContent style={{ width: 640, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto', padding: 16 }}>
             <DialogHeader>
               <DialogTitle>Generate Invoice</DialogTitle>
               <DialogDescription className="text-xs">Verify invoice details and submit</DialogDescription>
@@ -1135,7 +1141,7 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
         </Dialog>
       </div>
       <Dialog open={isTaxDialogOpen} onOpenChange={setIsTaxDialogOpen}>
-  <DialogContent style={{ width: 640, maxWidth: '90vw', padding: 16 }}>
+  <DialogContent style={{ width: 640, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto', padding: 16 }}>
     <DialogHeader>
       <DialogTitle>Generate Tax Invoice</DialogTitle>
       <DialogDescription className="text-xs">
@@ -1188,18 +1194,17 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
     <Label className="text-xs">Structure</Label>
     <Input value={taxTarget?.structure || ''} disabled />
   </div>
-</div>
+      </div>
 
-        <div>
-          <Label className="text-xs">GST %</Label>
-          <Input
-            type="number"
-            value={taxForm.gst_percentage}
-            onChange={(e) =>
-              setTaxForm(p => ({ ...p, gst_percentage: Number(e.target.value) || 0 }))
-            }
-          />
-        </div>
+      <div>
+        <Label className="text-xs">GST %</Label>
+        <Input
+          type="number"
+          value={taxForm.gst_percentage}
+          onChange={(e) =>
+            setTaxForm(p => ({ ...p, gst_percentage: Number(e.target.value) || 0 }))
+          }
+        />
       </div>
 
       <div>
@@ -1338,22 +1343,22 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                           {(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
                         </td>
                         <td className="border border-gray-300 px-4 py-3 text-center">
-                          <div className="flex flex-col items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openGenerateDialog(req)}
-                              className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-black font-medium inline-flex items-center justify-center rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border border-transparent"
-                            >
-                              <span className="text-sm">Invoice</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openTaxInvoiceDialog(req)}
-                              className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-black font-medium inline-flex items-center justify-center rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border border-transparent"
-                            >
-                              <span className="text-sm">TaxInvoice</span>
-                            </button>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-black font-medium inline-flex items-center gap-1 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border border-transparent">
+                                <span className="text-sm">Generate</span>
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openGenerateDialog(req)} className="cursor-pointer">
+                                Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openTaxInvoiceDialog(req)} className="cursor-pointer">
+                                Tax Invoice
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                         <td className="border border-gray-300 px-4 py-3 text-center">
                           <div className="flex justify-center gap-2">

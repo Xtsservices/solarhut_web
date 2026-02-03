@@ -24,10 +24,12 @@ import { GalleryPage } from './components/website/GalleryPage';
 import TeamsPage from './components/website/TeamsPage';
 import ContactModal from './components/website/ContactModal';
 import { EnquiryFormPopup } from './components/website/EnquiryFormPopup';
-
+import { CustomersPage } from './components/admin/CustomersPage'; // ADDED
+import { BankDetailsPage } from './components/admin/BankDetailsPage'; // ADDED
 
 import { PortalSidebar } from './components/shared/PortalSidebar';
 import { PortalHeader } from './components/shared/PortalHeader';
+import { PortalTopNav } from './components/shared/PortalTopNav'; // ADDED
 
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { EnquiriesPage } from './components/admin/EnquiriesPage';
@@ -39,6 +41,8 @@ import { WorkProgressPage } from './components/admin/WorkProgressPage';
 import { NotificationsPage } from './components/shared/NotificationsPage';
 import { SettingsPage } from './components/shared/SettingsPage';
 import { ProfilePage } from './components/shared/ProfilePage';
+import SolarCapacitiesPage from './components/admin/SolarCapacitiesPage';
+import ExpendituresPage from './components/admin/ExpendituresPage';
 
 import { SalesDashboard } from './components/sales/SalesDashboard';
 import { AssignedEnquiries } from './components/sales/AssignedEnquiries';
@@ -245,6 +249,12 @@ console.log("loginuser", user);
           onMenuToggle={() => setIsMobileSidebarOpen(true)}
         />
 
+        {/* Top Navigation - Desktop Only */}
+        <PortalTopNav 
+          role={auth.role}
+          currentPage={window.location.pathname.replace('/', '') || 'dashboard'}
+        />
+
         {/* Sidebar and Content */}
         <div className="flex flex-1 overflow-hidden">
           <PortalSidebar
@@ -260,6 +270,7 @@ console.log("loginuser", user);
               {auth.role === 'admin' && <>
                 <Route path="/Dashboard" element={<AdminDashboard />} />
                 <Route path="/enquiries" element={<EnquiriesPage />} />
+                <Route path="/customers" element={<CustomersPage />} /> {/* ADDED */}
                 <Route path="/employees" element={<EmployeesPage />} />
                 <Route path="/packages" element={<PackagesPage />} />
                 <Route path="/payments" element={<PaymentsPage />} />
@@ -275,6 +286,9 @@ console.log("loginuser", user);
                 <Route path="/My-Tasks" element={<MyTasks />} />
                 <Route path="/estimations" element={<RequirementsCapture />} />
                 <Route path="/tax-invoice" element={<TaxInvoicePage />} />
+                <Route path="/expenditures" element={<ExpendituresPage />} />
+                <Route path="/solar-capacities" element={<SolarCapacitiesPage />} />
+                <Route path="/bank-details" element={<BankDetailsPage />} /> {/* ADDED */}
                 <Route path="/invoices" element={<InvoicePage />} />
 
                 <Route path="*" element={<AdminDashboard />} />

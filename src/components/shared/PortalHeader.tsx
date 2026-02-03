@@ -39,7 +39,7 @@ export function PortalHeader({
   const initials = getInitials(userName);
 
   return (
-  <header className="bg-white border-b min-h-[64px] sm:min-h-[80px] flex items-center justify-between px-3 sm:px-4 md:px-6 sticky top-0 z-50">
+  <header className="bg-white border-b h-[64px] sm:h-[80px] flex items-center justify-between px-3 sm:px-4 md:px-6 sticky top-0 z-50">
       {/* Left: Menu Toggle (Mobile) + Logo */}
   <div className="flex items-center gap-2 sm:gap-3">
         {/* Mobile Menu Toggle */}
@@ -58,7 +58,7 @@ export function PortalHeader({
           <img
             src="/src/assets/image.png"
             alt="Solar Hut Solutions Logo"
-            className="h-16 sm:h-20 md:h-24 w-auto object-contain"
+            className="h-12 sm:h-16 md:h-20 w-auto object-contain"
             style={{ display: 'block', marginTop: 'auto', marginBottom: 'auto' }}
           />
         </div>
@@ -66,21 +66,6 @@ export function PortalHeader({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-        {/* Notifications */}
-        {/* <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-8 w-8 sm:h-9 sm:w-9"
-          onClick={onNotificationsClick}
-        >
-          <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-          {notificationCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center p-0 text-[10px] sm:text-xs">
-              {notificationCount}
-            </Badge>
-          )}
-        </Button> */}
-
         {/* Profile with Avatar */}
         <Button
           variant="ghost"

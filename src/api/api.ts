@@ -111,7 +111,7 @@ const getBaseURL = (): string => {
   }
   
   // Fallback to current configuration
-  return 'http://172.16.4.157:3200';
+  return 'http://172.16.4.161:3200';
 };
 
 // Create Axios instance
@@ -934,4 +934,425 @@ export const createTaxInvoice = async (
     () => api.post('/api/taxinvoices', data, { cancelToken }),
     'Tax Invoice created successfully!'
   );
+};
+
+// ===========================================
+// SOLAR CAPACITIES - CATEGORIES
+// ===========================================
+
+export const fetchCategories = async (token?: string): Promise<ApiResponse<any[]>> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const fullUrl = `${API_BASE_URL}/api/solar-capacities/categories`;
+  
+  // Get token from parameter or localStorage
+  const authToken = token || localStorage.getItem('authToken');
+  console.log('Fetching categories from:', fullUrl);
+  console.log('Auth token:', authToken ? 'Present' : 'Missing');
+  console.log('Full auth header value:', authToken ? `Bearer ${authToken}` : 'No token');
+  
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken && authToken.trim() !== '') {
+      headers['Authorization'] = `Bearer ${authToken}`;
+      console.log('Authorization header set');
+    } else {
+      console.warn('No valid token provided - request may fail');
+    }
+    
+    console.log('Request headers:', headers);
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      headers,
+    });
+    
+    console.log('Response status:', response.status, response.statusText);
+    
+    const data = await response.json();
+    console.log('Categories response data:', data);
+    
+    if (!response.ok) {
+      console.error('API error response:', data);
+    }
+    
+    // Handle both array response and nested data response
+    const categories = Array.isArray(data) ? data : (data.data || data.categories || []);
+    
+    return {
+      ok: response.ok,
+      data: categories,
+      error: response.ok ? null : (data.message || 'Failed to fetch categories')
+    };
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return {
+      ok: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Error fetching categories'
+    };
+  }
+};
+
+
+// Get inverter types items
+export const getInverterTypes = async (token?: string): Promise<ApiResponse<Array<{ id: number; name: string }>>> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const fullUrl = `${API_BASE_URL}/api/solar-capacities/inverter_types/items`;
+  
+  // Get token from parameter or localStorage
+  const authToken = token || localStorage.getItem('authToken');
+  console.log('Fetching inverter types from:', fullUrl);
+  console.log('Auth token:', authToken ? 'Present' : 'Missing');
+  
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken && authToken.trim() !== '') {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      headers,
+    });
+    
+    console.log('Response status:', response.status, response.statusText);
+    
+    const responseData = await response.json();
+    console.log('Inverter types response data:', responseData);
+    
+    if (!response.ok) {
+      console.error('API error response:', responseData);
+    }
+    
+    return {
+      ok: response.ok,
+      data: responseData.data || responseData,
+      error: response.ok ? null : (responseData.message || 'Failed to fetch inverter types')
+    };
+  } catch (error) {
+    console.error('Error fetching inverter types:', error);
+    return {
+      ok: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Error fetching inverter types'
+    };
+  }
+};
+
+// Get product descriptions items
+export const getProductDescriptions = async (token?: string): Promise<ApiResponse<Array<{ id: number; name: string }>>> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const fullUrl = `${API_BASE_URL}/api/solar-capacities/product_descriptions/items`;
+  
+  // Get token from parameter or localStorage
+  const authToken = token || localStorage.getItem('authToken');
+  console.log('Fetching product descriptions from:', fullUrl);
+  console.log('Auth token:', authToken ? 'Present' : 'Missing');
+  
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken && authToken.trim() !== '') {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      headers,
+    });
+    
+    console.log('Response status:', response.status, response.statusText);
+    
+    const responseData = await response.json();
+    console.log('Product descriptions response data:', responseData);
+    
+    if (!response.ok) {
+      console.error('API error response:', responseData);
+    }
+    
+    return {
+      ok: response.ok,
+      data: responseData.data || responseData,
+      error: response.ok ? null : (responseData.message || 'Failed to fetch product descriptions')
+    };
+  } catch (error) {
+    console.error('Error fetching product descriptions:', error);
+    return {
+      ok: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Error fetching product descriptions'
+    };
+  }
+};
+
+// Get structures items
+export const getStructures = async (token?: string): Promise<ApiResponse<Array<{ id: number; name: string }>>> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const fullUrl = `${API_BASE_URL}/api/solar-capacities/structures/items`;
+  
+  // Get token from parameter or localStorage
+  const authToken = token || localStorage.getItem('authToken');
+  console.log('Fetching structures from:', fullUrl);
+  console.log('Auth token:', authToken ? 'Present' : 'Missing');
+  
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken && authToken.trim() !== '') {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      headers,
+    });
+    
+    console.log('Response status:', response.status, response.statusText);
+    
+    const responseData = await response.json();
+    console.log('Structures response data:', responseData);
+    
+    if (!response.ok) {
+      console.error('API error response:', responseData);
+    }
+    
+    return {
+      ok: response.ok,
+      data: responseData.data || responseData,
+      error: response.ok ? null : (responseData.message || 'Failed to fetch structures')
+    };
+  } catch (error) {
+    console.error('Error fetching structures:', error);
+    return {
+      ok: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Error fetching structures'
+    };
+  }
+};
+
+// Get all solar capacity items (inverter types, product descriptions, structures)
+export const getAllSolarCapacityItems = async (token?: string): Promise<ApiResponse<any>> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const fullUrl = `${API_BASE_URL}/api/solar-capacities/admin/all-items`;
+  
+  // Get token from parameter or localStorage
+  const authToken = token || localStorage.getItem('authToken');
+  console.log('Fetching all solar capacity items from:', fullUrl);
+  console.log('Auth token:', authToken ? 'Present' : 'Missing');
+  
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken && authToken.trim() !== '') {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      headers,
+    });
+    
+    console.log('Response status:', response.status, response.statusText);
+    
+    const responseData = await response.json();
+    console.log('All items response data:', responseData);
+    
+    if (!response.ok) {
+      console.error('API error response:', responseData);
+    }
+    
+    return {
+      ok: response.ok,
+      data: responseData.data || responseData,
+      error: response.ok ? null : (responseData.message || 'Failed to fetch items')
+    };
+  } catch (error) {
+    console.error('Error fetching all solar capacity items:', error);
+    return {
+      ok: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Error fetching items'
+    };
+  }
+};
+
+// Add solar capacity item (inverter type, product description, or structure)
+export const addSolarCapacityItem = async (
+  data: { category: string; name: string },
+  token?: string
+): Promise<ApiResponse<any>> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const fullUrl = `${API_BASE_URL}/api/solar-capacities/items`;
+  
+  // Get token from parameter or localStorage
+  const authToken = token || localStorage.getItem('authToken');
+  console.log('Adding solar capacity item to:', fullUrl);
+  console.log('Auth token:', authToken ? 'Present' : 'Missing');
+  console.log('Request payload:', data);
+  
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken && authToken.trim() !== '') {
+      headers['Authorization'] = `Bearer ${authToken}`;
+      console.log('Authorization header set');
+    } else {
+      console.warn('No valid token provided - request may fail');
+    }
+    
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+    });
+    
+    console.log('Response status:', response.status, response.statusText);
+    
+    const responseData = await response.json();
+    console.log('Add item response data:', responseData);
+    
+    if (!response.ok) {
+      console.error('API error response:', responseData);
+    }
+    
+    return {
+      ok: response.ok,
+      data: responseData.data || responseData,
+      error: response.ok ? null : (responseData.message || 'Failed to add item')
+    };
+  } catch (error) {
+    console.error('Error adding solar capacity item:', error);
+    return {
+      ok: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Error adding item'
+    };
+  }
+};
+
+// Update solar capacity item (inverter type, product description, or structure)
+export const updateSolarCapacityItem = async (
+  id: string | number,
+  data: { category: string; name: string },
+  token?: string
+): Promise<ApiResponse<any>> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const fullUrl = `${API_BASE_URL}/api/solar-capacities/items/${id}`;
+  
+  // Get token from parameter or localStorage
+  const authToken = token || localStorage.getItem('authToken');
+  console.log('Updating solar capacity item at:', fullUrl);
+  console.log('Auth token:', authToken ? 'Present' : 'Missing');
+  console.log('Request payload:', data);
+  
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken && authToken.trim() !== '') {
+      headers['Authorization'] = `Bearer ${authToken}`;
+      console.log('Authorization header set');
+    } else {
+      console.warn('No valid token provided - request may fail');
+    }
+    
+    const response = await fetch(fullUrl, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(data),
+    });
+    
+    console.log('Response status:', response.status, response.statusText);
+    
+    const responseData = await response.json();
+    console.log('Update item response data:', responseData);
+    
+    if (!response.ok) {
+      console.error('API error response:', responseData);
+    }
+    
+    return {
+      ok: response.ok,
+      data: responseData.data || responseData,
+      error: response.ok ? null : (responseData.message || 'Failed to update item')
+    };
+  } catch (error) {
+    console.error('Error updating solar capacity item:', error);
+    return {
+      ok: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Error updating item'
+    };
+  }
+};
+
+// Delete solar capacity item
+export const deleteSolarCapacityItem = async (
+  id: string | number,
+  category: string,
+  token?: string
+): Promise<ApiResponse<any>> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const fullUrl = `${API_BASE_URL}/api/solar-capacities/items/${id}?category=${category}`;
+  
+  // Get token from parameter or localStorage
+  const authToken = token || localStorage.getItem('authToken');
+  console.log('Deleting solar capacity item from:', fullUrl);
+  console.log('Auth token:', authToken ? 'Present' : 'Missing');
+  
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken && authToken.trim() !== '') {
+      headers['Authorization'] = `Bearer ${authToken}`;
+      console.log('Authorization header set');
+    } else {
+      console.warn('No valid token provided - request may fail');
+    }
+    
+    const response = await fetch(fullUrl, {
+      method: 'DELETE',
+      headers,
+    });
+    
+    console.log('Response status:', response.status, response.statusText);
+    
+    const responseData = await response.json();
+    console.log('Delete item response data:', responseData);
+    
+    if (!response.ok) {
+      console.error('API error response:', responseData);
+    }
+    
+    return {
+      ok: response.ok,
+      data: responseData.data || responseData,
+      error: response.ok ? null : (responseData.message || 'Failed to delete item')
+    };
+  } catch (error) {
+    console.error('Error deleting solar capacity item:', error);
+    return {
+      ok: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Error deleting item'
+    };
+  }
 };

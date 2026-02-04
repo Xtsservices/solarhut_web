@@ -87,20 +87,34 @@ export function PortalHeader({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-        {/* Profile with Avatar */}
-        <Button
-          variant="ghost"
-          className="gap-2 sm:gap-3 h-8 sm:h-10 px-2 sm:px-3"
-          onClick={onProfileClick}
-        >
-          {/* Avatar with Initials */}
-          <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm sm:text-base">
-            {initials}
-          </div>
-          <span className="hidden sm:inline text-gray-700 text-xs sm:text-sm truncate max-w-[100px] md:max-w-[150px]">
-            {userName}
-          </span>
-        </Button>
+        {/* Profile with Avatar - Dropdown Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="gap-2 sm:gap-3 h-8 sm:h-10 px-2 sm:px-3"
+            >
+              {/* Avatar with Initials */}
+              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm sm:text-base">
+                {initials}
+              </div>
+              <span className="hidden sm:inline text-gray-700 text-xs sm:text-sm truncate max-w-[100px] md:max-w-[150px]">
+                {userName}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleProfileClick} className="gap-2 cursor-pointer">
+              <User className="h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer text-red-600">
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { Plus, Search, Loader, Edit2, X, Download, ChevronDown, Trash2 } from "lucide-react";
 import { createEstimation, getEstimations, updateEstimation, createInvoice,createTaxInvoice  } from "../../api";
+import { getInverterTypes, getProductDescriptions, getStructures } from "../../api/api";
 import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
 // Add this type declaration at the top of your file (or in a global .d.ts file)
@@ -85,6 +86,12 @@ const [taxTarget, setTaxTarget] = useState<Requirement | null>(null);
 const [isTaxGenerating, setIsTaxGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [inverterTypes, setInverterTypes] = useState<Array<{ id: number; name: string }>>([]);
+  const [isLoadingInverters, setIsLoadingInverters] = useState(false);
+  const [productDescriptions, setProductDescriptions] = useState<Array<{ id: number; name: string }>>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [structures, setStructures] = useState<Array<{ id: number; name: string }>>([]);
+  const [isLoadingStructures, setIsLoadingStructures] = useState(false);
 
   const [taxForm, setTaxForm] = useState<{
   amount: number;
@@ -153,6 +160,91 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
     };
 
     fetchEstimations();
+  }, []);
+
+  // Fetch inverter types, product descriptions, and structures on component mount
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDataAsync = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+
+        // Fetch all three in parallel
+        const [invertersResponse, productsResponse, structuresResponse] = await Promise.all([
+          getInverterTypes(token || undefined),
+          getProductDescriptions(token || undefined),
+          getStructures(token || undefined)
+        ]);
+
+        if (isMounted) {
+          // Handle inverter types
+          if (invertersResponse.ok && Array.isArray(invertersResponse.data)) {
+            setInverterTypes(invertersResponse.data);
+            console.log('Inverter types loaded successfully:', invertersResponse.data);
+          } else {
+            console.warn('Failed to fetch inverter types:', invertersResponse.error);
+            // Fallback to mock data
+            setInverterTypes(
+              inverterOptions.map((name, idx) => ({ id: idx + 1, name }))
+            );
+          }
+          setIsLoadingInverters(false);
+
+          // Handle product descriptions
+          if (productsResponse.ok && Array.isArray(productsResponse.data)) {
+            setProductDescriptions(productsResponse.data);
+            console.log('Product descriptions loaded successfully:', productsResponse.data);
+          } else {
+            console.warn('Failed to fetch product descriptions:', productsResponse.error);
+            // Fallback to mock data
+            setProductDescriptions(
+              solarPanelOptions.map((name, idx) => ({ id: idx + 1, name }))
+            );
+          }
+          setIsLoadingProducts(false);
+
+          // Handle structures
+          if (structuresResponse.ok && Array.isArray(structuresResponse.data)) {
+            setStructures(structuresResponse.data);
+            console.log('Structures loaded successfully:', structuresResponse.data);
+          } else {
+            console.warn('Failed to fetch structures:', structuresResponse.error);
+            // Fallback to mock data
+            setStructures(
+              structureOptions.map((name, idx) => ({ id: idx + 1, name }))
+            );
+          }
+          setIsLoadingStructures(false);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        if (isMounted) {
+          // Fallback to mock data
+          setInverterTypes(
+            inverterOptions.map((name, idx) => ({ id: idx + 1, name }))
+          );
+          setProductDescriptions(
+            solarPanelOptions.map((name, idx) => ({ id: idx + 1, name }))
+          );
+          setStructures(
+            structureOptions.map((name, idx) => ({ id: idx + 1, name }))
+          );
+          setIsLoadingInverters(false);
+          setIsLoadingProducts(false);
+          setIsLoadingStructures(false);
+        }
+      }
+    };
+
+    setIsLoadingInverters(true);
+    setIsLoadingProducts(true);
+    setIsLoadingStructures(true);
+    loadDataAsync();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
    const handleTaxInvoiceSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -952,14 +1044,23 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                     <Select
                       value={formData.capacityKw?.toString() || ""}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, capacityKw: value }))}
+                      disabled={isLoadingInverters}
                     >
                       <SelectTrigger id="capacityKw" className="h-8">
-                        <SelectValue placeholder="Select inverter type" />
+                        <SelectValue placeholder={isLoadingInverters ? "Loading..." : "Select inverter type"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {inverterOptions.map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
+                        {inverterTypes.length > 0 ? (
+                          inverterTypes.map((inverter) => (
+                            <SelectItem key={inverter.id} value={inverter.name}>
+                              {inverter.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          inverterOptions.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -969,14 +1070,23 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                     <Select
                       value={formData.productDescription || ""}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, productDescription: value }))}
+                      disabled={isLoadingProducts}
                     >
                       <SelectTrigger id="productDescription" className="h-8">
-                        <SelectValue placeholder="Select solar panel product" />
+                        <SelectValue placeholder={isLoadingProducts ? "Loading..." : "Select solar panel product"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {solarPanelOptions.map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
+                        {productDescriptions.length > 0 ? (
+                          productDescriptions.map((product) => (
+                            <SelectItem key={product.id} value={product.name}>
+                              {product.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          solarPanelOptions.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -986,14 +1096,23 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                     <Select
                       value={formData.structure || ""}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, structure: value }))}
+                      disabled={isLoadingStructures}
                     >
                       <SelectTrigger id="structure" className="h-8">
-                        <SelectValue placeholder="Select structure type" />
+                        <SelectValue placeholder={isLoadingStructures ? "Loading..." : "Select structure type"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {structureOptions.map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
+                        {structures.length > 0 ? (
+                          structures.map((struct) => (
+                            <SelectItem key={struct.id} value={struct.name}>
+                              {struct.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          structureOptions.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>

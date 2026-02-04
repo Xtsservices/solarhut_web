@@ -184,7 +184,7 @@ const fetchPaymentsList = async () => {
   {/* Today Payments */}
   <Card>
     <CardContent className="p-4 sm:p-6">
-      <p className="text-gray-600 text-sm mb-1">Today Payments</p>
+      <p className="text-gray-600 text-sm mb-1">Total Payments</p>
       <p className="text-xl font-semibold text-gray-900">₹{stats.today_payments.toLocaleString()}</p>
     </CardContent>
   </Card>
@@ -192,7 +192,7 @@ const fetchPaymentsList = async () => {
   {/* Week Payments */}
   <Card>
     <CardContent className="p-4 sm:p-6">
-      <p className="text-gray-600 text-sm mb-1">Week Payments</p>
+      <p className="text-gray-600 text-sm mb-1">Estimates Amount</p>
       <p className="text-xl font-semibold text-gray-900">₹{stats.week_payments.toLocaleString()}</p>
     </CardContent>
   </Card>
@@ -200,7 +200,13 @@ const fetchPaymentsList = async () => {
   {/* Pending Payments */}
   <Card>
     <CardContent className="p-4 sm:p-6">
-      <p className="text-gray-600 text-sm mb-1">Pending Payments</p>
+      <p className="text-gray-600 text-sm mb-1">Pending Payments </p>
+      <p className="text-xl font-semibold text-gray-900">{stats.pending_payments}</p>
+    </CardContent>
+  </Card>
+  <Card>
+    <CardContent className="p-4 sm:p-6">
+      <p className="text-gray-600 text-sm mb-1">partial payments </p>
       <p className="text-xl font-semibold text-gray-900">{stats.pending_payments}</p>
     </CardContent>
   </Card>

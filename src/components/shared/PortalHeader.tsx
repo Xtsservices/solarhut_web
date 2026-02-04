@@ -1,6 +1,14 @@
-import { Bell, User, Menu } from 'lucide-react';
+import { Bell, User, Menu, LogOut } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { useNavigate } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '../ui/dropdown-menu';
 
 // Use static path for the logo image to avoid type/import issues
 const logoImagePath = '/assets/image.png';
@@ -31,12 +39,25 @@ export function PortalHeader({
   onProfileClick,
   onMenuToggle
 }: PortalHeaderProps) {
+  const navigate = useNavigate();
   const roleTitle = 
     role === 'admin' ? 'Admin Portal' : 
     role === 'sales' ? 'Sales Portal' : 
     'Field Executive Portal';
 
   const initials = getInitials(userName);
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
+  const handleLogout = () => {
+    // Clear any auth tokens/session data
+    localStorage.clear();
+    sessionStorage.clear();
+    // Use a hard redirect to landing page to ensure a fresh load
+    window.location.href = '/';
+  };
 
   return (
   <header className="bg-white border-b h-[64px] sm:h-[80px] flex items-center justify-between px-3 sm:px-4 md:px-6 sticky top-0 z-50">

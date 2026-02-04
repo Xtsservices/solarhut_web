@@ -492,7 +492,7 @@ export function MyTasks() {
             <FileText className="h-4 w-4" /> Leads
           </TabsTrigger>
           <TabsTrigger value="jobs" className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4" /> Jobs
+            <Briefcase className="h-4 w-4" /> Jobs Done
           </TabsTrigger>
         </TabsList>
 
@@ -504,7 +504,7 @@ export function MyTasks() {
               {["assigned", "ongoing", "closed"].map((key) => (
                 <Card key={key}>
                   <CardContent className="p-6">
-                    <p className="text-sm text-gray-600 capitalize">{key}</p>
+                    <p className="text-sm text-gray-600 capitalize">{key === "assigned" ? "Total Count" : key}</p>
                     <p
                       className={`text-2xl font-bold ${
                         key === "assigned"
@@ -736,12 +736,12 @@ export function MyTasks() {
         {/* Jobs Tab */}
         <TabsContent value="jobs" className="space-y-6">
           <div>
-            <h2 className="text-2xl font-semibold mb-4">Jobs</h2>
+            <h2 className="text-2xl font-semibold mb-4">Jobs Done</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {["assigned", "ongoing", "closed"].map((key) => (
                 <Card key={key}>
                   <CardContent className="p-6">
-                    <p className="text-sm text-gray-600 capitalize">{key}</p>
+                    <p className="text-sm text-gray-600 capitalize">{key === "assigned" ? "Total Count" : key}</p>
                     <p
                       className={`text-2xl font-bold ${
                         key === "assigned"

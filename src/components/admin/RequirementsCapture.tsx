@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, Search, Loader, Edit2, X, Download, ChevronDown } from "lucide-react";
+import { Plus, Search, Loader, Edit2, X, Download, ChevronDown, Trash2 } from "lucide-react";
 import { createEstimation, getEstimations, updateEstimation, createInvoice,createTaxInvoice  } from "../../api";
 import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
@@ -484,6 +484,16 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
       toast.dismiss();
       toast.error("Failed to download requirement");
     }
+  };
+
+  const handleDelete = (requirement: Requirement) => {
+    if (!window.confirm(`Are you sure you want to delete the requirement for ${requirement.customerName || requirement.customer_name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    // Remove from state
+    setRequirements(prev => prev.filter(req => req.id !== requirement.id));
+    toast.success("Requirement deleted successfully!");
   };
 
   const validateForm = (): boolean => {
@@ -1381,6 +1391,16 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                               style={{ pointerEvents: 'auto' }}
                             >
                               <Edit2 className="h-4 w-4 text-blue-600" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDelete(req)}
+                              className="h-8 w-8 p-0 hover:bg-red-100 cursor-pointer"
+                              title="Delete"
+                              style={{ pointerEvents: 'auto' }}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                           </div>
                         </td>

@@ -14,12 +14,15 @@ import {
   DollarSign,
   Users2,
   Landmark,
-  User
+  User,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
 import { useSelector } from 'react-redux';
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { Button } from '../ui/button';
 
 interface MenuItem {
   id: string;
@@ -38,7 +41,7 @@ const adminMenuItems: MenuItem[] = [
   { id: 'Employees', label: 'Employees', icon: Users },
   { id: 'Packages', label: 'Packages', icon: Package },
   { id: 'Payments', label: 'Payments', icon: IndianRupee },
-  { id: 'Contacts', label: 'Contacts', icon: Handshake },
+  { id: 'Contacts', label: 'Partnership & Job Requests', icon: Handshake },
   { id: 'Masters', label: 'Masters', icon: Shield },
   { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
   { id: 'Locations', label: 'Locations', icon: MapPin },
@@ -69,6 +72,9 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
   const user = useSelector((state: any) => state.currentUserData);
   const permissions = user?.permissions || [];
   const navigate = useNavigate();
+  const navContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   const menuItems = useMemo(() => {
     let items: MenuItem[] = [];
@@ -139,10 +145,51 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
     navigate(routes[page] || '/' + page.toLowerCase());
   };
 
+  const checkScrollPosition = () => {
+    if (navContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = navContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (navContainerRef.current) {
+      const scrollAmount = 200;
+      const newScrollLeft = navContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+      navContainerRef.current.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+      setTimeout(checkScrollPosition, 300);
+    }
+  };
+
+  // Initialize scroll position on mount
+  const handleNavLoad = () => {
+    setTimeout(checkScrollPosition, 100);
+  };
+
   return (
     <div className="hidden lg:block bg-white border-b shadow-sm sticky top-[64px] sm:top-[80px] z-40">
-      <div className="px-4 overflow-x-auto">
-        <nav className="flex items-center gap-1 min-h-[48px]">
+      <div className="flex items-center">
+        {/* Left Scroll Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => scroll('left')}
+          disabled={!canScrollLeft}
+          className="h-full rounded-none border-r"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+
+        {/* Scrollable Nav Container */}
+        <div
+          ref={navContainerRef}
+          onScroll={checkScrollPosition}
+          onLoad={handleNavLoad}
+          className="px-4 overflow-x-auto scrollbar-hide flex-1"
+          style={{ scrollBehavior: 'smooth' }}
+        >
+          <nav className="flex items-center gap-1 min-h-[48px]">
           {menuItems.map((item) => {
             const Icon = item.icon;
             let isActive = false;
@@ -184,6 +231,18 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
             );
           })}
         </nav>
+        </div>
+
+        {/* Right Scroll Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => scroll('right')}
+          disabled={!canScrollRight}
+          className="h-full rounded-none border-l"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
       </div>
     </div>
   );

@@ -504,7 +504,7 @@ export function MyTasks() {
               {["assigned", "ongoing", "closed"].map((key) => (
                 <Card key={key}>
                   <CardContent className="p-6">
-                    <p className="text-sm text-gray-600 capitalize">{key === "assigned" ? "Total Count" : key}</p>
+                    <p className="text-sm text-gray-600 capitalize">{key === "assigned" ? "Total leads" : key}</p>
                     <p
                       className={`text-2xl font-bold ${
                         key === "assigned"
@@ -741,7 +741,7 @@ export function MyTasks() {
               {["assigned", "ongoing", "closed"].map((key) => (
                 <Card key={key}>
                   <CardContent className="p-6">
-                    <p className="text-sm text-gray-600 capitalize">{key === "assigned" ? "Total Count" : key}</p>
+                    <p className="text-sm text-gray-600 capitalize">{key === "assigned" ? "Total Jobs" : key}</p>
                     <p
                       className={`text-2xl font-bold ${
                         key === "assigned"

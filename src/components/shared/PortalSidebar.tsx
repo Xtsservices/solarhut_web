@@ -19,6 +19,10 @@ import {
   ListChecks,
   ChevronLeft,
   ChevronRight,
+  Sun, // ADDED: icon for Solar Capacities
+  DollarSign, // ADDED: icon for Expenditures
+  Users2, // ADDED: icon for Customers
+  Landmark, // ADDED: icon for Bank Details
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
@@ -47,18 +51,18 @@ const adminMenuItems: MenuItem[] = [
   { id: 'Packages', label: 'Packages', icon: Package },
   { id: 'Payments', label: 'Payments', icon: IndianRupee },
   { id: 'Contacts', label: 'Contacts', icon: Handshake },
-  // { id: 'Work_Progress', label: 'Work Progress', icon: TrendingUp },
   { id: 'Masters', label: 'Masters', icon: Shield },
-   { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
+  { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
   { id: 'Locations', label: 'Locations', icon: MapPin },
   { id: 'Jobs', label: 'Jobs', icon: Briefcase },
-  // { id: 'Notifications', label: 'Notifications', icon: Bell },
-  // { id: 'Settings', label: 'Settings', icon: Settings },
+  { id: 'Customers', label: 'Customers', icon: Users2 },
+  { id: 'Solar_Capacities', label: 'Solar Capacities', icon: Sun },
+  { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
+  { id: 'Bank_Details', label: 'Bank Details', icon: Landmark }, // ADDED
   { id: 'Profile', label: 'Profile', icon: User },
   { id: 'Estimations', label: 'Estimations', icon: ClipboardCheck },
   { id: 'Tax_Invoice', label: 'Tax Invoice', icon: FileText },
   { id: 'Invoices', label: 'Invoices', icon: FileText },
- 
 ];
 
 const salesMenuItems: MenuItem[] = [
@@ -86,13 +90,9 @@ export function PortalSidebar({
   console.log('Current User in Sidebar:', user);
   const permissions = user?.permissions || [];
 
-  // ADDED: Sidebar collapsed state
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  // ADDED: Ref to track the scrollable nav container
+  // Removed desktop collapsed state as sidebar is now mobile-only
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // ADDED: Memoize menuItems to prevent unnecessary re-creation on every render
   const menuItems = useMemo(() => {
     let items: MenuItem[] = [];
     
@@ -145,6 +145,23 @@ export function PortalSidebar({
         'tax_invoice_view':'tax_invoice',
         'taxinvoice_view':'tax_invoice',
         'tax':'tax_invoice',
+        // ADDED: Solar capacities mapping variants
+        'solar_capacities': 'solar_capacities',
+        'solar capacities': 'solar_capacities',
+        'solar-capacities': 'solar_capacities',
+        'solar_capacity': 'solar_capacities',
+        'solarcapacity': 'solar_capacities',
+        // ADDED: Expenditures mapping variants
+        'expenditures': 'expenditures',
+        'expenditure': 'expenditures',
+        'expenses': 'expenditures',
+        'customers': 'customers',
+        'customer': 'customers',
+        'bank_details': 'bank_details',
+        'bank details': 'bank_details',
+        'bank-details': 'bank_details',
+        'bankdetails': 'bank_details',
+        'bank': 'bank_details',
       };
       
       // Map allowed features to menu item IDs
@@ -180,7 +197,6 @@ export function PortalSidebar({
 
   const navigate = useNavigate();
 
-  // FIXED: Save scroll position before navigation
   const handleNavigate = (page: string) => {
     // Save scroll position before leaving
     if (scrollRef.current) {
@@ -220,6 +236,14 @@ export function PortalSidebar({
       navigate('/estimations');
     } else if (page === 'Tax_Invoice') {
       navigate('/tax-invoice');
+    } else if (page === 'Expenditures') { // ADDED: navigation target
+      navigate('/expenditures');
+    } else if (page === 'Solar_Capacities') { // ADDED: navigation target
+      navigate('/solar-capacities');
+    } else if (page === 'Customers') { // ADDED: navigation target
+      navigate('/customers');
+    } else if (page === 'Bank_Details') { // ADDED
+      navigate('/bank-details');
     } else {
       navigate('/' + page.toLowerCase());
     }
@@ -237,7 +261,7 @@ export function PortalSidebar({
   };
 
   console.log("menuItems in Sidebar:", menuItems);
-  // ADDED: Restore scroll position when currentPage changes (after navigation)
+  
   useEffect(() => {
     const savedScroll = sessionStorage.getItem('sidebar_scroll_position');
     if (scrollRef.current && savedScroll !== null) {
@@ -245,17 +269,20 @@ export function PortalSidebar({
     }
   }, [currentPage]);
 
-  const SidebarContent = ({ collapsed = false }: { collapsed?: boolean }) => (
+  const SidebarContent = () => (
     <div className="h-full bg-white flex flex-col">
-      {/* FIXED: Added ref to preserve scroll position */}
+      {/* Close button for mobile */}
+      <div className="flex justify-between items-center px-6 py-4 border-b lg:hidden">
+        <h2 className="text-lg font-semibold text-gray-800">Menu</h2>
+      </div>
+
       <nav 
         ref={scrollRef}
-        className={cn("flex-1 overflow-y-auto", collapsed ? "p-2" : "p-3 sm:p-4")}
+        className="flex-1 overflow-y-auto px-4 py-6"
       >
-        <ul className="space-y-1">
+        <ul className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            // Enhanced active state detection
             let isActive = false;
             if (item.id === 'Leads' && (currentPage === 'Leads' || currentPage === 'enquiries')) {
               isActive = true;
@@ -265,6 +292,16 @@ export function PortalSidebar({
               isActive = true;
             } else if (item.id === 'Masters' && (currentPage === 'Masters' || currentPage === 'masters')) {
               isActive = true;
+            } else if (item.id === 'Solar_Capacities' && (currentPage === 'Solar_Capacities' || currentPage === 'solar-capacities')) {
+              isActive = true;
+            } else if (item.id === 'Bank_Details' && (currentPage === 'Bank_Details' || currentPage === 'bank-details')) {
+              isActive = true;
+            } else if (item.id === 'Expenditures' && (currentPage === 'Expenditures' || currentPage === 'expenditures')) {
+              isActive = true;
+            } else if (item.id === 'Customers' && (currentPage === 'Customers' || currentPage === 'customers')) {
+              isActive = true;
+            } else if (item.id === 'Tax_Invoice' && (currentPage === 'Tax_Invoice' || currentPage === 'tax-invoice')) {
+              isActive = true;
             } else {
               isActive = currentPage === item.id || currentPage.toLowerCase() === item.id.toLowerCase();
             }
@@ -273,18 +310,16 @@ export function PortalSidebar({
               <li key={item.id}>
                 <button
                   onClick={() => handleNavigate(item.id)}
-                  title={collapsed ? item.label : undefined}
                   className={cn(
-                    'w-full flex items-center rounded-lg text-xs sm:text-sm transition-colors cursor-pointer',
-                    collapsed ? 'justify-center p-2' : 'gap-2 sm:gap-3 px-3 py-2 sm:py-2.5',
+                    'w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-all duration-200 cursor-pointer',
                     isActive
-                      ? 'bg-orange-50 text-orange-600'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'bg-orange-500 text-white font-medium shadow-sm'
+                      : 'text-gray-700 hover:bg-orange-50 hover:text-orange-600 font-normal'
                   )}
                   style={{ pointerEvents: 'auto' }}
                 >
-                  <Icon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                  {!collapsed && <span className="truncate">{item.label}</span>}
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">{item.label}</span>
                 </button>
               </li>
             );
@@ -293,18 +328,14 @@ export function PortalSidebar({
       </nav>
 
       {/* Logout */}
-      <div className={cn("border-t", collapsed ? "p-2" : "p-3 sm:p-4")}>
+      <div className="border-t px-4 py-4">
         <button
           onClick={handleLogout}
-          title={collapsed ? "Logout" : undefined}
-          className={cn(
-            "w-full flex items-center rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 transition-colors mb-10 cursor-pointer",
-            collapsed ? "justify-center p-2" : "gap-2 sm:gap-3 px-3 py-2 sm:py-2.5"
-          )}
+          className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200 cursor-pointer font-normal"
           style={{ pointerEvents: 'auto' }}
         >
-          <LogOut className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-          {!collapsed && <span>Logout</span>}
+          <LogOut className="h-5 w-5 flex-shrink-0" />
+          <span>Logout</span>
         </button>
       </div>
     </div>
@@ -312,38 +343,14 @@ export function PortalSidebar({
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <div 
-        className={cn(
-          "hidden lg:flex flex-col bg-white border-r flex-shrink-0 transition-all duration-300",
-          isCollapsed ? "w-16" : "w-56 xl:w-64"
-        )} 
-        style={{ height: 'calc(100vh - 3.5rem)', position: 'relative', zIndex: 1 }}
-      >
-        {/* Toggle Button */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-6 z-50 bg-orange-500 hover:bg-orange-600 text-white rounded-full p-1 shadow-md transition-colors cursor-pointer"
-          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          style={{ pointerEvents: 'auto' }}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </button>
-        <SidebarContent collapsed={isCollapsed} />
-      </div>
-
-      {/* Mobile Sidebar (Sheet) */}
+      {/* Mobile Sidebar (Sheet) - Only visible on mobile */}
       <Sheet open={isMobileOpen} onOpenChange={onMobileClose}>
-        <SheetContent side="left" className="w-full sm:w-80 p-0">
+        <SheetContent side="left" className="w-[280px] sm:w-[320px] p-0">
           <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           <SheetDescription className="sr-only">
             Access dashboard, notifications, and other menu items
           </SheetDescription>
-          <SidebarContent collapsed={false} />
+          <SidebarContent />
         </SheetContent>
       </Sheet>
     </>

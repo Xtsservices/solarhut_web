@@ -1,6 +1,14 @@
-import { Bell, User, Menu } from 'lucide-react';
+import { Bell, User, Menu, LogOut } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { useNavigate } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '../ui/dropdown-menu';
 
 // Use static path for the logo image to avoid type/import issues
 const logoImagePath = '/assets/image.png';
@@ -31,12 +39,25 @@ export function PortalHeader({
   onProfileClick,
   onMenuToggle
 }: PortalHeaderProps) {
+  const navigate = useNavigate();
   const roleTitle = 
     role === 'admin' ? 'Admin Portal' : 
     role === 'sales' ? 'Sales Portal' : 
     'Field Executive Portal';
 
   const initials = getInitials(userName);
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
+  const handleLogout = () => {
+    // Clear any auth tokens/session data
+    localStorage.clear();
+    sessionStorage.clear();
+    // Use a hard redirect to landing page to ensure a fresh load
+    window.location.href = '/';
+  };
 
   return (
   <header className="bg-white border-b min-h-[64px] sm:min-h-[80px] flex items-center justify-between px-3 sm:px-4 md:px-6 sticky top-0 z-50">
@@ -81,20 +102,34 @@ export function PortalHeader({
           )}
         </Button> */}
 
-        {/* Profile with Avatar */}
-        <Button
-          variant="ghost"
-          className="gap-2 sm:gap-3 h-8 sm:h-10 px-2 sm:px-3"
-          onClick={onProfileClick}
-        >
-          {/* Avatar with Initials */}
-          <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm sm:text-base">
-            {initials}
-          </div>
-          <span className="hidden sm:inline text-gray-700 text-xs sm:text-sm truncate max-w-[100px] md:max-w-[150px]">
-            {userName}
-          </span>
-        </Button>
+        {/* Profile Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="gap-2 sm:gap-3 h-8 sm:h-10 px-2 sm:px-3"
+            >
+              {/* Avatar with Initials */}
+              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm sm:text-base">
+                {initials}
+              </div>
+              <span className="hidden sm:inline text-gray-700 text-xs sm:text-sm truncate max-w-[100px] md:max-w-[150px]">
+                {userName}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
+              <User className="h-4 w-4 mr-2" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
+              <LogOut className="h-4 w-4 mr-2" />
+              <span>Logout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

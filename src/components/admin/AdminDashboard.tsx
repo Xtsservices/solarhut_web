@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { FileText, CheckCircle2, Clock, IndianRupee, Users, Wrench } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -9,6 +10,7 @@ export function AdminDashboard() {
     // ==========================
   // 🔹 API States
   // ==========================
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     pendingLeads: 0,
     pendingJobs: 0,
@@ -119,14 +121,14 @@ if (paymentRes.success) {
       bgColor: 'bg-purple-50',
     },
     {
-      title: 'Week Revenue',
+      title: 'Total Expenses',
       value: `₹${stats.weekRevenue}`,
       icon: IndianRupee,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
     },
     {
-      title: 'Month Revenue',
+      title: 'Total KV Installed',
       value: `₹${stats.monthRevenue}`,
       icon: IndianRupee,
       color: 'text-teal-600',
@@ -201,8 +203,18 @@ const paymentData = [
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
+          const isClickable = index === 0 || index === 1 || index === 2;
+          const getNavigationPath = () => {
+            if (index === 0) return '/enquiries';
+            if (index === 1) return '/jobs';
+            if (index === 2) return '/payments';
+          };
           return (
-            <Card key={index} className="overflow-hidden">
+            <Card 
+              key={index} 
+              className={`overflow-hidden ${isClickable ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+              onClick={() => isClickable && navigate(getNavigationPath())}
+            >
               <CardContent className="p-3 sm:p-4 md:p-5">
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">

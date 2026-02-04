@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { toast } from "sonner";
-import { Search, Loader, Edit2, X, Download } from "lucide-react";
+import { Search, Loader, Edit2, X, Download, Trash2 } from "lucide-react";
 import { getTaxInvoices, downloadTaxInvoice } from "../../api";
 import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
@@ -335,6 +335,16 @@ export function TaxInvoicePage() {
       toast.dismiss();
       toast.error(err?.message || 'Failed to download invoice');
     }
+  };
+
+  const handleDelete = (requirement: Requirement) => {
+    if (!window.confirm(`Are you sure you want to delete the tax invoice for ${requirement.customerName || requirement.customer_name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    // Remove from state
+    setRequirements(prev => prev.filter(req => req.id !== requirement.id));
+    toast.success("Tax invoice deleted successfully!");
   };
 
   const validateForm = (): boolean => {
@@ -849,6 +859,9 @@ export function TaxInvoicePage() {
                             </Button>
                             <Button size="sm" variant="ghost" onClick={() => handleEditClick(req)} className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer" title="Edit" style={{ pointerEvents: 'auto' }}>
                               <Edit2 className="h-4 w-4 text-blue-600" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleDelete(req)} className="h-8 w-8 p-0 hover:bg-red-100 cursor-pointer" title="Delete" style={{ pointerEvents: 'auto' }}>
+                              <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                           </div>
                         </td>

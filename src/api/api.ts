@@ -111,7 +111,7 @@ const getBaseURL = (): string => {
   }
   
   // Fallback to current configuration
-  return 'http://72.61.239.167:3200';
+  return 'http://172.16.4.157:3200';
 };
 
 // Create Axios instance

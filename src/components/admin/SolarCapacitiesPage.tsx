@@ -6,9 +6,9 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Plus, Edit, Trash2, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { fetchCategories, addSolarCapacityItem, getAllSolarCapacityItems, updateSolarCapacityItem, deleteSolarCapacityItem } from '../../api/api';
 
 type Capacity = {
@@ -35,9 +35,7 @@ export default function SolarCapacitiesPage() {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const itemsPerPage = 10;
 
   // Fetch categories and items on mount
   useEffect(() => {
@@ -86,11 +84,14 @@ export default function SolarCapacitiesPage() {
               Object.entries(categoriesData).forEach(([categoryKey, categoryItems]: [string, any]) => {
                 if (Array.isArray(categoryItems)) {
                   categoryItems.forEach((item: any) => {
-                    flattenedItems.push({
-                      id: String(item.id),
-                      category: categoryKey,
-                      name: item.name
-                    });
+                    // Only include items with "Active" status
+                    if (item.status === "Active") {
+                      flattenedItems.push({
+                        id: String(item.id),
+                        category: categoryKey,
+                        name: item.name
+                      });
+                    }
                   });
                 }
               });
@@ -127,6 +128,12 @@ export default function SolarCapacitiesPage() {
       localStorage.setItem('solar_capacities', JSON.stringify(items));
     }
   }, [items.length]); // Only depend on items.length to avoid excessive updates
+
+  // Reset page when category filter changes
+  useEffect(() => {
+    // This will trigger whenever the filter changes
+    // No need to reset currentPage here, just track the filter change
+  }, [categoryFilter]);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -356,13 +363,16 @@ export default function SolarCapacitiesPage() {
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="all">ALL CATEGORIES</SelectItem>
                   {categories.length > 0 ? (
-                    categories.map(cat => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.value.replace(/_/g, ' ')}
-                      </SelectItem>
-                    ))
+                    categories.map(cat => {
+                      const displayText = cat.value.replace(/_/g, ' ').toUpperCase();
+                      return (
+                        <SelectItem key={cat.value} value={cat.value}>
+                          {displayText}
+                        </SelectItem>
+                      );
+                    })
                   ) : null}
                 </SelectContent>
               </Select>
@@ -390,8 +400,8 @@ export default function SolarCapacitiesPage() {
                     </TableCell>
                   </TableRow>
                 ) : (() => {
-                  const filteredItems = categoryFilter === 'all' 
-                    ? items 
+                  const filteredItems = categoryFilter === 'all'
+                    ? items
                     : items.filter(item => item.category === categoryFilter);
                   
                   if (filteredItems.length === 0) {
@@ -406,15 +416,16 @@ export default function SolarCapacitiesPage() {
                     );
                   }
                   
-                  const startIndex = (currentPage - 1) * itemsPerPage;
-                  const endIndex = startIndex + itemsPerPage;
-                  const paginatedItems = filteredItems.slice(startIndex, endIndex);
-                  
-                  return paginatedItems.map((item, index) => (
+                  return filteredItems.map((item, index) => {
+                    const displayCategory = item.category
+                      .replace(/_/g, ' ')
+                      .toUpperCase();
+                    
+                    return (
                     <TableRow key={item.id}>
-                      <TableCell className="font-medium text-gray-600">{startIndex + index + 1}</TableCell>
+                      <TableCell className="font-medium text-gray-600">{index + 1}</TableCell>
                       {/* <TableCell className="font-medium">{item.id}</TableCell> */}
-                      <TableCell>{item.category}</TableCell>
+                      <TableCell>{displayCategory}</TableCell>
                       <TableCell>{item.name}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -459,62 +470,14 @@ export default function SolarCapacitiesPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ));
+                    );
+                  });
                 })()}
               </TableBody>
             </Table>
           </div>
           
-          {/* Pagination Controls */}
-          {items.length > 0 && (() => {
-            const filteredItems = categoryFilter === 'all' 
-              ? items 
-              : items.filter(item => item.category === categoryFilter);
-            const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = Math.min(currentPage * itemsPerPage, filteredItems.length);
-            
-            return (
-              <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-t">
-                <div className="text-sm text-gray-600">
-                  Showing {filteredItems.length > 0 ? startIndex + 1 : 0} to {endIndex} of {filteredItems.length} results
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }).map((_, index) => (
-                      <Button
-                        key={index + 1}
-                        variant={currentPage === index + 1 ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setCurrentPage(index + 1)}
-                        className="min-w-10"
-                      >
-                        {index + 1}
-                      </Button>
-                    ))}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })()}
+
         </CardContent>
       </Card>
     </div>

@@ -259,21 +259,21 @@ export default function ExpendituresPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Expenditures</h1>
-          <p className="text-gray-500 mt-1">Manage vendors, stock items and record expenses</p>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Manage vendors, stock items and record expenses</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => { resetExpenseForm(); setShowExpenseForm(true); }} className="bg-orange-500 hover:bg-orange-600">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button onClick={() => { resetExpenseForm(); setShowExpenseForm(true); }} className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Expense
           </Button>
-          <Button variant="outline" onClick={() => { setVendorEditing(null); resetVendorForm(); setShowVendorForm(true); }}>
+          <Button variant="outline" onClick={() => { setVendorEditing(null); resetVendorForm(); setShowVendorForm(true); }} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Vendor
           </Button>
-          <Button variant="outline" onClick={() => { setItemEditing(null); resetItemForm(); setShowItemForm(true); }}>
+          <Button variant="outline" onClick={() => { setItemEditing(null); resetItemForm(); setShowItemForm(true); }} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Item
           </Button>
@@ -334,8 +334,8 @@ export default function ExpendituresPage() {
       {/* Vendors Section */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Vendors</CardTitle>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <CardTitle className="text-lg sm:text-xl">Vendors</CardTitle>
             <Badge variant="outline">{vendors.length} vendors</Badge>
           </div>
         </CardHeader>
@@ -385,9 +385,9 @@ export default function ExpendituresPage() {
       {/* Stock Items Section */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Stock Items</CardTitle>
-            <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <CardTitle className="text-lg sm:text-xl">Stock Items</CardTitle>
+            <div className="flex gap-4 flex-wrap">
               <Badge variant="outline">{items.length} items</Badge>
               <Badge variant="outline">On hold: {totalStockOnHold}</Badge>
             </div>
@@ -395,17 +395,17 @@ export default function ExpendituresPage() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Item</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Vendor</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Category</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Qty</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">On Hold</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Purchase ₹</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Stock Value</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
+                  <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Item</th>
+                  <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden sm:table-cell">Vendor</th>
+                  <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden md:table-cell">Category</th>
+                  <th className="text-right py-3 px-2 sm:px-4 font-medium text-gray-700">Qty</th>
+                  <th className="text-right py-3 px-2 sm:px-4 font-medium text-gray-700 hidden sm:table-cell">On Hold</th>
+                  <th className="text-right py-3 px-2 sm:px-4 font-medium text-gray-700 hidden md:table-cell">Purchase ₹</th>
+                  <th className="text-right py-3 px-2 sm:px-4 font-medium text-gray-700 hidden lg:table-cell">Stock Value</th>
+                  <th className="text-right py-3 px-2 sm:px-4 font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -414,14 +414,14 @@ export default function ExpendituresPage() {
                   const stockValue = it.quantity * it.purchasePrice;
                   return (
                     <tr key={it.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium text-gray-900">{it.name}</td>
-                      <td className="py-3 px-4 text-gray-600">{vendor?.name || '—'}</td>
-                      <td className="py-3 px-4 text-gray-600">{it.category || '—'}</td>
-                      <td className="py-3 px-4 text-right text-gray-900">{it.quantity}</td>
-                      <td className="py-3 px-4 text-right text-gray-900">{it.stockOnHold}</td>
-                      <td className="py-3 px-4 text-right text-gray-900">₹{it.purchasePrice.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-right font-medium text-gray-900">₹{stockValue.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-2 sm:px-4 font-medium text-gray-900 text-sm">{it.name}</td>
+                      <td className="py-3 px-2 sm:px-4 text-gray-600 hidden sm:table-cell text-sm">{vendor?.name || '—'}</td>
+                      <td className="py-3 px-2 sm:px-4 text-gray-600 hidden md:table-cell text-sm">{it.category || '—'}</td>
+                      <td className="py-3 px-2 sm:px-4 text-right text-gray-900 text-sm">{it.quantity}</td>
+                      <td className="py-3 px-2 sm:px-4 text-right text-gray-900 hidden sm:table-cell text-sm">{it.stockOnHold}</td>
+                      <td className="py-3 px-2 sm:px-4 text-right text-gray-900 hidden md:table-cell text-sm">₹{it.purchasePrice.toLocaleString()}</td>
+                      <td className="py-3 px-2 sm:px-4 text-right font-medium text-gray-900 hidden lg:table-cell text-sm">₹{stockValue.toLocaleString()}</td>
+                      <td className="py-3 px-2 sm:px-4 text-right">
                         <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="sm" onClick={() => openEditItem(it)}>
                             <Edit className="h-4 w-4" />
@@ -443,33 +443,33 @@ export default function ExpendituresPage() {
       {/* Expenses Section */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Expenses</CardTitle>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <CardTitle className="text-lg sm:text-xl">Expenses</CardTitle>
             <Badge variant="outline">{expenses.length} records</Badge>
           </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Date</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Type</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Description</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Amount (₹)</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
+                  <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Date</th>
+                  <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Type</th>
+                  <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden sm:table-cell">Description</th>
+                  <th className="text-right py-3 px-2 sm:px-4 font-medium text-gray-700">Amount (₹)</th>
+                  <th className="text-right py-3 px-2 sm:px-4 font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {expenses.map(e => (
                   <tr key={e.id} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4 text-gray-900">{e.date}</td>
-                    <td className="py-3 px-4">
-                      <Badge className="capitalize">{e.type}</Badge>
+                    <td className="py-3 px-2 sm:px-4 text-gray-900 text-sm">{e.date}</td>
+                    <td className="py-3 px-2 sm:px-4">
+                      <Badge className="capitalize text-xs sm:text-sm">{e.type}</Badge>
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{e.description || '—'}</td>
-                    <td className="py-3 px-4 text-right font-medium text-gray-900">₹{Number(e.amount).toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-2 sm:px-4 text-gray-600 hidden sm:table-cell text-sm">{e.description || '—'}</td>
+                    <td className="py-3 px-2 sm:px-4 text-right font-medium text-gray-900 text-sm">₹{Number(e.amount).toLocaleString()}</td>
+                    <td className="py-3 px-2 sm:px-4 text-right">
                       <Button variant="ghost" size="sm" onClick={() => deleteExpense(e.id)}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
@@ -484,7 +484,7 @@ export default function ExpendituresPage() {
 
       {/* Vendor Form Dialog */}
       <Dialog open={showVendorForm} onOpenChange={setShowVendorForm}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-full mx-4 sm:mx-auto">
           <DialogHeader>
             <DialogTitle>{vendorEditing ? 'Edit Vendor' : 'Add Vendor'}</DialogTitle>
             <DialogDescription>
@@ -492,7 +492,7 @@ export default function ExpendituresPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="vendorName">Vendor Name *</Label>
                 <Input
@@ -512,7 +512,7 @@ export default function ExpendituresPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -556,7 +556,7 @@ export default function ExpendituresPage() {
 
       {/* Item Form Dialog */}
       <Dialog open={showItemForm} onOpenChange={setShowItemForm}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-full mx-4 sm:mx-auto">
           <DialogHeader>
             <DialogTitle>{itemEditing ? 'Edit Item' : 'Add Item'}</DialogTitle>
             <DialogDescription>
@@ -564,7 +564,7 @@ export default function ExpendituresPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="itemName">Item Name *</Label>
                 <Input
@@ -586,7 +586,7 @@ export default function ExpendituresPage() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="category">Category</Label>
                 <Input
@@ -607,7 +607,7 @@ export default function ExpendituresPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="stockOnHold">Stock On Hold</Label>
                 <Input
@@ -629,7 +629,7 @@ export default function ExpendituresPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="salePrice">Sale Price (₹)</Label>
                 <Input
@@ -661,7 +661,7 @@ export default function ExpendituresPage() {
 
       {/* Expense Form Dialog */}
       <Dialog open={showExpenseForm} onOpenChange={setShowExpenseForm}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl w-full mx-4 sm:mx-auto">
           <DialogHeader>
             <DialogTitle>Add Expense</DialogTitle>
             <DialogDescription>

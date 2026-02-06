@@ -19,8 +19,8 @@ import {
   SelectValue,
 } from "../ui/select";
 import { toast } from "sonner";
-import { Search, Loader, Edit2, X, Download, Trash2 } from "lucide-react";
-import { getInvoices, downloadInvoice } from "../../api";
+import { Search, Loader, X, Download, Trash2 } from "lucide-react";
+import { getInvoices, downloadInvoice, deleteInvoice } from "../../api";
 import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
 
 // Add this type declaration at the top of your file (or in a global .d.ts file)
@@ -59,6 +59,7 @@ export function InvoicePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterDate, setFilterDate] = useState("");
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -322,14 +323,30 @@ export function InvoicePage() {
     }
   };
 
-  const handleDelete = (requirement: Requirement) => {
+  const handleDelete = async (requirement: Requirement) => {
     if (!window.confirm(`Are you sure you want to delete the invoice for ${requirement.customerName || requirement.customer_name}? This action cannot be undone.`)) {
       return;
     }
 
-    // Remove from state
-    setRequirements(prev => prev.filter(req => req.id !== requirement.id));
-    toast.success("Invoice deleted successfully!");
+    try {
+      setIsLoading(true);
+      await deleteInvoice(requirement.id || '');
+      
+      // Remove from state
+      setRequirements(prev => prev.filter(req => req.id !== requirement.id));
+      
+      // Reset to first page if current page is now empty
+      const newTotal = requirements.length - 1;
+      const newTotalPages = Math.ceil(newTotal / itemsPerPage);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      }
+    } catch (err) {
+      console.error('Error deleting invoice', err);
+      toast.error('Failed to delete invoice');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const validateForm = (): boolean => {
@@ -441,10 +458,27 @@ export function InvoicePage() {
   };
 
   const filteredRequirements = requirements.filter(
-    (req) =>
-      (req.customerName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (req.mobile || "").includes(searchTerm) ||
-      (req.city || "").toLowerCase().includes(searchTerm.toLowerCase())
+    (req) => {
+      // Text search filter
+      const matchesSearch = 
+        (req.customerName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (req.mobile || "").includes(searchTerm) ||
+        (req.city || "").toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Date filter - filter by specific date
+      let matchesDate = true;
+      if (filterDate) {
+        const reqDate = new Date(req.created_at || req.createdAt || "");
+        
+        // Compare dates without time
+        const reqDateStr = reqDate.toISOString().split('T')[0];
+        const filterDateStr = filterDate;
+        
+        matchesDate = reqDateStr === filterDateStr;
+      }
+
+      return matchesSearch && matchesDate;
+    }
   );
 
   // Pagination calculations
@@ -453,10 +487,10 @@ export function InvoicePage() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedRequirements = filteredRequirements.slice(startIndex, endIndex);
 
-  // Reset to first page when search term changes
+  // Reset to first page when search term or date changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, filterDate]);
 
   return (
     <div className="space-y-4">
@@ -773,16 +807,37 @@ export function InvoicePage() {
           <CardTitle>Search Invoices</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Search by customer name, mobile, or city..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-            />
-            <Button variant="outline" size="icon" className="cursor-pointer">
-              <Search className="h-4 w-4" />
-            </Button>
+          <div className="flex gap-4 items-end">
+            <div className="flex-1 flex gap-2">
+              <Input
+                placeholder="Search by customer name, mobile, or city..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1"
+              />
+              <Button variant="outline" size="icon" className="cursor-pointer">
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="w-48">
+              <Label htmlFor="filterDate" className="text-sm font-medium mb-2 block">Date</Label>
+              <Input
+                id="filterDate"
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            {filterDate && (
+              <Button
+                variant="outline"
+                onClick={() => setFilterDate("")}
+                className="h-10"
+              >
+                Clear Date
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -842,11 +897,11 @@ export function InvoicePage() {
                             <Button size="sm" variant="ghost" onClick={() => handleDownload(req)} className="h-8 w-8 p-0 hover:bg-green-100 cursor-pointer" title="Download" style={{ pointerEvents: 'auto' }}>
                               <Download className="h-4 w-4 text-green-600" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleEditClick(req)} className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer" title="Edit" style={{ pointerEvents: 'auto' }}>
+                            {/* <Button size="sm" variant="ghost" onClick={() => handleEditClick(req)} className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer" title="Edit" style={{ pointerEvents: 'auto' }}>
                               <Edit2 className="h-4 w-4 text-blue-600" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleDelete(req)} className="h-8 w-8 p-0 hover:bg-red-100 cursor-pointer" title="Delete" style={{ pointerEvents: 'auto' }}>
-                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button> */}
+                            <Button size="sm" variant="ghost" onClick={() => handleDelete(req)} disabled={isLoading} className="h-8 w-8 p-0 hover:bg-red-100 cursor-pointer" title="Delete" style={{ pointerEvents: 'auto' }}>
+                              {isLoading ? <Loader className="h-4 w-4 text-red-600 animate-spin" /> : <Trash2 className="h-4 w-4 text-red-600" />}
                             </Button>
                           </div>
                         </td>

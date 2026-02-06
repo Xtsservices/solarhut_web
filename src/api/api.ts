@@ -93,6 +93,33 @@ export interface Role {
   permissions?: string[];
 }
 
+// Bank Detail types
+export interface BankDetailData {
+  id: number;
+  bank_name: string;
+  account_name: string;
+  account_number: string;
+  ifsc: string;
+  branch: string;
+  upi_id: string;
+  qr_code_url?: string;
+  qr_code_signed_url?: string;
+  qr_code_s3_key?: string;
+  created_by?: number;
+}
+
+export interface BankDetailResponse {
+  success: boolean;
+  message: string;
+  data: BankDetailData;
+}
+
+export interface BankDetailListResponse {
+  success: boolean;
+  message: string;
+  data: BankDetailData[];
+}
+
 // Get base URL from environment or fallback to default
 const getBaseURL = (): string => {
   // Try Vite environment variables first
@@ -300,6 +327,16 @@ export const updateEstimation = async (
   );
 };
 
+export const deleteEstimation = async (
+  id: string | number,
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.delete(`/api/estimations/${id}`, { cancelToken }),
+    'Estimation deleted successfully!'
+  );
+};
+
 // ===========================================
 // INVOICES
 // ===========================================
@@ -323,6 +360,16 @@ export const downloadInvoice = async (
   cancelToken?: CancelToken
 ): Promise<import('axios').AxiosResponse<Blob>> => {
   return api.get(`/api/invoices/${id}/download`, { cancelToken, responseType: 'blob' });
+};
+
+export const deleteInvoice = async (
+  id: string | number,
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.delete(`/api/invoices/${id}`, { cancelToken }),
+    'Invoice deleted successfully!'
+  );
 };
 
 // ===========================================
@@ -917,6 +964,17 @@ export const downloadTaxInvoice = async (
     responseType: 'blob',
   });
 };
+
+export const deleteTaxInvoice = async (
+  id: string | number,
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.delete(`/api/taxinvoices/${id}`, { cancelToken }),
+    'Tax invoice deleted successfully!'
+  );
+};
+
 // ===========================================
 // TAX INVOICES
 // ===========================================
@@ -1355,4 +1413,54 @@ export const deleteSolarCapacityItem = async (
       error: error instanceof Error ? error.message : 'Error deleting item'
     };
   }
+};
+
+// ===========================================
+// BANK DETAILS ENDPOINTS
+// ===========================================
+
+export const createBankDetail = async (
+  formData: FormData,
+  cancelToken?: CancelToken
+): Promise<ApiResponse<BankDetailResponse>> => {
+  return makeRequest(
+    () => api.post<BankDetailResponse>('/api/bank-details/create', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      cancelToken
+    })
+  );
+};
+
+export const getBankDetails = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse<BankDetailListResponse>> => {
+  return makeRequest(
+    () => api.get<BankDetailListResponse>('/api/bank-details/all', { cancelToken })
+  );
+};
+
+export const updateBankDetail = async (
+  id: number,
+  formData: FormData,
+  cancelToken?: CancelToken
+): Promise<ApiResponse<BankDetailResponse>> => {
+  return makeRequest(
+    () => api.put<BankDetailResponse>(`/api/bank-details/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      cancelToken
+    })
+  );
+};
+
+export const deleteBankDetail = async (
+  id: number,
+  cancelToken?: CancelToken
+): Promise<ApiResponse<BankDetailResponse>> => {
+  return makeRequest(
+    () => api.delete<BankDetailResponse>(`/api/bank-details/${id}`, { cancelToken })
+  );
 };

@@ -8,6 +8,7 @@ import SubbuImg from '../../../src/assets/SubbuMetadev.png';
 import DevunipallyPhaniImg from '../../../src/assets/DevunipallyPhani.jpeg';
 import GowthamRajuImg from '../../../src/assets/GowthamRaju.jpeg';
 import SiramVenkataGowthamImg from '../../../src/assets/SiramVenkataGowtham.jpeg';
+import EruvadaAnandImg from '../../../src/assets/sales team.jpeg';
 
 interface TeamMember {
   id: string;
@@ -124,6 +125,16 @@ const TeamsPage: React.FC = () => {
         bio: 'Venkata Gowtham manages operational excellence, ensuring seamless project execution and customer satisfaction.',
         specialties: ['Operations Management', 'Project Coordination', 'Quality Delivery'],
         experience: '6+ Years'
+    },
+    {
+        id: 'sales-4',
+        name: 'Eruvada Anand',
+        role: 'Eluru Sales Representative',
+        department: 'Sales',
+        image: EruvadaAnandImg,
+        bio: 'Eruvada Anand represents Solar Hut Solutions in Eluru, delivering excellent customer service and driving solar adoption in the region.',
+        specialties: ['Customer Relations', 'Sales', 'Regional Expansion'],
+        experience: '5+ Years'
     },
 
     // === TECHNICAL TEAM COMMENTED OUT ===

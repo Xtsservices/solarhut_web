@@ -48,9 +48,9 @@ const adminMenuItems: MenuItem[] = [
   { id: 'Jobs', label: 'Jobs', icon: Briefcase },
   { id: 'Customers', label: 'Customers', icon: Users2 },
   { id: 'Solar_Capacities', label: 'Solar Capacities', icon: Sun },
-  { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
-  { id: 'Bank_Details', label: 'Bank Details', icon: Landmark },
-  { id: 'Profile', label: 'Profile', icon: User },
+  // { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
+  // { id: 'Bank_Details', label: 'Bank Details', icon: Landmark },
+  // { id: 'Profile', label: 'Profile', icon: User },
   { id: 'Estimations', label: 'Estimations', icon: ClipboardCheck },
   { id: 'Tax_Invoice', label: 'Tax Invoice', icon: FileText },
   { id: 'Invoices', label: 'Invoices', icon: FileText },
@@ -171,15 +171,25 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
     <div className="hidden lg:block bg-white border-b shadow-sm sticky top-[64px] sm:top-[80px] z-40">
       <div className="flex items-center">
         {/* Left Scroll Button */}
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={() => scroll('left')}
           disabled={!canScrollLeft}
-          className="h-full rounded-none border-r"
+          className="p-2 h-full border-r border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            color: canScrollLeft ? 'inherit' : '#d3d3d3'
+          }}
+          onMouseEnter={(e) => {
+            if (!canScrollLeft) return;
+            e.currentTarget.style.color = '#ea580c';
+            e.currentTarget.style.backgroundColor = '#fed7aa';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'inherit';
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           <ChevronLeft className="h-5 w-5" />
-        </Button>
+        </button>
 
         {/* Scrollable Nav Container */}
         <div
@@ -234,15 +244,25 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
         </div>
 
         {/* Right Scroll Button */}
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={() => scroll('right')}
           disabled={!canScrollRight}
-          className="h-full rounded-none border-l"
+          className="p-2 h-full border-l border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            color: canScrollRight ? 'inherit' : '#d3d3d3'
+          }}
+          onMouseEnter={(e) => {
+            if (!canScrollRight) return;
+            e.currentTarget.style.color = '#ea580c';
+            e.currentTarget.style.backgroundColor = '#fed7aa';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'inherit';
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           <ChevronRight className="h-5 w-5" />
-        </Button>
+        </button>
       </div>
     </div>
   );

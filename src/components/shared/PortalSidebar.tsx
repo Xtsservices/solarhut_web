@@ -57,9 +57,9 @@ const adminMenuItems: MenuItem[] = [
   { id: 'Jobs', label: 'Jobs', icon: Briefcase },
   { id: 'Customers', label: 'Customers', icon: Users2 },
   { id: 'Solar_Capacities', label: 'Solar Capacities', icon: Sun },
-  { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
-  { id: 'Bank_Details', label: 'Bank Details', icon: Landmark }, // ADDED
-  { id: 'Profile', label: 'Profile', icon: User },
+  // { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
+  // { id: 'Bank_Details', label: 'Bank Details', icon: Landmark }, // ADDED
+  // { id: 'Profile', label: 'Profile', icon: User },
   { id: 'Estimations', label: 'Estimations', icon: ClipboardCheck },
   { id: 'Tax_Invoice', label: 'Tax Invoice', icon: FileText },
   { id: 'Invoices', label: 'Invoices', icon: FileText },

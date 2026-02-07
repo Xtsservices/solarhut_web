@@ -306,6 +306,20 @@ export function Navbar({ onNavigate, currentPage = 'home' }: NavbarProps) {
 
             <button
               onClick={() => {
+                onNavigate('teams');
+                setMobileMenuOpen(false);
+              }}
+              className={`block w-full text-left px-6 py-4 transition-colors ${
+                currentPage === 'teams'
+                  ? 'text-[#FFA500] bg-orange-50 font-semibold'
+                  : 'text-gray-700 hover:text-[#FFA500] hover:bg-gray-50'
+              }`}
+            >
+              Team
+            </button>
+
+            <button
+              onClick={() => {
                 onNavigate('testimonials');
                 setMobileMenuOpen(false);
               }}

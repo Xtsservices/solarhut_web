@@ -515,8 +515,8 @@ export function JobRequestsPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-gray-900 mb-2">Partnership & Job Requests</h1>
-            <p className="text-gray-600">Manage partnership and job requests</p>
+            <h1 className="text-gray-900 mb-2">CAREERS & VENDOR REQUESTS</h1>
+            <p className="text-gray-600">Manage career opportunities and vendor partnership requests</p>
           </div>
         
         </div>
@@ -532,7 +532,7 @@ export function JobRequestsPage() {
         <TabsContent value="job">
           <Card>
             <CardHeader>
-              <CardTitle>Job Partnership Requests</CardTitle>
+              <CardTitle>Career Opportunities</CardTitle>
             </CardHeader>
             <CardContent className="p-0 sm:p-6">
               {/* Desktop Table Layout */}
@@ -771,7 +771,7 @@ export function JobRequestsPage() {
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleDeleteJobRequest(request.id || request.contact_id)}
+                                  onClick={() => handleDeleteJob(request.id || request.contact_id)}
                                   className="bg-red-600 hover:bg-red-700"
                                 >
                                   Delete
@@ -848,7 +848,7 @@ export function JobRequestsPage() {
         <TabsContent value="supplier">
           <Card>
             <CardHeader>
-              <CardTitle>Supplier Partnership Requests</CardTitle>
+              <CardTitle>Vendor Partnership Requests</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>

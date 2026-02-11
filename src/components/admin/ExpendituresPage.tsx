@@ -269,10 +269,6 @@ export default function ExpendituresPage() {
             <Plus className="h-4 w-4 mr-2" />
             Add Expense
           </Button>
-          <Button variant="outline" onClick={() => { setVendorEditing(null); resetVendorForm(); setShowVendorForm(true); }} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Vendor
-          </Button>
           <Button variant="outline" onClick={() => { setItemEditing(null); resetItemForm(); setShowItemForm(true); }} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Item
@@ -331,56 +327,7 @@ export default function ExpendituresPage() {
         </Card>
       </div>
 
-      {/* Vendors Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle className="text-lg sm:text-xl">Vendors</CardTitle>
-            <Badge variant="outline">{vendors.length} vendors</Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {vendors.map(v => (
-              <Card key={v.id} className="border-2">
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5 text-orange-500" />
-                      <h3 className="font-semibold text-gray-900">{v.name}</h3>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => openEditVendor(v)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteVendor(v.id)}>
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <p className="text-xs text-gray-500">Contact</p>
-                      <p className="text-gray-900">{v.contact || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Email</p>
-                      <p className="text-gray-900">{v.email || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Address</p>
-                      <p className="text-gray-900">{v.address || '—'}</p>
-                    </div>
-                    <Badge className="bg-orange-100 text-orange-700">
-                      {items.filter(it => it.vendorId === v.id).length} items
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Stock Items Section */}
       <Card>

@@ -43,6 +43,7 @@ import { SettingsPage } from './components/shared/SettingsPage';
 import { ProfilePage } from './components/shared/ProfilePage';
 import SolarCapacitiesPage from './components/admin/SolarCapacitiesPage';
 import ExpendituresPage from './components/admin/ExpendituresPage';
+import InventoryPage from './components/admin/InventoryPage';
 
 import { SalesDashboard } from './components/sales/SalesDashboard';
 import { AssignedEnquiries } from './components/sales/AssignedEnquiries';
@@ -289,6 +290,7 @@ console.log("loginuser", user);
                 <Route path="/expenditures" element={<ExpendituresPage />} />
                 <Route path="/solar-capacities" element={<SolarCapacitiesPage />} />
                 <Route path="/bank-details" element={<BankDetailsPage />} /> {/* ADDED */}
+                <Route path="/inventory" element={<InventoryPage />} />
                 <Route path="/invoices" element={<InvoicePage />} />
 
                 <Route path="*" element={<AdminDashboard />} />

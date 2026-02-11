@@ -23,6 +23,7 @@ import {
   DollarSign, // ADDED: icon for Expenditures
   Users2, // ADDED: icon for Customers
   Landmark, // ADDED: icon for Bank Details
+  ChevronDown,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
@@ -47,22 +48,26 @@ interface PortalSidebarProps {
 const adminMenuItems: MenuItem[] = [
   { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'Leads', label: 'Leads', icon: FileText },
-  { id: 'Employees', label: 'Employees', icon: Users },
-  { id: 'Packages', label: 'Packages', icon: Package },
-  { id: 'Payments', label: 'Payments', icon: IndianRupee },
-  { id: 'Contacts', label: 'Contacts', icon: Handshake },
+  { id: 'Payments', label: 'Revenue', icon: IndianRupee },
   { id: 'Masters', label: 'Masters', icon: Shield },
   { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
-  { id: 'Locations', label: 'Locations', icon: MapPin },
   { id: 'Jobs', label: 'Jobs', icon: Briefcase },
   { id: 'Customers', label: 'Customers', icon: Users2 },
   { id: 'Solar_Capacities', label: 'Solar Capacities', icon: Sun },
-  // { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
-  // { id: 'Bank_Details', label: 'Bank Details', icon: Landmark }, // ADDED
+  { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
   // { id: 'Profile', label: 'Profile', icon: User },
   { id: 'Estimations', label: 'Estimations', icon: ClipboardCheck },
-  { id: 'Tax_Invoice', label: 'Tax Invoice', icon: FileText },
   { id: 'Invoices', label: 'Invoices', icon: FileText },
+];
+
+const mastersSubmenu = [
+  { id: 'Masters', label: 'Masters' },
+  { id: 'Locations', label: 'Location Management' },
+  { id: 'Packages', label: 'Packages' },
+  { id: 'Bank_Details', label: 'Bank Details' },
+  { id: 'Employees', label: 'Employees' },
+  { id: 'Inventory', label: 'Inventory' },
+  { id: 'Contacts', label: 'CAREERS & VENDOR REQUESTS' },
 ];
 
 const salesMenuItems: MenuItem[] = [
@@ -86,7 +91,8 @@ export function PortalSidebar({
   isMobileOpen = false,
   onMobileClose
 }: PortalSidebarProps) {
-  const user = useSelector((state: any) => state.currentUserData);
+  const [masterstOpen, setMastersOpen] = useState(false);
+  const [invoicesOpen, setInvoicesOpen] = useState(false);  const user = useSelector((state: any) => state.currentUserData);
   console.log('Current User in Sidebar:', user);
   const permissions = user?.permissions || [];
 
@@ -236,6 +242,8 @@ export function PortalSidebar({
       navigate('/estimations');
     } else if (page === 'Tax_Invoice') {
       navigate('/tax-invoice');
+    } else if (page === 'Invoices') {
+      navigate('/invoices');
     } else if (page === 'Expenditures') { // ADDED: navigation target
       navigate('/expenditures');
     } else if (page === 'Solar_Capacities') { // ADDED: navigation target
@@ -244,6 +252,10 @@ export function PortalSidebar({
       navigate('/customers');
     } else if (page === 'Bank_Details') { // ADDED
       navigate('/bank-details');
+    } else if (page === 'Inventory') { // ADDED
+      navigate('/inventory');
+    } else if (page === 'Contacts') { // ADDED
+      navigate('/contacts');
     } else {
       navigate('/' + page.toLowerCase());
     }
@@ -290,7 +302,7 @@ export function PortalSidebar({
               isActive = true;
             } else if (item.id === 'My_Tasks' && (currentPage === 'My_Tasks' || currentPage === 'my-tasks')) {
               isActive = true;
-            } else if (item.id === 'Masters' && (currentPage === 'Masters' || currentPage === 'masters')) {
+            } else if (item.id === 'Masters' && (currentPage === 'Masters' || currentPage === 'masters' || currentPage === 'Locations' || currentPage === 'locations' || currentPage === 'Packages' || currentPage === 'packages' || currentPage === 'Bank_Details' || currentPage === 'bank-details' || currentPage === 'Employees' || currentPage === 'employees' || currentPage === 'Inventory' || currentPage === 'inventory' || currentPage === 'Contacts' || currentPage === 'contacts')) {
               isActive = true;
             } else if (item.id === 'Solar_Capacities' && (currentPage === 'Solar_Capacities' || currentPage === 'solar-capacities')) {
               isActive = true;
@@ -300,10 +312,126 @@ export function PortalSidebar({
               isActive = true;
             } else if (item.id === 'Customers' && (currentPage === 'Customers' || currentPage === 'customers')) {
               isActive = true;
-            } else if (item.id === 'Tax_Invoice' && (currentPage === 'Tax_Invoice' || currentPage === 'tax-invoice')) {
+            } else if (item.id === 'Invoices' && (currentPage === 'Invoices' || currentPage === 'invoices' || currentPage === 'tax-invoice')) {
               isActive = true;
             } else {
               isActive = currentPage === item.id || currentPage.toLowerCase() === item.id.toLowerCase();
+            }
+            
+            if (item.id === 'Masters') {
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => setMastersOpen(!masterstOpen)}
+                    className={cn(
+                      'w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-all duration-200 cursor-pointer',
+                      isActive
+                        ? 'bg-orange-500 text-white font-medium shadow-sm'
+                        : 'text-gray-700 hover:bg-orange-50 hover:text-orange-600 font-normal'
+                    )}
+                    style={{ pointerEvents: 'auto' }}
+                  >
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                    <ChevronDown 
+                      className={cn(
+                        'h-4 w-4 ml-auto transition-transform',
+                        masterstOpen ? 'rotate-180' : ''
+                      )} 
+                    />
+                  </button>
+                  {masterstOpen && (
+                    <ul className="ml-4 mt-2 space-y-1">
+                      {mastersSubmenu.map((subitem) => {
+                        const isSubmenuActive = currentPage === subitem.id || currentPage.toLowerCase() === subitem.id.toLowerCase() || currentPage === subitem.id.replace('_', '-') || currentPage === subitem.id.replace('_', '-').toLowerCase();
+                        return (
+                          <li key={subitem.id}>
+                            <button
+                              onClick={() => {
+                                handleNavigate(subitem.id);
+                                setMastersOpen(false);
+                              }}
+                              className={cn(
+                                'w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-all duration-200 cursor-pointer',
+                                isSubmenuActive
+                                  ? 'bg-orange-500 text-white font-medium shadow-sm'
+                                  : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-normal'
+                              )}
+                              style={{ pointerEvents: 'auto' }}
+                            >
+                              <span className="truncate">{subitem.label}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </li>
+              );
+            }
+            
+            if (item.id === 'Invoices') {
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => setInvoicesOpen(!invoicesOpen)}
+                    className={cn(
+                      'w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-all duration-200 cursor-pointer',
+                      isActive
+                        ? 'bg-orange-500 text-white font-medium shadow-sm'
+                        : 'text-gray-700 hover:bg-orange-50 hover:text-orange-600 font-normal'
+                    )}
+                    style={{ pointerEvents: 'auto' }}
+                  >
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                    <ChevronDown 
+                      className={cn(
+                        'h-4 w-4 ml-auto transition-transform',
+                        invoicesOpen ? 'rotate-180' : ''
+                      )} 
+                    />
+                  </button>
+                  {invoicesOpen && (
+                    <ul className="ml-4 mt-2 space-y-1">
+                      <li>
+                        <button
+                          onClick={() => {
+                            handleNavigate('Invoices');
+                            setInvoicesOpen(false);
+                          }}
+                          className={cn(
+                            'w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-all duration-200 cursor-pointer',
+                            currentPage === 'invoices'
+                              ? 'bg-orange-500 text-white font-medium shadow-sm'
+                              : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-normal'
+                          )}
+                          style={{ pointerEvents: 'auto' }}
+                        >
+                          <span className="truncate">Invoices</span>
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          onClick={() => {
+                            handleNavigate('Tax_Invoice');
+                            setInvoicesOpen(false);
+                          }}
+                          className={cn(
+                            'w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-all duration-200 cursor-pointer',
+                            currentPage === 'tax-invoice'
+                              ? 'bg-orange-500 text-white font-medium shadow-sm'
+                              : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-normal'
+                          )}
+                          style={{ pointerEvents: 'auto' }}
+                        >
+                          <span className="truncate">Tax Invoice</span>
+                        </button>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+              );
             }
             
             return (

@@ -24,6 +24,8 @@ export function PaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [paidAmount, setPaidAmount] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [dateFilter, setDateFilter] = useState('all');
   // ⭐ CHANGED
   const [stats, setStats] = useState({
     today_payments: 0,
@@ -33,20 +35,55 @@ export function PaymentsPage() {
   
 
 
-  const filteredPayments = payments.filter((payment) => {
-    const matchesStatus =
-      statusFilter === 'all' ||
-      (statusFilter === 'paid' ? payment.paymentStatus === 'completed' : payment.paymentStatus !== 'completed');
+  const filteredPayments = payments
+    .filter((payment) => {
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'paid' ? payment.paymentStatus === 'completed' : payment.paymentStatus !== 'completed');
 
-    const matchesSearch =
-      searchTerm === '' ||
-      payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.mobile.includes(searchTerm) ||
-      payment.jobCode?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch =
+        searchTerm === '' ||
+        payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.mobile.includes(searchTerm) ||
+        payment.jobCode?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesStatus && matchesSearch;
-  });
+      // Date filter logic
+      let matchesDate = true;
+      if (dateFilter !== 'all' && payment.paymentDate) {
+        const paymentDate = new Date(payment.paymentDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (dateFilter === 'today') {
+          const paymentDateOnly = new Date(paymentDate);
+          paymentDateOnly.setHours(0, 0, 0, 0);
+          matchesDate = paymentDateOnly.getTime() === today.getTime();
+        } else if (dateFilter === 'week') {
+          const weekAgo = new Date(today);
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          matchesDate = paymentDate >= weekAgo && paymentDate <= today;
+        } else if (dateFilter === 'month') {
+          const monthAgo = new Date(today);
+          monthAgo.setDate(monthAgo.getDate() - 30);
+          matchesDate = paymentDate >= monthAgo && paymentDate <= today;
+        }
+      }
+
+      return matchesStatus && matchesSearch && matchesDate;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'newest') {
+        return new Date(b.paymentDate || 0).getTime() - new Date(a.paymentDate || 0).getTime();
+      } else if (sortBy === 'oldest') {
+        return new Date(a.paymentDate || 0).getTime() - new Date(b.paymentDate || 0).getTime();
+      } else if (sortBy === 'asc') {
+        return payments.indexOf(a) - payments.indexOf(b);
+      } else if (sortBy === 'desc') {
+        return payments.indexOf(b) - payments.indexOf(a);
+      }
+      return 0;
+    });
 
   const updatePaymentStatus = (id: string, status: 'paid' | 'pending', amount?: string) => {
     if (status === 'paid' && !amount) {
@@ -173,8 +210,8 @@ const fetchPaymentsList = async () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">Payments</h1>
-        <p className="text-sm sm:text-base text-gray-600">Track and manage payment status</p>
+        <h1 className="text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">REVENUE</h1>
+        <p className="text-sm sm:text-base text-gray-600">Track and manage revenue and payment status</p>
       </div>
 
       {/* Summary Cards */}
@@ -216,7 +253,7 @@ const fetchPaymentsList = async () => {
 
       {/* Filters */}
       <div className="mb-4 sm:mb-6">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 sm:gap-4 sm:justify-end">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 sm:gap-4">
           <div className="w-full sm:flex-none sm:w-64">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -241,6 +278,34 @@ const fetchPaymentsList = async () => {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="w-full sm:flex-none sm:w-48">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="text-sm sm:text-base">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">S.No (Newest)</SelectItem>
+                <SelectItem value="oldest">S.No (Oldest)</SelectItem>
+                <SelectItem value="asc">Sort (A-Z)</SelectItem>
+                <SelectItem value="desc">Sort (Z-A)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-full sm:flex-none sm:w-48">
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger className="text-sm sm:text-base">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Dates</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">Last 7 Days</SelectItem>
+                <SelectItem value="month">Last 30 Days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -254,10 +319,11 @@ const fetchPaymentsList = async () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs sm:text-sm">Job Code</TableHead>
+                  <TableHead className="text-xs sm:text-sm">S.No</TableHead>
                   <TableHead className="text-xs sm:text-sm">Customer Name</TableHead>
                   <TableHead className="text-xs sm:text-sm">Mobile</TableHead>
-                  <TableHead className="text-xs sm:text-sm">Amount</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Estimated Price</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Final Price</TableHead>
                   <TableHead className="text-xs sm:text-sm">Payment Method</TableHead>
                   <TableHead className="text-xs sm:text-sm">Status</TableHead>
                   <TableHead className="text-xs sm:text-sm">Payment Date</TableHead>
@@ -267,24 +333,32 @@ const fetchPaymentsList = async () => {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                       Loading payments...
                     </TableCell>
                   </TableRow>
                 ) : filteredPayments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                       No payments found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPayments.map((payment) => (
+                  filteredPayments.map((payment, index) => (
                   <TableRow key={payment.id}>
-                    <TableCell className="text-xs sm:text-sm">{payment.jobCode}</TableCell>
+                    <TableCell className="text-xs sm:text-sm font-medium text-gray-600">{index + 1}</TableCell>
                     <TableCell className="text-xs sm:text-sm">{payment.fullName}</TableCell>
                     <TableCell className="text-xs sm:text-sm">{payment.mobile}</TableCell>
                     <TableCell className="text-xs sm:text-sm">
                       ₹{payment.quotationAmount?.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm">
+                      <Input
+                        type="number"
+                        placeholder="Enter price"
+                        defaultValue={payment.paidAmount || ''}
+                        className="w-24 h-8 text-xs"
+                      />
                     </TableCell>
                     <TableCell className="text-xs sm:text-sm">{payment.paymentMethod}</TableCell>
                     <TableCell>{getPaymentBadge(payment.paymentStatus)}</TableCell>
@@ -332,26 +406,32 @@ const fetchPaymentsList = async () => {
             </CardContent>
           </Card>
         ) : (
-          filteredPayments.map((payment) => (
+          filteredPayments.map((payment, index) => (
           <Card key={payment.id}>
             <CardContent className="p-4">
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
+                    <p className="text-xs text-gray-500 mb-1">S.No {index + 1}</p>
                     <p className="text-sm font-medium text-gray-900">{payment.fullName}</p>
-                    <p className="text-xs text-gray-500">{payment.jobCode}</p>
+                    <p className="text-xs text-gray-500">{payment.mobile}</p>
                   </div>
                   {getPaymentBadge(payment.paymentStatus)}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
-                    <p className="text-gray-500 mb-1">Mobile</p>
-                    <p className="text-gray-900">{payment.mobile}</p>
+                    <p className="text-gray-500 mb-1">Estimated Price</p>
+                    <p className="text-gray-900 font-medium">₹{payment.quotationAmount?.toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 mb-1">Amount</p>
-                    <p className="text-gray-900 font-medium">₹{payment.quotationAmount?.toLocaleString()}</p>
+                    <p className="text-gray-500 mb-1">Final Price</p>
+                    <Input
+                      type="number"
+                      placeholder="Enter price"
+                      defaultValue={payment.paidAmount || ''}
+                      className="w-full h-7 text-xs p-1"
+                    />
                   </div>
                   <div>
                     <p className="text-gray-500 mb-1">Payment Method</p>

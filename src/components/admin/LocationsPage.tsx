@@ -813,9 +813,9 @@ export function LocationsPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
-        <h1 style={{ color: '#111827', margin: 0 }}>Location Masters</h1>
+        <h1 style={{ color: '#111827', margin: 0, fontSize: '2.25rem', fontWeight: '600' }}>Location Management</h1>
         <p style={{ color: '#6B7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-          Manage countries, states, and districts across India
+          Manage countries, states, and districts
         </p>
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Button } from '../ui/button';
@@ -26,7 +27,7 @@ const MOCK_CAPACITIES: Capacity[] = [
 export default function SolarCapacitiesPage() {
   const [items, setItems] = useState<Capacity[]>([]);
   const [categories, setCategories] = useState<Array<{ value: string; table: string }>>([]);
-  const [formData, setFormData] = useState<Capacity>({ id: '', category: 'product_descriptions', name: '' });
+  const [formData, setFormData] = useState<Capacity>({ id: '', category: 'inverter_types', name: '' });
   const [editing, setEditing] = useState<Capacity | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -35,7 +36,7 @@ export default function SolarCapacitiesPage() {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>('inverter_types');
 
   // Fetch categories and items on mount
   useEffect(() => {
@@ -55,14 +56,22 @@ export default function SolarCapacitiesPage() {
             if (categoryResponse.ok && Array.isArray(categoryResponse.data)) {
               setCategories(categoryResponse.data);
               console.log('Categories loaded successfully:', categoryResponse.data);
+              // Set the first category as active
+              if (categoryResponse.data && categoryResponse.data.length > 0) {
+                setActiveTab(categoryResponse.data[0].value);
+                setFormData(prev => ({ ...prev, category: categoryResponse.data![0].value }));
+              }
             } else {
               console.log('Error loading categories:', categoryResponse.error);
               // Set default categories if fetch fails
-              setCategories([
+              const defaultCategories = [
                 { value: 'inverter_types', table: 'inverter_types' },
                 { value: 'product_descriptions', table: 'product_descriptions' },
                 { value: 'structures', table: 'structures' }
-              ]);
+              ];
+              setCategories(defaultCategories);
+              setActiveTab('inverter_types');
+              setFormData(prev => ({ ...prev, category: 'inverter_types' }));
             }
           }
         } finally {
@@ -129,15 +138,8 @@ export default function SolarCapacitiesPage() {
     }
   }, [items.length]); // Only depend on items.length to avoid excessive updates
 
-  // Reset page when category filter changes
-  useEffect(() => {
-    // This will trigger whenever the filter changes
-    // No need to reset currentPage here, just track the filter change
-  }, [categoryFilter]);
-
   const validateForm = () => {
     const errors: Record<string, string> = {};
-    if (!formData.category.trim()) errors.category = 'Category is required';
     if (!formData.name.trim()) errors.name = 'Name is required';
     return errors;
   };
@@ -259,227 +261,311 @@ export default function SolarCapacitiesPage() {
     }
   };
 
-  return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-gray-900 mb-1 sm:mb-2">Product Descriptions</h1>
-          <p className="text-gray-600 text-sm sm:text-base">Manage product descriptions for solar systems and estimations.</p>
-        </div>
-        
-        <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
-          <DialogTrigger asChild>
-            <Button 
-              className="w-full sm:w-auto"
-              onClick={() => {
-                setFormData({ id: '', category: 'product_descriptions', name: '' });
-                setEditing(null);
-                setValidationErrors({});
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Item
-            </Button>
-          </DialogTrigger>
+  // Helper function to get category display name
+  const getCategoryDisplayName = (value: string) => {
+    return value.replace(/_/g, ' ').toUpperCase();
+  };
 
-          <DialogContent className="p-6 max-w-lg max-h-[90vh]">
-            <DialogHeader>
-              <DialogTitle>{editing ? 'Edit Item' : 'Add New Item'}</DialogTitle>
-            </DialogHeader>
+  // Helper function to get items for a specific category
+  const getItemsByCategory = (categoryValue: string) => {
+    return items.filter(item => item.category === categoryValue);
+  };
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSave();
-              }}
-              className="space-y-5"
-            >
-              <div>
-                <Label className="mb-2 block text-black">
-                  Category <span style={{ color: '#FF0000' }}>*</span>
-                </Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
-                  <SelectTrigger className="border-black ring-0 text-black">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.length > 0 ? (
-                      categories.map(cat => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.value.replace(/_/g, ' ')}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="product_descriptions" disabled>
-                        Loading categories...
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                {validationErrors.category && (
-                  <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.category}</div>
-                )}
-              </div>
+  // Render table content for a specific category
+  const renderCategoryTable = (categoryValue: string) => {
+    const categoryItems = getItemsByCategory(categoryValue);
 
-              <div>
-                <Label className="mb-2 block text-black">
-                  Name <span style={{ color: '#FF0000' }}>*</span>
-                </Label>
-                <Input
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  className="mb-1 border-black ring-0 text-black"
-                  placeholder="e.g., High Efficiency Solar Panel 650W"
-                />
-                {validationErrors.name && (
-                  <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.name}</div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 mt-8">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (editing ? 'Updating...' : 'Adding...') : (editing ? 'Update Product Description' : 'Add Product Description')}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle>Product Descriptions</CardTitle>
-            <div className="w-full sm:w-64">
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="border-black ring-0 text-black">
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">ALL CATEGORIES</SelectItem>
-                  {categories.length > 0 ? (
-                    categories.map(cat => {
-                      const displayText = cat.value.replace(/_/g, ' ').toUpperCase();
-                      return (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {displayText}
-                        </SelectItem>
-                      );
-                    })
-                  ) : null}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0 sm:p-6">
-          
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>S.No</TableHead>
-                  {/* <TableHead>ID</TableHead> */}
-                  <TableHead>Category</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoadingItems ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                      Loading items...
-                    </TableCell>
-                  </TableRow>
-                ) : (() => {
-                  const filteredItems = categoryFilter === 'all'
-                    ? items
-                    : items.filter(item => item.category === categoryFilter);
-                  
-                  if (filteredItems.length === 0) {
-                    return (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                          {items.length === 0 
-                            ? 'No product descriptions defined. Add one to get started.'
-                            : 'No items found in this category.'}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  }
-                  
-                  return filteredItems.map((item, index) => {
-                    const displayCategory = item.category
-                      .replace(/_/g, ' ')
-                      .toUpperCase();
-                    
-                    return (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium text-gray-600">{index + 1}</TableCell>
-                      {/* <TableCell className="font-medium">{item.id}</TableCell> */}
-                      <TableCell>{displayCategory}</TableCell>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>S.No</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoadingItems ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                  Loading items...
+                </TableCell>
+              </TableRow>
+            ) : categoryItems.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                  No items found. Add one to get started.
+                </TableCell>
+              </TableRow>
+            ) : (
+              categoryItems.map((item, index) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium text-gray-600">{index + 1}</TableCell>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleEdit(item)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleEdit(item)}
+                            onClick={() => handleDeleteClick(item)}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDeleteClick(item)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-                                  <AlertTriangle className="h-5 w-5" />
-                                  Confirm Delete
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete "{itemToDelete?.name}"? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={confirmDelete}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    );
-                  });
-                })()}
-              </TableBody>
-            </Table>
-          </div>
-          
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                              <AlertTriangle className="h-5 w-5" />
+                              Confirm Delete
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{itemToDelete?.name}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={confirmDelete}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
 
-        </CardContent>
-      </Card>
+  return (
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      <div>
+        <h1 className="text-gray-900 mb-1 sm:mb-2">Solar Capacities</h1>
+        <p className="text-gray-600 text-sm sm:text-base">Manage solar system capacities by category.</p>
+      </div>
+
+      <Tabs defaultValue="inverter_types" value={activeTab} onValueChange={setActiveTab} style={{ width: '100%' }}>
+        <TabsList style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', width: '100%', marginBottom: '1rem' }}>
+          <TabsTrigger value="inverter_types">Inverter Types</TabsTrigger>
+          <TabsTrigger value="product_descriptions">Product Descriptions</TabsTrigger>
+          <TabsTrigger value="structures">Structures</TabsTrigger>
+        </TabsList>
+
+        {/* ========== INVERTER TYPES TAB ========== */}
+        <TabsContent value="inverter_types">
+          <Card>
+            <CardHeader style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem' }}>
+              <CardTitle>Inverter Types</CardTitle>
+              <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => {
+                      setFormData({ id: '', category: 'inverter_types', name: '' });
+                      setEditing(null);
+                      setValidationErrors({});
+                    }}
+                    style={{ backgroundColor: '#F97316', color: 'white' }}
+                  >
+                    <Plus style={{ height: '1rem', width: '1rem', marginRight: '0.25rem' }} />
+                    Add Inverter Type
+                  </Button>
+                </DialogTrigger>
+
+                <DialogContent className="p-6 max-w-lg max-h-[90vh]">
+                  <DialogHeader>
+                    <DialogTitle>{editing ? 'Edit Inverter Type' : 'Add New Inverter Type'}</DialogTitle>
+                  </DialogHeader>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSave();
+                    }}
+                    className="space-y-5"
+                  >
+                    <div>
+                      <Label className="mb-2 block text-black">
+                        Name <span style={{ color: '#FF0000' }}>*</span>
+                      </Label>
+                      <Input
+                        value={formData.name}
+                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        required
+                        className="mb-1 border-black ring-0 text-black"
+                        placeholder="e.g., Hybrid Inverter 5kW"
+                      />
+                      {validationErrors.name && (
+                        <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.name}</div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-8">
+                      <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={isSubmitting}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (editing ? 'Updating...' : 'Adding...') : (editing ? 'Update' : 'Add')}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              {renderCategoryTable('inverter_types')}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ========== PRODUCT DESCRIPTIONS TAB ========== */}
+        <TabsContent value="product_descriptions">
+          <Card>
+            <CardHeader style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem' }}>
+              <CardTitle>Product Descriptions</CardTitle>
+              <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => {
+                      setFormData({ id: '', category: 'product_descriptions', name: '' });
+                      setEditing(null);
+                      setValidationErrors({});
+                    }}
+                    style={{ backgroundColor: '#F97316', color: 'white' }}
+                  >
+                    <Plus style={{ height: '1rem', width: '1rem', marginRight: '0.25rem' }} />
+                    Add Product Description
+                  </Button>
+                </DialogTrigger>
+
+                <DialogContent className="p-6 max-w-lg max-h-[90vh]">
+                  <DialogHeader>
+                    <DialogTitle>{editing ? 'Edit Product Description' : 'Add New Product Description'}</DialogTitle>
+                  </DialogHeader>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSave();
+                    }}
+                    className="space-y-5"
+                  >
+                    <div>
+                      <Label className="mb-2 block text-black">
+                        Name <span style={{ color: '#FF0000' }}>*</span>
+                      </Label>
+                      <Input
+                        value={formData.name}
+                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        required
+                        className="mb-1 border-black ring-0 text-black"
+                        placeholder="e.g., High Efficiency Solar Panel 650W"
+                      />
+                      {validationErrors.name && (
+                        <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.name}</div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-8">
+                      <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={isSubmitting}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (editing ? 'Updating...' : 'Adding...') : (editing ? 'Update' : 'Add')}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              {renderCategoryTable('product_descriptions')}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ========== STRUCTURES TAB ========== */}
+        <TabsContent value="structures">
+          <Card>
+            <CardHeader style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem' }}>
+              <CardTitle>Structures</CardTitle>
+              <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => {
+                      setFormData({ id: '', category: 'structures', name: '' });
+                      setEditing(null);
+                      setValidationErrors({});
+                    }}
+                    style={{ backgroundColor: '#F97316', color: 'white' }}
+                  >
+                    <Plus style={{ height: '1rem', width: '1rem', marginRight: '0.25rem' }} />
+                    Add Structure
+                  </Button>
+                </DialogTrigger>
+
+                <DialogContent className="p-6 max-w-lg max-h-[90vh]">
+                  <DialogHeader>
+                    <DialogTitle>{editing ? 'Edit Structure' : 'Add New Structure'}</DialogTitle>
+                  </DialogHeader>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSave();
+                    }}
+                    className="space-y-5"
+                  >
+                    <div>
+                      <Label className="mb-2 block text-black">
+                        Name <span style={{ color: '#FF0000' }}>*</span>
+                      </Label>
+                      <Input
+                        value={formData.name}
+                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        required
+                        className="mb-1 border-black ring-0 text-black"
+                        placeholder="e.g., Rooftop Mounting Structure"
+                      />
+                      {validationErrors.name && (
+                        <div style={{ color: '#FF0000' }} className="text-xs mt-1">{validationErrors.name}</div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-8">
+                      <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={isSubmitting}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (editing ? 'Updating...' : 'Adding...') : (editing ? 'Update' : 'Add')}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              {renderCategoryTable('structures')}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

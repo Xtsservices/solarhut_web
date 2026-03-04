@@ -16,13 +16,20 @@ import {
   Landmark,
   User,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
 import { useSelector } from 'react-redux';
 import { useMemo, useRef, useState } from 'react';
 import { Button } from '../ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 
 interface MenuItem {
   id: string;
@@ -38,21 +45,15 @@ interface PortalTopNavProps {
 const adminMenuItems: MenuItem[] = [
   { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'Leads', label: 'Leads', icon: FileText },
-  { id: 'Employees', label: 'Employees', icon: Users },
-  { id: 'Packages', label: 'Packages', icon: Package },
-  { id: 'Payments', label: 'Payments', icon: IndianRupee },
-  { id: 'Contacts', label: 'Partnership & Job Requests', icon: Handshake },
+  { id: 'Payments', label: 'Revenue', icon: IndianRupee },
   { id: 'Masters', label: 'Masters', icon: Shield },
   { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
-  { id: 'Locations', label: 'Locations', icon: MapPin },
   { id: 'Jobs', label: 'Jobs', icon: Briefcase },
   { id: 'Customers', label: 'Customers', icon: Users2 },
   { id: 'Solar_Capacities', label: 'Solar Capacities', icon: Sun },
-  // { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
-  // { id: 'Bank_Details', label: 'Bank Details', icon: Landmark },
+  { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
   // { id: 'Profile', label: 'Profile', icon: User },
   { id: 'Estimations', label: 'Estimations', icon: ClipboardCheck },
-  { id: 'Tax_Invoice', label: 'Tax Invoice', icon: FileText },
   { id: 'Invoices', label: 'Invoices', icon: FileText },
 ];
 
@@ -140,6 +141,7 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
       'Solar_Capacities': '/solar-capacities',
       'Customers': '/customers',
       'Bank_Details': '/bank-details',
+      'Inventory': '/inventory',
     };
 
     navigate(routes[page] || '/' + page.toLowerCase());
@@ -208,7 +210,7 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
               isActive = true;
             } else if (item.id === 'My_Tasks' && (currentPage === 'My_Tasks' || currentPage === 'my-tasks')) {
               isActive = true;
-            } else if (item.id === 'Masters' && (currentPage === 'Masters' || currentPage === 'masters')) {
+            } else if (item.id === 'Masters' && (currentPage === 'Masters' || currentPage === 'masters' || currentPage === 'locations' || currentPage === 'packages' || currentPage === 'bank-details' || currentPage === 'employees' || currentPage === 'inventory' || currentPage === 'contacts')) {
               isActive = true;
             } else if (item.id === 'Solar_Capacities' && (currentPage === 'Solar_Capacities' || currentPage === 'solar-capacities')) {
               isActive = true;
@@ -218,10 +220,85 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
               isActive = true;
             } else if (item.id === 'Customers' && (currentPage === 'Customers' || currentPage === 'customers')) {
               isActive = true;
-            } else if (item.id === 'Tax_Invoice' && (currentPage === 'Tax_Invoice' || currentPage === 'tax-invoice')) {
+            } else if (item.id === 'Invoices' && (currentPage === 'Invoices' || currentPage === 'invoices' || currentPage === 'tax-invoice')) {
               isActive = true;
             } else {
               isActive = currentPage === item.id || currentPage.toLowerCase() === item.id.toLowerCase();
+            }
+
+            // Invoices dropdown menu
+            if (item.id === 'Invoices') {
+              return (
+                <DropdownMenu key={item.id}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={cn(
+                        'flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2',
+                        isActive
+                          ? 'text-orange-600 border-orange-600 bg-orange-50/50'
+                          : 'text-gray-600 border-transparent hover:text-orange-600 hover:bg-gray-50'
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => handleNavigate('Invoices')}>
+                      Invoices
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigate('Tax_Invoice')}>
+                      Tax Invoice
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            }
+
+            // Masters dropdown menu
+            if (item.id === 'Masters') {
+              return (
+                <DropdownMenu key={item.id}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={cn(
+                        'flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2',
+                        isActive
+                          ? 'text-orange-600 border-orange-600 bg-orange-50/50'
+                          : 'text-gray-600 border-transparent hover:text-orange-600 hover:bg-gray-50'
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => handleNavigate('Masters')}>
+                      Masters
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigate('Locations')}>
+                      Location Management
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigate('Packages')}>
+                      Packages
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigate('Bank_Details')}>
+                      Bank Details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigate('Employees')}>
+                      Employees
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigate('Inventory')}>
+                      Inventory
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigate('Contacts')}>
+                      CAREERS & VENDOR REQUESTS
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
             }
 
             return (

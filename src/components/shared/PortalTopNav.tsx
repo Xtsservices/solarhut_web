@@ -42,13 +42,12 @@ interface PortalTopNavProps {
   currentPage: string;
 }
 
+
 const adminMenuItems: MenuItem[] = [
   { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'Leads', label: 'Leads', icon: FileText },
   { id: 'Payments', label: 'Revenue', icon: IndianRupee },
   { id: 'Masters', label: 'Masters', icon: Shield },
   { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
-  { id: 'Jobs', label: 'Jobs', icon: Briefcase },
   { id: 'Customers', label: 'Customers', icon: Users2 },
   { id: 'Solar_Capacities', label: 'Solar Capacities', icon: Sun },
   { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
@@ -89,10 +88,10 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
       }).filter(Boolean);
 
       const featureToMenuMapping: Record<string, string> = {
-        'enquiries': 'leads', 'leads': 'leads', 'employees': 'employees',
+        'enquiries': 'my_tasks', 'leads': 'my_tasks', 'employees': 'employees',
         'packages': 'packages', 'payments': 'payments', 'contacts': 'contacts',
         'masters': 'masters', 'my_tasks': 'my_tasks', 'my tasks': 'my_tasks',
-        'locations': 'locations', 'jobs': 'jobs', 'dashboard': 'dashboard',
+        'locations': 'locations', 'jobs': 'my_tasks', 'dashboard': 'dashboard',
         'profile': 'profile', 'estimations':'estimations', 
         'tax_invoice':'tax_invoice', 'tax invoices':'tax_invoice',
         'invoice':'invoices', 'invoices':'invoices',
@@ -128,6 +127,9 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
       'Contacts': '/contacts',
       'Masters': '/masters',
       'My_Tasks': '/my-tasks',
+      'My_Tasks_Leads': '/my-tasks?tab=leads',
+      'My_Tasks_Jobs': '/my-tasks?tab=jobs',
+      'My_Tasks_JobsDone': '/my-tasks?tab=jobs',
       'Dashboard': '/dashboard',
       'Employees': '/employees',
       'Packages': '/packages',
@@ -208,7 +210,7 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
             
             if (item.id === 'Leads' && (currentPage === 'Leads' || currentPage === 'enquiries')) {
               isActive = true;
-            } else if (item.id === 'My_Tasks' && (currentPage === 'My_Tasks' || currentPage === 'my-tasks')) {
+            } else if (item.id === 'My_Tasks' && (currentPage === 'My_Tasks' || currentPage === 'my-tasks' || currentPage === 'enquiries')) {
               isActive = true;
             } else if (item.id === 'Masters' && (currentPage === 'Masters' || currentPage === 'masters' || currentPage === 'locations' || currentPage === 'packages' || currentPage === 'bank-details' || currentPage === 'employees' || currentPage === 'inventory' || currentPage === 'contacts')) {
               isActive = true;
@@ -298,6 +300,25 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              );
+            }
+
+            // My Tasks — plain nav button (tabs handled inside the page)
+            if (item.id === 'My_Tasks') {
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigate('My_Tasks')}
+                  className={cn(
+                    'flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2',
+                    isActive
+                      ? 'text-orange-600 border-orange-600 bg-orange-50/50'
+                      : 'text-gray-600 border-transparent hover:text-orange-600 hover:bg-gray-50'
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </button>
               );
             }
 

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useSelector } from "react-redux";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import {
   Table,
@@ -113,7 +114,23 @@ const PAYMENT_METHODS = [
 ] as const;
 
 export function MyTasks() {
-  const [activeTab, setActiveTab] = useState<"leads" | "jobs">("leads");
+  const user = useSelector((state: any) => state.currentUserData);
+
+  // Check if user has 'leads' or 'enquiries' permission — only then show the Leads tab
+  const canViewLeads = useMemo(() => {
+    if (!user) return true; // fallback: allow if user not loaded yet
+    const perms: string[] = (user.permissions || []).map((p: any) => {
+      if (typeof p === 'string') return p.toLowerCase();
+      if (p?.feature_name) return p.feature_name.toLowerCase();
+      if (p?.name) return p.name.toLowerCase();
+      return '';
+    }).filter(Boolean);
+    // If no permissions defined, allow by default (full-access user)
+    if (perms.length === 0) return true;
+    return perms.some(p => p === 'leads' || p === 'enquiries');
+  }, [user]);
+
+  const [activeTab, setActiveTab] = useState<"leads" | "jobs" | "jobs_done">("jobs");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [summary, setSummary] = useState<TaskSummary | null>(null);
@@ -154,6 +171,9 @@ export function MyTasks() {
     has_next: false,
     has_previous: false,
   });
+
+  // Cache all leads for client-side pagination
+  const allLeadsRef = React.useRef<Lead[]>([]);
 
   // Action Modal
   const [actionOpen, setActionOpen] = useState(false);
@@ -201,52 +221,110 @@ export function MyTasks() {
     }
   };
 
-  // Fetch Leads
+  // Fetch Leads — uses same /leads API as the main Leads (EnquiriesPage)
   const fetchMyLeads = useCallback(
     async (page = 1) => {
       setIsLoading(true);
       try {
-        const params = new URLSearchParams({
-          page: page.toString(),
-          limit: "10",
-          ...(leadFilters.search && { search: leadFilters.search }),
-          ...(leadFilters.status !== "all" && { status: leadFilters.status }),
-          ...(leadFilters.solar_service !== "all" && {
-            solar_service: leadFilters.solar_service,
-          }),
-          ...(leadFilters.channel !== "all" && {
-            channel: leadFilters.channel,
-          }),
-          ...(leadFilters.start_date && {
-            start_date: format(leadFilters.start_date, "yyyy-MM-dd"),
-          }),
-          ...(leadFilters.end_date && {
-            end_date: format(leadFilters.end_date, "yyyy-MM-dd"),
-          }),
-        });
+        // Only re-fetch from API when on page 1 (i.e. fresh load or filter change)
+        // For page changes, use cached allLeadsRef
+        if (page === 1 || allLeadsRef.current.length === 0) {
+          const response = await apiGet(`/leads`);
+          if (response?.data?.success) {
+            const raw: any[] = Array.isArray(response.data.data)
+              ? response.data.data
+              : [];
 
-        const response = await apiGet(`/mytasks/myLeads?${params.toString()}`);
-        if (response?.data?.success) {
-          const data: LeadsResponse = response.data.data;
-          const mapped = data.leads.map((l: any) => ({
-            id: l.id,
-            customer_name: `${l.first_name} ${l.last_name}`.trim() || "Unknown",
-            mobile: l.mobile,
-            email: l.email,
-            solar_service: l.solar_service,
-            lead_status: l.status,
-            capacity: l.capacity,
-            location: l.location,
-            property_type: l.property_type,
-            channel: l.channel,
-            assigned_at: l.created_at || l.updated_at,
-          }));
-          setLeads(mapped);
-          setLeadPagination(data.pagination);
-          setLeadPage(data.pagination.current_page);
-        } else {
-          setLeads([]);
+            const mapped: Lead[] = raw.map((l: any) => ({
+              id: l.id || l.lead_id,
+              customer_name:
+                l.full_name ||
+                l.fullName ||
+                l.name ||
+                l.customer_name ||
+                `${l.first_name || l.firstName || ''} ${l.last_name || l.lastName || ''}`.trim() ||
+                "Unknown",
+              mobile: l.mobile || l.phone || l.contact || "",
+              email: l.email || "",
+              solar_service:
+                l.solar_service ||
+                l.service_type ||
+                l.serviceType ||
+                l.type ||
+                "",
+              lead_status: l.status || l.lead_status || "New",
+              capacity: l.capacity || l.kv || l.system_size || "",
+              location: l.location || l.city || "",
+              property_type: l.property_type || l.home_type || "",
+              channel: l.channel || l.lead_source || "",
+              assigned_at: l.created_at || l.createdAt || l.updated_at || "",
+            }));
+
+            allLeadsRef.current = mapped;
+          } else {
+            allLeadsRef.current = [];
+          }
         }
+
+        // Client-side filter
+        let filtered = allLeadsRef.current;
+        if (leadFilters.search) {
+          const s = leadFilters.search.toLowerCase();
+          filtered = filtered.filter(
+            (l) =>
+              l.customer_name.toLowerCase().includes(s) ||
+              l.mobile.includes(s) ||
+              String(l.id).includes(s)
+          );
+        }
+        if (leadFilters.status !== "all") {
+          filtered = filtered.filter(
+            (l) => l.lead_status.toLowerCase() === leadFilters.status.toLowerCase()
+          );
+        }
+        if (leadFilters.solar_service !== "all") {
+          filtered = filtered.filter(
+            (l) => l.solar_service.toLowerCase() === leadFilters.solar_service.toLowerCase()
+          );
+        }
+        if (leadFilters.channel !== "all") {
+          filtered = filtered.filter(
+            (l) => l.channel.toLowerCase() === leadFilters.channel.toLowerCase()
+          );
+        }
+        if (leadFilters.start_date) {
+          filtered = filtered.filter(
+            (l) =>
+              l.assigned_at &&
+              new Date(l.assigned_at) >= leadFilters.start_date!
+          );
+        }
+        if (leadFilters.end_date) {
+          filtered = filtered.filter(
+            (l) =>
+              l.assigned_at &&
+              new Date(l.assigned_at) <= leadFilters.end_date!
+          );
+        }
+
+        // Client-side pagination
+        const perPage = 10;
+        const total = filtered.length;
+        const totalPages = Math.ceil(total / perPage) || 1;
+        const safePage = Math.min(page, totalPages);
+        const start = (safePage - 1) * perPage;
+        const paginated = filtered.slice(start, start + perPage);
+
+        setLeads(paginated);
+        setLeadPagination({
+          current_page: safePage,
+          total_pages: totalPages,
+          total_records: total,
+          records_per_page: perPage,
+          has_next: safePage < totalPages,
+          has_previous: safePage > 1,
+        });
+        setLeadPage(safePage);
       } catch (error) {
         toast.error("Failed to load leads");
         setLeads([]);
@@ -432,11 +510,12 @@ export function MyTasks() {
     if (!token) return;
 
     fetchOverview();
-    if (activeTab === "leads") fetchMyLeads(1);
+    if (activeTab === "leads" && canViewLeads) fetchMyLeads(1);
     else fetchMyJobs(1);
-  }, [activeTab, fetchMyLeads, fetchMyJobs]);
+  }, [activeTab, fetchMyLeads, fetchMyJobs, canViewLeads]);
 
   useEffect(() => {
+    allLeadsRef.current = []; // clear cache so filters re-fetch from API
     setLeadPage(1);
   }, [leadFilters]);
   useEffect(() => {
@@ -445,9 +524,10 @@ export function MyTasks() {
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (activeTab === "leads" && leadPage === 1) fetchMyLeads(1);
-      else if (activeTab === "jobs" && jobPage === 1) fetchMyJobs(1);
-      else activeTab === "leads" ? setLeadPage(1) : setJobPage(1);
+      if (activeTab === "leads" && canViewLeads && leadPage === 1) fetchMyLeads(1);
+      else if ((activeTab === "jobs" || activeTab === "jobs_done") && jobPage === 1) fetchMyJobs(1);
+      else if (activeTab === "leads") setLeadPage(1);
+      else setJobPage(1);
     }, 500);
     return () => clearTimeout(handler);
   }, [
@@ -456,6 +536,7 @@ export function MyTasks() {
     activeTab,
     fetchMyLeads,
     fetchMyJobs,
+    canViewLeads,
   ]);
 
   const getStatusBadge = (status: string, type: "lead" | "job") => {
@@ -484,14 +565,19 @@ export function MyTasks() {
 
       <Tabs
         value={activeTab}
-        onValueChange={(v) => setActiveTab(v as "leads" | "jobs")}
+        onValueChange={(v) => setActiveTab(v as "leads" | "jobs" | "jobs_done")}
         className="space-y-6"
       >
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="leads" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" /> Leads
-          </TabsTrigger>
+        <TabsList className={`grid w-full max-w-lg ${canViewLeads ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          {canViewLeads && (
+            <TabsTrigger value="leads" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" /> Leads
+            </TabsTrigger>
+          )}
           <TabsTrigger value="jobs" className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4" /> Jobs
+          </TabsTrigger>
+          <TabsTrigger value="jobs_done" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" /> Jobs Done
           </TabsTrigger>
         </TabsList>
@@ -581,7 +667,7 @@ export function MyTasks() {
                     <Calendar
                       mode="single"
                       selected={leadFilters.start_date || undefined}
-                      onSelect={(d) =>
+                      onSelect={(d: Date | undefined) =>
                         setLeadFilters({
                           ...leadFilters,
                           start_date: d || null,
@@ -605,7 +691,7 @@ export function MyTasks() {
                     <Calendar
                       mode="single"
                       selected={leadFilters.end_date || undefined}
-                      onSelect={(d) =>
+                      onSelect={(d: Date | undefined) =>
                         setLeadFilters({ ...leadFilters, end_date: d || null })
                       }
                     />
@@ -736,7 +822,7 @@ export function MyTasks() {
         {/* Jobs Tab */}
         <TabsContent value="jobs" className="space-y-6">
           <div>
-            <h2 className="text-2xl font-semibold mb-4">Jobs Done</h2>
+            <h2 className="text-2xl font-semibold mb-4">Jobs</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {["assigned", "ongoing", "closed"].map((key) => (
                 <Card key={key}>
@@ -790,35 +876,22 @@ export function MyTasks() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
-                    {[
-                      "Assigned",
-                      "In Progress",
-                      "On Hold",
-                      "Completed",
-                      "Cancelled",
-                    ].map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
+                    {["Assigned", "In Progress", "On Hold", "Completed", "Cancelled"].map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      {jobFilters.start_date
-                        ? format(jobFilters.start_date, "PP")
-                        : "Start Date"}
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      {jobFilters.start_date ? format(jobFilters.start_date, "PP") : "Start Date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
                       selected={jobFilters.start_date || undefined}
-                      onSelect={(d) =>
+                      onSelect={(d: Date | undefined) =>
                         setJobFilters({ ...jobFilters, start_date: d || null })
                       }
                     />
@@ -826,20 +899,15 @@ export function MyTasks() {
                 </Popover>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      {jobFilters.end_date
-                        ? format(jobFilters.end_date, "PP")
-                        : "End Date"}
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      {jobFilters.end_date ? format(jobFilters.end_date, "PP") : "End Date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
                       selected={jobFilters.end_date || undefined}
-                      onSelect={(d) =>
+                      onSelect={(d: Date | undefined) =>
                         setJobFilters({ ...jobFilters, end_date: d || null })
                       }
                     />
@@ -852,15 +920,13 @@ export function MyTasks() {
           {/* Jobs Table */}
           <Card>
             <CardHeader>
-              <CardTitle>My Jobs</CardTitle>
+              <CardTitle>Jobs</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
                 <div className="text-center py-8">Loading...</div>
               ) : jobs.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No jobs found
-                </div>
+                <div className="text-center py-8 text-gray-500">No jobs found</div>
               ) : (
                 <>
                   <Table>
@@ -881,55 +947,27 @@ export function MyTasks() {
                     <TableBody>
                       {jobs.map((job) => (
                         <TableRow key={job.id}>
-                          <TableCell className="font-medium">
-                            {job.job_code}
+                          <TableCell className="font-medium">{job.job_code}</TableCell>
+                          <TableCell>
+                            <p className="font-medium">{job.customer.first_name} {job.customer.last_name}</p>
+                            <p className="text-sm text-gray-500">{job.customer.mobile}</p>
                           </TableCell>
                           <TableCell>
-                            <p className="font-medium">
-                              {job.customer.first_name} {job.customer.last_name}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {job.customer.mobile}
-                            </p>
-                          </TableCell>
-                          <TableCell>
-                            <p className="text-sm">
-                              {job.location.city}, {job.location.pincode}
-                            </p>
+                            <p className="text-sm">{job.location.city}, {job.location.pincode}</p>
                           </TableCell>
                           <TableCell>{job.solar_service}</TableCell>
                           <TableCell>{job.package_name}</TableCell>
+                          <TableCell>₹{job.estimated_cost.toLocaleString("en-IN")}</TableCell>
+                          <TableCell>{new Date(job.scheduled_date).toLocaleDateString()}</TableCell>
                           <TableCell>
-                            ₹{job.estimated_cost.toLocaleString("en-IN")}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(job.scheduled_date).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                job.job_priority === "High"
-                                  ? "destructive"
-                                  : job.job_priority === "Medium"
-                                  ? "secondary"
-                                  : "outline"
-                              }
-                            >
+                            <Badge variant={job.job_priority === "High" ? "destructive" : job.job_priority === "Medium" ? "secondary" : "outline"}>
                               {job.job_priority}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            {getStatusBadge(job.status, "job")}
-                          </TableCell>
+                          <TableCell>{getStatusBadge(job.status, "job")}</TableCell>
                           <TableCell>
                             {job.status !== "Completed" && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() =>
-                                  openActionModal("job", job.id, job.status)
-                                }
-                              >
+                              <Button size="sm" variant="ghost" onClick={() => openActionModal("job", job.id, job.status)}>
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             )}
@@ -942,42 +980,169 @@ export function MyTasks() {
                   {jobPagination.total_pages > 1 && (
                     <div className="flex items-center justify-between mt-4">
                       <p className="text-sm text-gray-500">
-                        Showing {jobs.length} of {jobPagination.total_records}{" "}
-                        jobs
+                        Showing {jobs.length} of {jobPagination.total_records} jobs
                       </p>
                       <div className="flex gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => fetchMyJobs(jobPage - 1)}
-                          disabled={!jobPagination.has_previous}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => fetchMyJobs(jobPage - 1)} disabled={!jobPagination.has_previous}>
                           <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        {Array.from(
-                          { length: Math.min(5, jobPagination.total_pages) },
-                          (_, i) => {
-                            const pageNum = i + 1;
-                            return (
-                              <Button
-                                key={pageNum}
-                                variant={
-                                  jobPage === pageNum ? "default" : "outline"
-                                }
-                                size="sm"
-                                onClick={() => fetchMyJobs(pageNum)}
-                              >
-                                {pageNum}
-                              </Button>
-                            );
-                          }
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => fetchMyJobs(jobPage + 1)}
-                          disabled={!jobPagination.has_next}
-                        >
+                        {Array.from({ length: Math.min(5, jobPagination.total_pages) }, (_, i) => {
+                          const pageNum = i + 1;
+                          return (
+                            <Button key={pageNum} variant={jobPage === pageNum ? "default" : "outline"} size="sm" onClick={() => fetchMyJobs(pageNum)}>
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                        <Button variant="outline" size="sm" onClick={() => fetchMyJobs(jobPage + 1)} disabled={!jobPagination.has_next}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Jobs Done Tab */}
+        <TabsContent value="jobs_done" className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Jobs Done</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {["assigned", "ongoing", "closed"].map((key) => (
+                <Card key={key}>
+                  <CardContent className="p-6">
+                    <p className="text-sm text-gray-600 capitalize">{key === "assigned" ? "Total Jobs" : key}</p>
+                    <p className={`text-2xl font-bold ${key === "assigned" ? "text-blue-600" : key === "ongoing" ? "text-purple-600" : "text-green-600"}`}>
+                      {summary?.jobs[key as keyof typeof summary.jobs] ?? 0}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Job Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" /> Filters
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search jobs..."
+                    value={jobFilters.search}
+                    onChange={(e) => setJobFilters({ ...jobFilters, search: e.target.value })}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={jobFilters.status} onValueChange={(v) => setJobFilters({ ...jobFilters, status: v })}>
+                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {["Assigned", "In Progress", "On Hold", "Completed", "Cancelled"].map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      {jobFilters.start_date ? format(jobFilters.start_date, "PP") : "Start Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" selected={jobFilters.start_date || undefined} onSelect={(d: Date | undefined) => setJobFilters({ ...jobFilters, start_date: d || null })} />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      {jobFilters.end_date ? format(jobFilters.end_date, "PP") : "End Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" selected={jobFilters.end_date || undefined} onSelect={(d: Date | undefined) => setJobFilters({ ...jobFilters, end_date: d || null })} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Jobs Done Table — only Completed jobs */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed Jobs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-center py-8">Loading...</div>
+              ) : jobs.filter((j) => j.status === "Completed").length === 0 ? (
+                <div className="text-center py-8 text-gray-500">No completed jobs found</div>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Service</TableHead>
+                        <TableHead>Package</TableHead>
+                        <TableHead>Cost</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Priority</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {jobs.filter((j) => j.status === "Completed").map((job) => (
+                        <TableRow key={job.id}>
+                          <TableCell className="font-medium">{job.job_code}</TableCell>
+                          <TableCell>
+                            <p className="font-medium">{job.customer.first_name} {job.customer.last_name}</p>
+                            <p className="text-sm text-gray-500">{job.customer.mobile}</p>
+                          </TableCell>
+                          <TableCell><p className="text-sm">{job.location.city}, {job.location.pincode}</p></TableCell>
+                          <TableCell>{job.solar_service}</TableCell>
+                          <TableCell>{job.package_name}</TableCell>
+                          <TableCell>₹{job.estimated_cost.toLocaleString("en-IN")}</TableCell>
+                          <TableCell>{new Date(job.scheduled_date).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            <Badge variant={job.job_priority === "High" ? "destructive" : job.job_priority === "Medium" ? "secondary" : "outline"}>
+                              {job.job_priority}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(job.status, "job")}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {jobPagination.total_pages > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      <p className="text-sm text-gray-500">
+                        Showing {jobs.filter((j) => j.status === "Completed").length} completed jobs
+                      </p>
+                      <div className="flex gap-1">
+                        <Button variant="outline" size="sm" onClick={() => fetchMyJobs(jobPage - 1)} disabled={!jobPagination.has_previous}>
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        {Array.from({ length: Math.min(5, jobPagination.total_pages) }, (_, i) => {
+                          const pageNum = i + 1;
+                          return (
+                            <Button key={pageNum} variant={jobPage === pageNum ? "default" : "outline"} size="sm" onClick={() => fetchMyJobs(pageNum)}>
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                        <Button variant="outline" size="sm" onClick={() => fetchMyJobs(jobPage + 1)} disabled={!jobPagination.has_next}>
                           <ChevronRight className="h-4 w-4" />
                         </Button>
                       </div>

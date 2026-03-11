@@ -47,11 +47,9 @@ interface PortalSidebarProps {
 
 const adminMenuItems: MenuItem[] = [
   { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'Leads', label: 'Leads', icon: FileText },
   { id: 'Payments', label: 'Revenue', icon: IndianRupee },
   { id: 'Masters', label: 'Masters', icon: Shield },
   { id: 'My_Tasks', label: 'My Tasks', icon: ListChecks },
-  { id: 'Jobs', label: 'Jobs', icon: Briefcase },
   { id: 'Customers', label: 'Customers', icon: Users2 },
   { id: 'Solar_Capacities', label: 'Solar Capacities', icon: Sun },
   { id: 'Expenditures', label: 'Expenditures', icon: DollarSign },
@@ -92,7 +90,8 @@ export function PortalSidebar({
   onMobileClose
 }: PortalSidebarProps) {
   const [masterstOpen, setMastersOpen] = useState(false);
-  const [invoicesOpen, setInvoicesOpen] = useState(false);  const user = useSelector((state: any) => state.currentUserData);
+  const [invoicesOpen, setInvoicesOpen] = useState(false);
+  const user = useSelector((state: any) => state.currentUserData);
   console.log('Current User in Sidebar:', user);
   const permissions = user?.permissions || [];
 
@@ -120,8 +119,8 @@ export function PortalSidebar({
       
       // Create a mapping between feature names and menu item IDs
       const featureToMenuMapping: Record<string, string> = {
-        'enquiries': 'leads',
-        'leads': 'leads',
+        'enquiries': 'my_tasks',
+        'leads': 'my_tasks',
         'employees': 'employees',
         'packages': 'packages', 
         'payments': 'payments',
@@ -132,7 +131,7 @@ export function PortalSidebar({
         'my_tasks': 'my_tasks',
         'my tasks': 'my_tasks',
         'locations': 'locations',
-        'jobs': 'jobs',
+        'jobs': 'my_tasks',
         'dashboard': 'dashboard',
         'notifications': 'notifications',
         'settings': 'settings',
@@ -300,7 +299,7 @@ export function PortalSidebar({
               isActive = true;
             } else if (item.id === 'Work_Progress' && (currentPage === 'Work_Progress' || currentPage === 'work-progress')) {
               isActive = true;
-            } else if (item.id === 'My_Tasks' && (currentPage === 'My_Tasks' || currentPage === 'my-tasks')) {
+            } else if (item.id === 'My_Tasks' && (currentPage === 'My_Tasks' || currentPage === 'my-tasks' || currentPage === 'enquiries' || currentPage === 'jobs')) {
               isActive = true;
             } else if (item.id === 'Masters' && (currentPage === 'Masters' || currentPage === 'masters' || currentPage === 'Locations' || currentPage === 'locations' || currentPage === 'Packages' || currentPage === 'packages' || currentPage === 'Bank_Details' || currentPage === 'bank-details' || currentPage === 'Employees' || currentPage === 'employees' || currentPage === 'Inventory' || currentPage === 'inventory' || currentPage === 'Contacts' || currentPage === 'contacts')) {
               isActive = true;
@@ -370,6 +369,27 @@ export function PortalSidebar({
               );
             }
             
+            // My Tasks — plain button, tabs are handled inside the page
+            if (item.id === 'My_Tasks') {
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => handleNavigate('My_Tasks')}
+                    className={cn(
+                      'w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-all duration-200 cursor-pointer',
+                      isActive
+                        ? 'bg-orange-500 text-white font-medium shadow-sm'
+                        : 'text-gray-700 hover:bg-orange-50 hover:text-orange-600 font-normal'
+                    )}
+                    style={{ pointerEvents: 'auto' }}
+                  >
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                </li>
+              );
+            }
+
             if (item.id === 'Invoices') {
               return (
                 <li key={item.id}>
@@ -385,11 +405,11 @@ export function PortalSidebar({
                   >
                     <Icon className="h-5 w-5 flex-shrink-0" />
                     <span className="truncate">{item.label}</span>
-                    <ChevronDown 
+                    <ChevronDown
                       className={cn(
                         'h-4 w-4 ml-auto transition-transform',
                         invoicesOpen ? 'rotate-180' : ''
-                      )} 
+                      )}
                     />
                   </button>
                   {invoicesOpen && (

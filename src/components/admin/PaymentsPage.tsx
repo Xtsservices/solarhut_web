@@ -24,8 +24,8 @@ export function PaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [paidAmount, setPaidAmount] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
   const [dateFilter, setDateFilter] = useState('all');
+  const [rowLimit, setRowLimit] = useState('all');
   // ⭐ CHANGED
   const [stats, setStats] = useState({
     today_payments: 0,
@@ -72,18 +72,7 @@ export function PaymentsPage() {
 
       return matchesStatus && matchesSearch && matchesDate;
     })
-    .sort((a, b) => {
-      if (sortBy === 'newest') {
-        return new Date(b.paymentDate || 0).getTime() - new Date(a.paymentDate || 0).getTime();
-      } else if (sortBy === 'oldest') {
-        return new Date(a.paymentDate || 0).getTime() - new Date(b.paymentDate || 0).getTime();
-      } else if (sortBy === 'asc') {
-        return payments.indexOf(a) - payments.indexOf(b);
-      } else if (sortBy === 'desc') {
-        return payments.indexOf(b) - payments.indexOf(a);
-      }
-      return 0;
-    });
+    .slice(0, rowLimit === 'all' ? undefined : parseInt(rowLimit));
 
   const updatePaymentStatus = (id: string, status: 'paid' | 'pending', amount?: string) => {
     if (status === 'paid' && !amount) {
@@ -211,7 +200,7 @@ const fetchPaymentsList = async () => {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">REVENUE</h1>
-        <p className="text-sm sm:text-base text-gray-600">Track and manage revenue and payment status</p>
+        <p className="text-sm sm:text-base text-gray-600">Track and manage revenue </p>
       </div>
 
       {/* Summary Cards */}
@@ -221,7 +210,7 @@ const fetchPaymentsList = async () => {
   {/* Today Payments */}
   <Card>
     <CardContent className="p-4 sm:p-6">
-      <p className="text-gray-600 text-sm mb-1">Total Payments</p>
+      <p className="text-gray-600 text-sm mb-1">Total Revenue</p>
       <p className="text-xl font-semibold text-gray-900">₹{stats.today_payments.toLocaleString()}</p>
     </CardContent>
   </Card>
@@ -258,7 +247,7 @@ const fetchPaymentsList = async () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search by ID, name, mobile..."
+                placeholder="Search by name, mobile..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 text-sm sm:text-base"
@@ -280,20 +269,6 @@ const fetchPaymentsList = async () => {
           </div>
 
           <div className="w-full sm:flex-none sm:w-48">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="text-sm sm:text-base">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">S.No (Newest)</SelectItem>
-                <SelectItem value="oldest">S.No (Oldest)</SelectItem>
-                <SelectItem value="asc">Sort (A-Z)</SelectItem>
-                <SelectItem value="desc">Sort (Z-A)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="w-full sm:flex-none sm:w-48">
             <Select value={dateFilter} onValueChange={setDateFilter}>
               <SelectTrigger className="text-sm sm:text-base">
                 <SelectValue />
@@ -303,6 +278,21 @@ const fetchPaymentsList = async () => {
                 <SelectItem value="today">Today</SelectItem>
                 <SelectItem value="week">Last 7 Days</SelectItem>
                 <SelectItem value="month">Last 30 Days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-full sm:flex-none sm:w-48">
+            <Select value={rowLimit} onValueChange={setRowLimit}>
+              <SelectTrigger className="text-sm sm:text-base">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Rows</SelectItem>
+                <SelectItem value="15">Show First 15</SelectItem>
+                <SelectItem value="25">Show First 25</SelectItem>
+                <SelectItem value="50">Show First 50</SelectItem>
+                <SelectItem value="100">Show First 100</SelectItem>
               </SelectContent>
             </Select>
           </div>

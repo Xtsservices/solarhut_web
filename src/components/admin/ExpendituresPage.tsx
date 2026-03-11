@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Building2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Building2, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -88,6 +88,8 @@ export default function ExpendituresPage() {
   const [showItemForm, setShowItemForm] = useState(false);
   const [itemEditing, setItemEditing] = useState<Item | null>(null);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [itemSearchTerm, setItemSearchTerm] = useState('');
+  const [expenseDateFilter, setExpenseDateFilter] = useState('');
 
   const [vendorFormData, setVendorFormData] = useState({
     name: '',
@@ -248,6 +250,20 @@ export default function ExpendituresPage() {
     setExpenseFormData({ date: new Date().toISOString().slice(0,10), type: 'salary', description: '', amount: 0 });
   };
 
+  // Filter items by search term
+  const filteredItems = useMemo(() => {
+    return items.filter(item =>
+      item.name.toLowerCase().includes(itemSearchTerm.toLowerCase()) ||
+      item.category?.toLowerCase().includes(itemSearchTerm.toLowerCase())
+    );
+  }, [items, itemSearchTerm]);
+
+  // Filter expenses by date
+  const filteredExpenses = useMemo(() => {
+    if (!expenseDateFilter) return expenses;
+    return expenses.filter(e => e.date === expenseDateFilter);
+  }, [expenses, expenseDateFilter]);
+
   const totalExpenses = useMemo(() => expenses.reduce((s, e) => s + Number(e.amount || 0), 0), [expenses]);
   const totalSalaries = useMemo(() => expenses.filter(e => e.type === 'salary').reduce((s, e) => s + Number(e.amount || 0), 0), [expenses]);
   const totalCommissions = useMemo(() => expenses.filter(e => e.type === 'commission').reduce((s, e) => s + Number(e.amount || 0), 0), [expenses]);
@@ -341,10 +357,40 @@ export default function ExpendituresPage() {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <Label htmlFor="itemSearch" className="text-sm font-medium mb-2 block">Search Items</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="itemSearch"
+                    placeholder="Search by item name or category..."
+                    value={itemSearchTerm}
+                    onChange={(e) => setItemSearchTerm(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button variant="outline" size="icon" className="cursor-pointer">
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              {itemSearchTerm && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setItemSearchTerm('')}
+                  className="h-10"
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
+                  <th className="text-center py-3 px-2 sm:px-4 font-medium text-gray-700">S.No</th>
                   <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Item</th>
                   <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden sm:table-cell">Vendor</th>
                   <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden md:table-cell">Category</th>
@@ -356,11 +402,12 @@ export default function ExpendituresPage() {
                 </tr>
               </thead>
               <tbody>
-                {items.map(it => {
+                {filteredItems.map((it, index) => {
                   const vendor = vendors.find(v => v.id === it.vendorId);
                   const stockValue = it.quantity * it.purchasePrice;
                   return (
                     <tr key={it.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-2 sm:px-4 font-medium text-gray-900 text-sm text-center">{index + 1}</td>
                       <td className="py-3 px-2 sm:px-4 font-medium text-gray-900 text-sm">{it.name}</td>
                       <td className="py-3 px-2 sm:px-4 text-gray-600 hidden sm:table-cell text-sm">{vendor?.name || '—'}</td>
                       <td className="py-3 px-2 sm:px-4 text-gray-600 hidden md:table-cell text-sm">{it.category || '—'}</td>
@@ -391,7 +438,29 @@ export default function ExpendituresPage() {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle className="text-lg sm:text-xl">Expenses</CardTitle>
+            <div className="flex items-center gap-4">
+              <CardTitle className="text-lg sm:text-xl">Expenses</CardTitle>
+              <div className="flex gap-2 items-center">
+                <Input
+                  id="expenseDate"
+                  type="date"
+                  value={expenseDateFilter}
+                  onChange={(e) => setExpenseDateFilter(e.target.value)}
+                  className="h-9 w-40 text-sm"
+                  title="Filter by date"
+                />
+                {expenseDateFilter && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setExpenseDateFilter('')}
+                    className="h-9 px-2 text-xs"
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
+            </div>
             <Badge variant="outline">{expenses.length} records</Badge>
           </div>
         </CardHeader>
@@ -400,6 +469,7 @@ export default function ExpendituresPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
+                  <th className="text-center py-3 px-2 sm:px-4 font-medium text-gray-700">S.No</th>
                   <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Date</th>
                   <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Type</th>
                   <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden sm:table-cell">Description</th>
@@ -408,8 +478,9 @@ export default function ExpendituresPage() {
                 </tr>
               </thead>
               <tbody>
-                {expenses.map(e => (
+                {filteredExpenses.map((e, index) => (
                   <tr key={e.id} className="border-b hover:bg-gray-50">
+                    <td className="py-3 px-2 sm:px-4 text-gray-900 text-sm text-center font-medium">{index + 1}</td>
                     <td className="py-3 px-2 sm:px-4 text-gray-900 text-sm">{e.date}</td>
                     <td className="py-3 px-2 sm:px-4">
                       <Badge className="capitalize text-xs sm:text-sm">{e.type}</Badge>

@@ -525,8 +525,8 @@ export function JobRequestsPage() {
 
       <Tabs defaultValue="job" className="w-full">
         <TabsList>
-          <TabsTrigger value="job">Job Requests ({jobRequests.length})</TabsTrigger>
-          <TabsTrigger value="supplier">Supplier Requests ({supplierRequests.length})</TabsTrigger>
+          <TabsTrigger value="job">Career Requests ({jobRequests.length})</TabsTrigger>
+          <TabsTrigger value="supplier">Vendor Requests ({supplierRequests.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="job">
@@ -540,7 +540,7 @@ export function JobRequestsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
+                      <TableHead>S.No</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Mobile</TableHead>
                       <TableHead>Email</TableHead>
@@ -854,7 +854,7 @@ export function JobRequestsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
+                    <TableHead>S.No</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Email</TableHead>
@@ -969,18 +969,18 @@ export function JobRequestsPage() {
                   {supplierRequests.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        No supplier requests found. Check your API connection or contact data.
+                        No vendor requests found. Check your API connection or contact data.
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
               
-              {/* Supplier Requests Pagination Controls */}
+              {/* Vendor Requests Pagination Controls */}
               {supplierRequests.length > itemsPerPage && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
                   <div className="text-sm text-gray-700">
-                    Showing {supplierStartIndex + 1} to {Math.min(supplierEndIndex, supplierRequests.length)} of {supplierRequests.length} supplier requests
+                    Showing {supplierStartIndex + 1} to {Math.min(supplierEndIndex, supplierRequests.length)} of {supplierRequests.length} vendor requests
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button

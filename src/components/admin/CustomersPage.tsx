@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, Filter, Calendar, Download, Eye } from 'lucide-react';
+import { Search, Filter, Calendar, Download, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -292,13 +292,13 @@ export function CustomersPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">S.No</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Name</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Contact</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Address</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Type</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">Service Type</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Assigned To</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Updated</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
@@ -310,8 +310,9 @@ export function CustomersPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredCustomers.map((customer) => (
+                  filteredCustomers.map((customer, index) => (
                     <tr key={customer.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4 text-center font-medium text-gray-700">{index + 1}</td>
                       <td className="py-3 px-4">
                         <div className="font-medium text-gray-900">{customer.name}</div>
                       </td>
@@ -333,17 +334,23 @@ export function CustomersPage() {
                           {customer.status}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">
-                        {new Date(customer.updatedAt).toLocaleDateString()}
-                      </td>
                       <td className="py-3 px-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetails(customer.id)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewDetails(customer.id)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => console.log('Delete:', customer.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))

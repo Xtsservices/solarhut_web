@@ -31,13 +31,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../ui/alert-dialog';
-import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertTriangle, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Vendor {
   id: string;
   name: string;
-  contact?: string;
+  mobile?: string;
   email?: string;
   gst?: string;
   address?: string;
@@ -62,7 +62,7 @@ interface ItemType {
 }
 
 const MOCK_VENDORS: Vendor[] = [
-  { id: 'v-1', name: 'SunTech Suppliers', contact: 'Rajesh', email: 'rajesh@suntech.com', gst: '29ABCDE1234F1Z5', address: 'Mumbai' },
+  { id: 'v-1', name: 'SunTech Suppliers', mobile: '9876543210', email: 'sales@suntech.com', gst: '29ABCDE1234F1Z5', address: 'Mumbai' },
 ];
 
 const MOCK_CATEGORIES: Category[] = [
@@ -131,7 +131,7 @@ export default function InventoryPage() {
   // Form state
   const [vendorForm, setVendorForm] = useState({
     name: '',
-    contact: '',
+    mobile: '',
     email: '',
     gst: '',
     address: '',
@@ -156,7 +156,30 @@ export default function InventoryPage() {
   });
   const [editingItemType, setEditingItemType] = useState<ItemType | null>(null);
 
-  // Save to localStorage
+  // Search states
+  const [searchVendors, setSearchVendors] = useState('');
+  const [searchCategories, setSearchCategories] = useState('');
+  const [searchExpenseTypes, setSearchExpenseTypes] = useState('');
+  const [searchItemTypes, setSearchItemTypes] = useState('');
+
+  // Filter functions
+  const filteredVendors = vendors.filter(v =>
+    v.name.toLowerCase().includes(searchVendors.toLowerCase()) ||
+    v.mobile?.toLowerCase().includes(searchVendors.toLowerCase()) ||
+    v.email?.toLowerCase().includes(searchVendors.toLowerCase())
+  );
+
+  const filteredCategories = categories.filter(c =>
+    c.name.toLowerCase().includes(searchCategories.toLowerCase())
+  );
+
+  const filteredExpenseTypes = expenseTypes.filter(e =>
+    e.name.toLowerCase().includes(searchExpenseTypes.toLowerCase())
+  );
+
+  const filteredItemTypes = itemTypes.filter(i =>
+    i.name.toLowerCase().includes(searchItemTypes.toLowerCase())
+  );
   useEffect(() => {
     localStorage.setItem(VENDORS_KEY, JSON.stringify(vendors));
   }, [vendors]);
@@ -192,7 +215,7 @@ export default function InventoryPage() {
       toast.success('Vendor added successfully');
     }
 
-    setVendorForm({ name: '', contact: '', email: '', gst: '', address: '' });
+    setVendorForm({ name: '', mobile: '', email: '', gst: '', address: '' });
     setEditingVendor(null);
     setDialogOpen(false);
   };
@@ -274,7 +297,7 @@ export default function InventoryPage() {
     setEditingVendor(vendor);
     setVendorForm({
       name: vendor.name,
-      contact: vendor.contact || '',
+      mobile: vendor.mobile || '',
       email: vendor.email || '',
       gst: vendor.gst || '',
       address: vendor.address || '',
@@ -338,7 +361,7 @@ export default function InventoryPage() {
   const handleDialogChange = (open: boolean) => {
     setDialogOpen(open);
     if (!open) {
-      setVendorForm({ name: '', contact: '', email: '', gst: '', address: '' });
+      setVendorForm({ name: '', mobile: '', email: '', gst: '', address: '' });
       setEditingVendor(null);
       setCategoryForm({ name: '', description: '' });
       setEditingCategory(null);
@@ -357,7 +380,7 @@ export default function InventoryPage() {
           <TableRow>
             <TableHead>S.No</TableHead>
             <TableHead>Vendor Name</TableHead>
-            <TableHead>Contact Person</TableHead>
+            <TableHead>Mobile Number</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>GST</TableHead>
             <TableHead>Address</TableHead>
@@ -365,18 +388,18 @@ export default function InventoryPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {vendors.length === 0 ? (
+          {filteredVendors.length === 0 ? (
             <TableRow>
               <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                 No vendors found. Add one to get started.
               </TableCell>
             </TableRow>
           ) : (
-            vendors.map((vendor, index) => (
+            filteredVendors.map((vendor, index) => (
               <TableRow key={vendor.id}>
                 <TableCell className="font-medium text-gray-600">{index + 1}</TableCell>
                 <TableCell>{vendor.name}</TableCell>
-                <TableCell>{vendor.contact || '-'}</TableCell>
+                <TableCell>{vendor.mobile || '-'}</TableCell>
                 <TableCell>{vendor.email || '-'}</TableCell>
                 <TableCell>{vendor.gst || '-'}</TableCell>
                 <TableCell>{vendor.address || '-'}</TableCell>
@@ -442,14 +465,14 @@ export default function InventoryPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {categories.length === 0 ? (
+          {filteredCategories.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                 No categories found. Add one to get started.
               </TableCell>
             </TableRow>
           ) : (
-            categories.map((category, index) => (
+            filteredCategories.map((category, index) => (
               <TableRow key={category.id}>
                 <TableCell className="font-medium text-gray-600">{index + 1}</TableCell>
                 <TableCell>{category.name}</TableCell>
@@ -516,14 +539,14 @@ export default function InventoryPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {expenseTypes.length === 0 ? (
+          {filteredExpenseTypes.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                 No expense types found. Add one to get started.
               </TableCell>
             </TableRow>
           ) : (
-            expenseTypes.map((expenseType, index) => (
+            filteredExpenseTypes.map((expenseType, index) => (
               <TableRow key={expenseType.id}>
                 <TableCell className="font-medium text-gray-600">{index + 1}</TableCell>
                 <TableCell>{expenseType.name}</TableCell>
@@ -590,14 +613,14 @@ export default function InventoryPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {itemTypes.length === 0 ? (
+          {filteredItemTypes.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                 No item types found. Add one to get started.
               </TableCell>
             </TableRow>
           ) : (
-            itemTypes.map((itemType, index) => (
+            filteredItemTypes.map((itemType, index) => (
               <TableRow key={itemType.id}>
                 <TableCell className="font-medium text-gray-600">{index + 1}</TableCell>
                 <TableCell>{itemType.name}</TableCell>
@@ -671,12 +694,12 @@ export default function InventoryPage() {
         <TabsContent value="vendors">
           <Card>
             <CardHeader style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem' }}>
-              <CardTitle>Vendors</CardTitle>
+              <CardTitle className="font-bold">Vendors</CardTitle>
               <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
                 <DialogTrigger asChild>
                   <Button 
                     onClick={() => {
-                      setVendorForm({ name: '', contact: '', email: '', gst: '', address: '' });
+                      setVendorForm({ name: '', mobile: '', email: '', gst: '', address: '' });
                       setEditingVendor(null);
                     }}
                     style={{ backgroundColor: '#F97316', color: 'white' }}
@@ -708,12 +731,12 @@ export default function InventoryPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="vendor-contact">Contact Person</Label>
+                      <Label htmlFor="vendor-mobile">Mobile Number</Label>
                       <Input
-                        id="vendor-contact"
-                        value={vendorForm.contact}
-                        onChange={(e) => setVendorForm({ ...vendorForm, contact: e.target.value })}
-                        placeholder="Enter contact person name"
+                        id="vendor-mobile"
+                        value={vendorForm.mobile}
+                        onChange={(e) => setVendorForm({ ...vendorForm, mobile: e.target.value })}
+                        placeholder="Enter mobile number"
                       />
                     </div>
                     <div>
@@ -753,6 +776,27 @@ export default function InventoryPage() {
               </Dialog>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 flex gap-2 items-center">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search vendors by name, mobile, or email..."
+                    value={searchVendors}
+                    onChange={(e) => setSearchVendors(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {searchVendors && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchVendors('')}
+                    className="h-9 w-9 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               {renderVendorsTable()}
             </CardContent>
           </Card>
@@ -762,7 +806,7 @@ export default function InventoryPage() {
         <TabsContent value="categories">
           <Card>
             <CardHeader style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem' }}>
-              <CardTitle>Categories</CardTitle>
+              <CardTitle className="font-bold">Categories</CardTitle>
               <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
                 <DialogTrigger asChild>
                   <Button 
@@ -816,6 +860,27 @@ export default function InventoryPage() {
               </Dialog>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 flex gap-2 items-center">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search categories by name..."
+                    value={searchCategories}
+                    onChange={(e) => setSearchCategories(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {searchCategories && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchCategories('')}
+                    className="h-9 w-9 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               {renderCategoriesTable()}
             </CardContent>
           </Card>
@@ -825,7 +890,7 @@ export default function InventoryPage() {
         <TabsContent value="expenseTypes">
           <Card>
             <CardHeader style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem' }}>
-              <CardTitle>Expense Types</CardTitle>
+              <CardTitle className="font-bold">Expense Types</CardTitle>
               <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
                 <DialogTrigger asChild>
                   <Button 
@@ -879,6 +944,27 @@ export default function InventoryPage() {
               </Dialog>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 flex gap-2 items-center">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search expense types by name..."
+                    value={searchExpenseTypes}
+                    onChange={(e) => setSearchExpenseTypes(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {searchExpenseTypes && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchExpenseTypes('')}
+                    className="h-9 w-9 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               {renderExpenseTypesTable()}
             </CardContent>
           </Card>
@@ -888,7 +974,7 @@ export default function InventoryPage() {
         <TabsContent value="itemTypes">
           <Card>
             <CardHeader style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem' }}>
-              <CardTitle>Item Types</CardTitle>
+              <CardTitle className="font-bold">Item Types</CardTitle>
               <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
                 <DialogTrigger asChild>
                   <Button 
@@ -942,6 +1028,27 @@ export default function InventoryPage() {
               </Dialog>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 flex gap-2 items-center">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search item types by name..."
+                    value={searchItemTypes}
+                    onChange={(e) => setSearchItemTypes(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {searchItemTypes && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchItemTypes('')}
+                    className="h-9 w-9 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               {renderItemTypesTable()}
             </CardContent>
           </Card>

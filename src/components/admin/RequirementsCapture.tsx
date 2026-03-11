@@ -1487,6 +1487,7 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-blue-50">
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm w-12">S.No</th>
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Customer Name</th>
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Address & Location</th>
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Capacity</th>
@@ -1501,6 +1502,9 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                   <tbody>
                     {paginatedRequirements.map((req, index) => (
                       <tr key={req.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                        <td className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-12">
+                          {startIndex + index + 1}
+                        </td>
                         <td className="border border-gray-300 px-4 py-3 text-sm font-medium">
                           <span>{req.customerName || req.customer_name}</span>
                           <span className="block text-xs text-gray-500 mt-1">{req.mobile}</span>

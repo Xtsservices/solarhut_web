@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -1420,230 +1421,255 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
 </Dialog>
 
 
-      {/* Search Bar */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Search Requirements</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 items-end">
-            <div className="flex-1 flex gap-2">
-              <Input
-                placeholder="Search by customer name, mobile, or city..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1"
-              />
-              <Button variant="outline" size="icon" className="cursor-pointer">
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="w-48">
-              <Label htmlFor="startDate" className="text-sm font-medium mb-2 block">Date</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            {startDate && (
-              <Button
-                variant="outline"
-                onClick={() => setStartDate("")}
-                className="h-10"
-              >
-                Clear Date
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Requirements Tabs */}
+      <Tabs defaultValue="running" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="running">Running Estimations</TabsTrigger>
+          <TabsTrigger value="pending">Pending Estimations</TabsTrigger>
+          <TabsTrigger value="waiting">Waiting for Approval</TabsTrigger>
+        </TabsList>
 
-      {/* Requirements List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Captured Requirements ({filteredRequirements.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isFetching ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader className="h-6 w-6 animate-spin text-blue-600 mr-2" />
-              <p className="text-muted-foreground">Loading requirements...</p>
-            </div>
-          ) : filteredRequirements.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No requirements captured yet</p>
-              <p className="text-sm">
-                Click "New Requirement" to add customer requirements
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-blue-50">
-                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm w-12">S.No</th>
-                      <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Customer Name</th>
-                      <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Address & Location</th>
-                      <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Capacity</th>
-                      <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Product</th>
-                      <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Base Amount (₹)</th>
-                      <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">GST%</th>
-                      <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Total (₹)</th>
-                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Invoices</th>
-                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedRequirements.map((req, index) => (
-                      <tr key={req.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                        <td className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-12">
-                          {startIndex + index + 1}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm font-medium">
-                          <span>{req.customerName || req.customer_name}</span>
-                          <span className="block text-xs text-gray-500 mt-1">{req.mobile}</span>
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm">
-                          <div className="space-y-1">
-                            <p>{(req.doorNo || req.door_no)} {req.area}</p>
-                            <p className="text-xs text-muted-foreground">{req.city}, {req.district}, {req.state} - {req.pincode}</p>
-                          </div>
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm text-black font-semibold">
-                          {req.capacityKw || "N/A"}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm">
-                          {(req.productDescription || req.product_description) ? (
-                            <span title={req.productDescription || req.product_description} className="truncate block max-w-xs">
-                              {req.productDescription || req.product_description}
-                            </span>
-                          ) : (
-                            "-"
-                          )}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm text-right text-green-600 font-semibold">
-                          {(req.amount || 0) > 0 ? `₹${((req.amount || 0) / (1 + ((req.gstPercentage || req.gst || 0) / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm text-right text-orange-600">
-                          {(req.gstPercentage || req.gst) || 0}%
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-sm text-right text-purple-600 font-semibold">
-                          {(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-black font-medium inline-flex items-center gap-1 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border border-transparent">
-                                <span className="text-sm">Generate</span>
-                                <ChevronDown className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => openGenerateDialog(req)} className="cursor-pointer">
-                                Invoice
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openTaxInvoiceDialog(req)} className="cursor-pointer">
-                                Tax Invoice
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-center">
-                          <div className="flex justify-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDownload(req)}
-                              className="h-8 w-8 p-0 hover:bg-green-100 cursor-pointer"
-                              title="Download"
-                              style={{ pointerEvents: 'auto' }}
-                            >
-                              <Download className="h-4 w-4 text-green-600" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEditClick(req)}
-                              className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer"
-                              title="Edit"
-                              style={{ pointerEvents: 'auto' }}
-                            >
-                              <Edit2 className="h-4 w-4 text-blue-600" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDelete(req)}
-                              className="h-8 w-8 p-0 hover:bg-red-100 cursor-pointer"
-                              title="Delete"
-                              disabled={isLoading}
-                              style={{ pointerEvents: 'auto' }}
-                            >
-                              {isLoading ? (
-                                <Loader className="h-4 w-4 text-red-600 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              )}
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination Controls */}
-              <div className="flex items-center justify-between mt-4 px-4 py-3 bg-orange-50 rounded border border-orange-200">
-                <div className="text-sm text-muted-foreground">
-                  Showing {startIndex + 1} to {Math.min(endIndex, filteredRequirements.length)} of {filteredRequirements.length} requirements
+        {/* Running Estimations Tab */}
+        <TabsContent value="running" className="mt-4">
+          <Card>
+            <CardHeader className="py-3 px-6 flex flex-row items-center justify-between gap-6">
+              <CardTitle className="text-lg flex-shrink-0 font-bold">
+                Running Estimations ({filteredRequirements.length})
+              </CardTitle>
+              <div className="flex gap-4 items-center flex-1">
+                <div className="flex-1 flex gap-2">
+                  <Input
+                    placeholder="Search by customer name, mobile, or city..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button variant="outline" size="icon" className="cursor-pointer">
+                    <Search className="h-4 w-4" />
+                  </Button>
                 </div>
-                <div className="flex gap-2">
+                <div className="w-48">
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                {startDate && (
                   <Button
                     variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer"
+                    onClick={() => setStartDate("")}
+                    className="h-10"
                   >
-                    Previous
+                    Clear Date
                   </Button>
-                  
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 p-0 cursor-pointer ${currentPage === page ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-orange-300 text-orange-600 hover:bg-orange-100"}`}
-                      >
-                        {page}
-                      </Button>
-                    ))}
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isFetching ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+                  <p className="text-muted-foreground">Loading estimations...</p>
+                </div>
+              ) : filteredRequirements.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No running estimations</p>
+                  <p className="text-sm">
+                    Click "New Requirement" to add customer requirements
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-blue-50">
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm w-12">S.No</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Customer Name</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Address & Location</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Capacity</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Product</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Base Amount (₹)</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">GST%</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Total (₹)</th>
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Invoices</th>
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedRequirements.map((req, index) => (
+                          <tr key={req.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                            <td className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-12">
+                              {startIndex + index + 1}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm font-medium">
+                              <span>{req.customerName || req.customer_name}</span>
+                              <span className="block text-xs text-gray-500 mt-1">{req.mobile}</span>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm">
+                              <div className="space-y-1">
+                                <p>{(req.doorNo || req.door_no)} {req.area}</p>
+                                <p className="text-xs text-muted-foreground">{req.city}, {req.district}, {req.state} - {req.pincode}</p>
+                              </div>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-black font-semibold">
+                              {req.capacityKw || "N/A"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm">
+                              {(req.productDescription || req.product_description) ? (
+                                <span title={req.productDescription || req.product_description} className="truncate block max-w-xs">
+                                  {req.productDescription || req.product_description}
+                                </span>
+                              ) : (
+                                "-"
+                              )}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-green-600 font-semibold">
+                              {(req.amount || 0) > 0 ? `₹${((req.amount || 0) / (1 + ((req.gstPercentage || req.gst || 0) / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-orange-600">
+                              {(req.gstPercentage || req.gst) || 0}%
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-purple-600 font-semibold">
+                              {(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-center">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-black font-medium inline-flex items-center gap-1 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border border-transparent">
+                                    <span className="text-sm">Generate</span>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => openGenerateDialog(req)} className="cursor-pointer">
+                                    Invoice
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => openTaxInvoiceDialog(req)} className="cursor-pointer">
+                                    Tax Invoice
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-center">
+                              <div className="flex justify-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDownload(req)}
+                                  className="h-8 w-8 p-0 hover:bg-green-100 cursor-pointer"
+                                  title="Download"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  <Download className="h-4 w-4 text-green-600" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleEditClick(req)}
+                                  className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer"
+                                  title="Edit"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  <Edit2 className="h-4 w-4 text-blue-600" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDelete(req)}
+                                  className="h-8 w-8 p-0 hover:bg-red-100 cursor-pointer"
+                                  title="Delete"
+                                  disabled={isLoading}
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  {isLoading ? (
+                                    <Loader className="h-4 w-4 text-red-600 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  )}
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer"
-                  >
-                    Next
-                  </Button>
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between mt-4 px-4 py-3 bg-orange-50 rounded border border-orange-200">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {startIndex + 1} to {Math.min(endIndex, filteredRequirements.length)} of {filteredRequirements.length} estimations
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer"
+                      >
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-8 h-8 p-0 cursor-pointer ${currentPage === page ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-orange-300 text-orange-600 hover:bg-orange-100"}`}
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Pending Estimations Tab */}
+        <TabsContent value="pending" className="mt-4">
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center text-muted-foreground">
+                <p className="text-lg">No pending estimations</p>
+                <p className="text-sm">API configuration pending</p>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Waiting for Approval Tab */}
+        <TabsContent value="waiting" className="mt-4">
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center text-muted-foreground">
+                <p className="text-lg">No estimations waiting for approval</p>
+                <p className="text-sm">API configuration pending</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

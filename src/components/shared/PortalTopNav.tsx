@@ -22,7 +22,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../ui/utils';
 import { useSelector } from 'react-redux';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
@@ -75,6 +75,7 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
   const navContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [hasScroll, setHasScroll] = useState(false);
 
   const menuItems = useMemo(() => {
     let items: MenuItem[] = [];
@@ -152,6 +153,8 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
   const checkScrollPosition = () => {
     if (navContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = navContainerRef.current;
+      const isScrollable = scrollWidth > clientWidth;
+      setHasScroll(isScrollable);
       setCanScrollLeft(scrollLeft > 0);
       setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
     }
@@ -171,29 +174,38 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
     setTimeout(checkScrollPosition, 100);
   };
 
+  // Listen for window resize and check scroll position
+  useEffect(() => {
+    window.addEventListener('resize', checkScrollPosition);
+    handleNavLoad();
+    return () => window.removeEventListener('resize', checkScrollPosition);
+  }, []);
+
   return (
     <div className="hidden lg:block bg-white border-b shadow-sm sticky top-[64px] sm:top-[80px] z-40">
       <div className="flex items-center">
         {/* Left Scroll Button */}
-        <button
-          onClick={() => scroll('left')}
-          disabled={!canScrollLeft}
-          className="p-2 h-full border-r border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            color: canScrollLeft ? 'inherit' : '#d3d3d3'
-          }}
-          onMouseEnter={(e) => {
-            if (!canScrollLeft) return;
-            e.currentTarget.style.color = '#ea580c';
-            e.currentTarget.style.backgroundColor = '#fed7aa';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'inherit';
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
+        {hasScroll && (
+          <button
+            onClick={() => scroll('left')}
+            disabled={!canScrollLeft}
+            className="p-2 h-full border-r border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              color: canScrollLeft ? 'inherit' : '#d3d3d3'
+            }}
+            onMouseEnter={(e) => {
+              if (!canScrollLeft) return;
+              e.currentTarget.style.color = '#ea580c';
+              e.currentTarget.style.backgroundColor = '#fed7aa';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'inherit';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
 
         {/* Scrollable Nav Container */}
         <div
@@ -342,25 +354,27 @@ export function PortalTopNav({ role, currentPage }: PortalTopNavProps) {
         </div>
 
         {/* Right Scroll Button */}
-        <button
-          onClick={() => scroll('right')}
-          disabled={!canScrollRight}
-          className="p-2 h-full border-l border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            color: canScrollRight ? 'inherit' : '#d3d3d3'
-          }}
-          onMouseEnter={(e) => {
-            if (!canScrollRight) return;
-            e.currentTarget.style.color = '#ea580c';
-            e.currentTarget.style.backgroundColor = '#fed7aa';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'inherit';
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
+        {hasScroll && (
+          <button
+            onClick={() => scroll('right')}
+            disabled={!canScrollRight}
+            className="p-2 h-full border-l border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              color: canScrollRight ? 'inherit' : '#d3d3d3'
+            }}
+            onMouseEnter={(e) => {
+              if (!canScrollRight) return;
+              e.currentTarget.style.color = '#ea580c';
+              e.currentTarget.style.backgroundColor = '#fed7aa';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'inherit';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -724,7 +724,7 @@ export default function MastersPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
-        <h1 style={{ color: '#111827', margin: 0 }}>Masters</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Masters</h1>
         <p style={{ color: '#6B7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>
           Manage roles, features, and permissions
         </p>

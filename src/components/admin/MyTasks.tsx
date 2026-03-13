@@ -555,7 +555,7 @@ export function MyTasks() {
   };
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-8 pr-6 pb-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">My Tasks</h1>
         <p className="text-gray-600">

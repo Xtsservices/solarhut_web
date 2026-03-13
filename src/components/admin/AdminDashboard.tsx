@@ -196,7 +196,7 @@ const paymentData = [
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-gray-900 mb-1 sm:mb-2">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight"> Dashboard</h1>
         <p className="text-gray-600 text-sm sm:text-base">Overview of your solar business operations</p>
       </div>
 

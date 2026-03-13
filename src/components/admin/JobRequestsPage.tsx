@@ -511,11 +511,11 @@ export function JobRequestsPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="pr-8 pb-8">
       <div className="mb-8">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-gray-900 mb-2">CAREERS & VENDOR REQUESTS</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Careers & Vendor Requests</h1>
             <p className="text-gray-600">Manage career opportunities and vendor partnership requests</p>
           </div>
         

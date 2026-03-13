@@ -355,9 +355,9 @@ export default function SolarCapacitiesPage() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+    <div className="space-y-4 sm:space-y-6 pr-4 sm:pr-6 pb-4 sm:pb-6">
       <div>
-        <h1 className="text-gray-900 mb-1 sm:mb-2">Solar Capacities</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Solar Capacities</h1>
         <p className="text-gray-600 text-sm sm:text-base">Manage solar system capacities by category.</p>
       </div>
 

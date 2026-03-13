@@ -818,11 +818,9 @@ export function TaxInvoicePage() {
 
       {/* Search Bar */}
       <Card>
-        <CardHeader>
-          <CardTitle>Search Invoices</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 items-end">
+        <CardHeader className="py-3 px-6 flex flex-row items-center justify-between gap-6">
+          <CardTitle className="text-lg flex-shrink-0">Search Invoices</CardTitle>
+          <div className="flex gap-4 items-center flex-1">
             <div className="flex-1 flex gap-2">
               <Input
                 placeholder="Search by customer name, mobile, or city..."
@@ -835,7 +833,6 @@ export function TaxInvoicePage() {
               </Button>
             </div>
             <div className="w-48">
-              <Label htmlFor="filterDate" className="text-sm font-medium mb-2 block">Date</Label>
               <Input
                 id="filterDate"
                 type="date"
@@ -854,7 +851,7 @@ export function TaxInvoicePage() {
               </Button>
             )}
           </div>
-        </CardContent>
+        </CardHeader>
       </Card>
 
       {/* Requirements List (Invoices) */}

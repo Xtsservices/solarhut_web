@@ -197,9 +197,9 @@ const fetchPaymentsList = async () => {
 
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="pr-4 sm:pr-6 lg:pr-8 pb-4 sm:pb-6 lg:pb-8">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">REVENUE</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Revenue</h1>
         <p className="text-sm sm:text-base text-gray-600">Track and manage revenue </p>
       </div>
 

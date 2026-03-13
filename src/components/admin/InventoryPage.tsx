@@ -676,7 +676,7 @@ export default function InventoryPage() {
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+    <div className="space-y-4 sm:space-y-6 pr-4 sm:pr-6 pb-4 sm:pb-6">
       <div>
         <h1 className="text-4xl font-bold text-gray-900 mb-2 sm:mb-3">Inventory Management</h1>
         <p className="text-gray-600 text-sm sm:text-base">Manage vendors, categories, expense types, and item types.</p>

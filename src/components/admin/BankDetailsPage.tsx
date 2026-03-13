@@ -622,16 +622,16 @@ export function BankDetailsPage() {
           <p className="text-gray-500 mt-1">Manage bank accounts and payment methods</p>
         </div>
         <div className="flex gap-2">
-          {!isFetchingData && (
-            <Button 
-              onClick={fetchBankDetails}
-              variant="outline"
-              size="sm"
-              title="Refresh bank details"
-            >
-              <Loader2 className="h-4 w-4" />
-            </Button>
-          )}
+          {/* {!isFetchingData && (
+            // <Button 
+            //   onClick={fetchBankDetails}
+            //   variant="outline"
+            //   size="sm"
+            //   title="Refresh bank details"
+            // >
+            //   <Loader2 className="h-4 w-4" />
+            // </Button>
+          )} */}
           <Button onClick={openAddDialog} className="bg-orange-500 hover:bg-orange-600">
             <Plus className="h-4 w-4 mr-2" />
             Add Bank Details

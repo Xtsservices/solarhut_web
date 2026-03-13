@@ -213,7 +213,7 @@ export function PackagesPage() {
           <>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h1 className="text-gray-900 mb-1 sm:mb-2">Solar Packages</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Solar Packages</h1>
                 <p className="text-gray-600 text-sm sm:text-base">Manage packages displayed on the website</p>
               </div>
               <div className="flex gap-2">

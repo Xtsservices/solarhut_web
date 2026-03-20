@@ -26,7 +26,7 @@ axiosWithToken.interceptors.request.use((config) => {
   if (token) {
     config.headers = {
       ...config.headers,
-      Authorization: `${token}`, // ✅ Correct template string
+      Authorization: `Bearer ${token}`,
     };
   }
   return config;

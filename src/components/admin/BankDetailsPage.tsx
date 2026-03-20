@@ -6,6 +6,13 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -15,6 +22,7 @@ import {
 } from '../ui/dialog';
 import { toast } from 'sonner';
 import { createBankDetail, getBankDetails, updateBankDetail, deleteBankDetail } from '../../api/api';
+import { apiGet } from '../../api/commonApi';
 
 interface BankDetail {
   id: number;
@@ -35,6 +43,21 @@ interface EmployeePermission {
   email: string;
   role: string;
   hasPermission: boolean;
+}
+
+interface EmployeeBankPermission {
+  id: number;
+  employeeId: number;
+  employeeName: string;
+  employeeRole: string;
+  bankId: number;
+  bankName: string;
+}
+
+interface Role {
+  role_id: number;
+  role_name: string;
+  status: string;
 }
 
 // Mock data for bank details
@@ -213,18 +236,62 @@ export function BankDetailsPage() {
   const [bankDetails, setBankDetails] = useState<BankDetail[]>(mockBankDetails);
   const [selectedBank, setSelectedBank] = useState<number | null>(null);
   const [employees, setEmployees] = useState<EmployeePermission[]>(mockEmployees);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [employeeBankPermissions, setEmployeeBankPermissions] = useState<EmployeeBankPermission[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddPermissionDialogOpen, setIsAddPermissionDialogOpen] = useState(false);
+  const [editingBankPermission, setEditingBankPermission] = useState<EmployeeBankPermission | null>(null);
   const [editingBank, setEditingBank] = useState<BankDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingData, setIsFetchingData] = useState(true);
   const [deletingBankId, setDeletingBankId] = useState<number | null>(null);
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<number[]>([]);
+  const [selectedBankIds, setSelectedBankIds] = useState<number[]>([]);
+  const [selectedRole, setSelectedRole] = useState<string>('');
 
-  // Fetch bank details on component mount
+  // Fetch bank details, roles, and employees on component mount
   useEffect(() => {
     fetchBankDetails();
+    fetchRoles();
+    fetchEmployees();
   }, []);
+
+  const fetchRoles = async () => {
+    try {
+      const response = await apiGet('roles');
+      if (response.status === 200 && response.data?.data) {
+        setRoles(response.data.data);
+      } else {
+        console.error('Failed to fetch roles:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await apiGet('employees/');
+      if (response.status === 200 && response.data?.data) {
+        // Transform API response to match EmployeePermission interface
+        const formattedEmployees: EmployeePermission[] = response.data.data
+          .filter((emp: any) => emp.status === 'Active')
+          .map((emp: any) => ({
+            id: emp.id,
+            name: `${emp.first_name} ${emp.last_name}`,
+            email: emp.email || '',
+            role: emp.role_names_display || 'N/A',
+            hasPermission: false
+          }));
+        setEmployees(formattedEmployees);
+      } else {
+        console.error('Failed to fetch employees:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    }
+  };
 
   const fetchBankDetails = async () => {
     setIsFetchingData(true);
@@ -257,11 +324,13 @@ export function BankDetailsPage() {
       setIsFetchingData(false);
     }
   };
-  const [newPermissionData, setNewPermissionData] = useState({
-    name: '',
-    email: '',
-    role: ''
-  });
+
+  const resetPermissionForm = () => {
+    setSelectedEmployeeIds([]);
+    setSelectedBankIds([]);
+    setSelectedRole('');
+    setEditingBankPermission(null);
+  };
 
   const [formData, setFormData] = useState({
     bankName: '',
@@ -590,27 +659,75 @@ export function BankDetailsPage() {
   };
 
   const handleAddPermission = () => {
-    if (!newPermissionData.name || !newPermissionData.email || !newPermissionData.role) {
-      toast.error('Please fill all required fields');
+    if (selectedEmployeeIds.length === 0 || selectedBankIds.length === 0 || !selectedRole.trim()) {
+      toast.error('Please select an employee, role, and bank');
       return;
     }
 
-    const newEmployee: EmployeePermission = {
-      id: employees.length + 1,
-      name: newPermissionData.name,
-      email: newPermissionData.email,
-      role: newPermissionData.role,
-      hasPermission: false
-    };
+    // Create permission entries for each selected employee-bank combination
+    const newPermissions: EmployeeBankPermission[] = [];
+    let id = Math.max(...employeeBankPermissions.map(p => p.id), 0) + 1;
 
-    setEmployees([...employees, newEmployee]);
+    selectedEmployeeIds.forEach(empId => {
+      const employee = employees.find(e => e.id === empId);
+      selectedBankIds.forEach(bankId => {
+        const bank = bankDetails.find(b => b.id === bankId);
+        if (employee && bank) {
+          newPermissions.push({
+            id: id++,
+            employeeId: empId,
+            employeeName: employee.name,
+            employeeRole: selectedRole,
+            bankId: bankId,
+            bankName: bank.bankName
+          });
+        }
+      });
+    });
+
+    setEmployeeBankPermissions([...employeeBankPermissions, ...newPermissions]);
+    resetPermissionForm();
     setIsAddPermissionDialogOpen(false);
-    setNewPermissionData({ name: '', email: '', role: '' });
-    toast.success('Employee added successfully');
+    toast.success('Employee bank permissions added successfully');
   };
 
-  const resetPermissionForm = () => {
-    setNewPermissionData({ name: '', email: '', role: '' });
+  const handleEditPermission = (permission: EmployeeBankPermission) => {
+    setEditingBankPermission(permission);
+    setSelectedEmployeeIds([permission.employeeId]);
+    setSelectedBankIds([permission.bankId]);
+    setSelectedRole(permission.employeeRole);
+    setIsAddPermissionDialogOpen(true);
+  }
+
+  const handleUpdatePermission = () => {
+    if (!editingBankPermission) return;
+    if (selectedEmployeeIds.length === 0 || selectedBankIds.length === 0 || !selectedRole.trim()) {
+      toast.error('Please select an employee, role, and bank');
+      return;
+    }
+
+    const employee = employees.find(e => e.id === selectedEmployeeIds[0]);
+    const bank = bankDetails.find(b => b.id === selectedBankIds[0]);
+
+    if (employee && bank) {
+      const updatedPermissions = employeeBankPermissions.map(p =>
+        p.id === editingBankPermission.id
+          ? { ...p, employeeId: selectedEmployeeIds[0], employeeName: employee.name, employeeRole: selectedRole, bankId: selectedBankIds[0], bankName: bank.bankName }
+          : p
+      );
+      setEmployeeBankPermissions(updatedPermissions);
+      resetPermissionForm();
+      setIsAddPermissionDialogOpen(false);
+      toast.success('Permission updated successfully');
+    }
+  };
+
+  const handleDeletePermission = (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this permission?')) {
+      return;
+    }
+    setEmployeeBankPermissions(employeeBankPermissions.filter(p => p.id !== id));
+    toast.success('Permission deleted successfully');
   };
 
   return (
@@ -736,73 +853,75 @@ export function BankDetailsPage() {
         </div>
       )}
 
-      {/* Employee Permissions */}
+      {/* Employee Bank Permissions */}
       <Card>
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle>Employee Permissions</CardTitle>
+              <CardTitle>Employee Bank Permissions</CardTitle>
               <p className="text-sm text-gray-500 mt-1">
-                {selectedBank
-                  ? `Select employees who can use ${bankDetails.find(b => b.id === selectedBank)?.bankName} in invoices`
-                  : 'Select a bank above to manage permissions'}
+                Manage which employees can access which bank accounts
               </p>
             </div>
             <Button 
-              onClick={() => setIsAddPermissionDialogOpen(true)}
+              onClick={() => {
+                resetPermissionForm();
+                setIsAddPermissionDialogOpen(true);
+              }}
               className="bg-orange-500 hover:bg-orange-600"
               size="sm"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Employee
+              Add Permission
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300"
-                      disabled={!selectedBank}
-                    />
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Name</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Email</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Role</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employees.map((employee) => (
-                  <tr key={employee.id} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300"
-                        checked={employee.hasPermission}
-                        onChange={() => handleEmployeePermissionToggle(employee.id)}
-                        disabled={!selectedBank}
-                      />
-                    </td>
-                    <td className="py-3 px-4 font-medium text-gray-900">{employee.name}</td>
-                    <td className="py-3 px-4 text-sm text-gray-600">{employee.email}</td>
-                    <td className="py-3 px-4 text-sm text-gray-600">{employee.role}</td>
-                    <td className="py-3 px-4">
-                      {employee.hasPermission ? (
-                        <Badge className="bg-green-100 text-green-700">Permitted</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-gray-500">No Access</Badge>
-                      )}
-                    </td>
+          {employeeBankPermissions.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No permissions assigned yet. Click 'Add Permission' to create one.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Employee Name</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Role</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Bank Name</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {employeeBankPermissions.map((permission) => (
+                    <tr key={permission.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4 font-medium text-gray-900">{permission.employeeName}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{permission.employeeRole}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{permission.bankName}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditPermission(permission)}
+                          >
+                            <Edit className="h-4 w-4 text-blue-500" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeletePermission(permission.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -862,43 +981,109 @@ export function BankDetailsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Permission Dialog */}
+      {/* Add/Edit Permission Dialog */}
       <Dialog open={isAddPermissionDialogOpen} onOpenChange={setIsAddPermissionDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add Employee Permission</DialogTitle>
+            <DialogTitle>{editingBankPermission ? 'Edit' : 'Add New'} Employee Bank Permission</DialogTitle>
             <DialogDescription>
-              Add a new employee to the system and assign permissions
+              Select an employee and a bank to assign permissions
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
+            {/* Role Selection */}
             <div>
-              <Label htmlFor="empName">Employee Name *</Label>
-              <Input
-                id="empName"
-                value={newPermissionData.name}
-                onChange={(e) => setNewPermissionData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter employee name"
-              />
+              <Label htmlFor="role-select" className="text-base font-semibold mb-2 block">Select Role *</Label>
+              <Select 
+                value={selectedRole} 
+                onValueChange={(value) => {
+                  setSelectedRole(value);
+                  setSelectedEmployeeIds([]);
+                }}
+              >
+                <SelectTrigger id="role-select" className="w-full">
+                  <SelectValue placeholder="Choose a role..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.length === 0 ? (
+                    <div className="text-gray-500 text-sm p-2">No roles available</div>
+                  ) : (
+                    roles.map((role) => (
+                      <SelectItem key={role.role_id} value={role.role_name}>
+                        {role.role_name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* Employee Selection Dropdown - Filtered by Role */}
             <div>
-              <Label htmlFor="empEmail">Email Address *</Label>
-              <Input
-                id="empEmail"
-                type="email"
-                value={newPermissionData.email}
-                onChange={(e) => setNewPermissionData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="Enter email address"
-              />
+              <Label htmlFor="employee-select" className="text-base font-semibold mb-2 block">Select Employee *</Label>
+              <Select 
+                value={selectedEmployeeIds[0]?.toString() || ''} 
+                onValueChange={(value) => {
+                  setSelectedEmployeeIds([parseInt(value, 10)]);
+                }}
+                disabled={!selectedRole}
+              >
+                <SelectTrigger id="employee-select" className="w-full">
+                  <SelectValue placeholder={selectedRole ? "Choose an employee..." : "Select a role first..."} />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedRole ? (
+                    employees.filter(emp => emp.role === selectedRole).length === 0 ? (
+                      <div className="text-gray-500 text-sm p-2">No employees with this role</div>
+                    ) : (
+                      employees
+                        .filter(emp => emp.role === selectedRole)
+                        .map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id.toString()}>
+                            <span>{employee.name}</span>
+                          </SelectItem>
+                        ))
+                    )
+                  ) : (
+                    <div className="text-gray-500 text-sm p-2">Select a role first</div>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* Bank Selection */}
             <div>
-              <Label htmlFor="empRole">Role *</Label>
-              <Input
-                id="empRole"
-                value={newPermissionData.role}
-                onChange={(e) => setNewPermissionData(prev => ({ ...prev, role: e.target.value }))}
-                placeholder="Enter employee role"
-              />
+              <Label className="text-base font-semibold mb-2 block">Select Bank *</Label>
+              <div className="border rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto space-y-2">
+                {bankDetails.length === 0 ? (
+                  <p className="text-gray-500 text-sm">No banks available</p>
+                ) : (
+                  bankDetails.map((bank) => (
+                    <div key={bank.id} className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded">
+                      <input
+                        type="checkbox"
+                        id={`bank-${bank.id}`}
+                        checked={selectedBankIds.includes(bank.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedBankIds([bank.id]);
+                          } else {
+                            setSelectedBankIds([]);
+                          }
+                        }}
+                        className="rounded border-gray-300 cursor-pointer"
+                      />
+                      <label htmlFor={`bank-${bank.id}`} className="flex items-center gap-2 cursor-pointer flex-1">
+                        <Building2 className="h-4 w-4 text-orange-500" />
+                        <div>
+                          <p className="font-medium text-gray-900">{bank.bankName}</p>
+                          <p className="text-xs text-gray-500">{bank.accountNumber}</p>
+                        </div>
+                      </label>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -908,8 +1093,11 @@ export function BankDetailsPage() {
             }}>
               Cancel
             </Button>
-            <Button onClick={handleAddPermission} className="bg-orange-500 hover:bg-orange-600">
-              Add Employee
+            <Button 
+              onClick={editingBankPermission ? handleUpdatePermission : handleAddPermission}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              {editingBankPermission ? 'Update Permission' : 'Add Permission'}
             </Button>
           </DialogFooter>
         </DialogContent>

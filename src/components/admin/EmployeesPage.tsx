@@ -45,6 +45,7 @@ import {
 import { toast } from "sonner";
 import { AssignedEnquiries } from "../sales/AssignedEnquiries";
 import { AssignedJobs } from "../field/AssignedJobs";
+import { apiGet, apiPost, apiPut, apiDelete } from "../../api/commonApi";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -429,18 +430,15 @@ export function EmployeesPage() {
       setIsLoading(true);
       console.log("🔍 Fetching roles from:", `${API_BASE_URL}/api/roles`);
 
-      const response = await fetch(`${API_BASE_URL}/api/roles`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await apiGet("roles");
 
       console.log("📡 Response status:", response.status, response.statusText);
 
-      if (!response.ok) {
+      if (response.status !== 200 && response.status !== 201) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
+      const result = response.data;
       console.log("📊 COMPLETE API Response:", JSON.stringify(result, null, 2));
       console.log("📊 Response type:", typeof result);
       console.log("📊 Has success property:", "success" in result);
@@ -569,16 +567,13 @@ export function EmployeesPage() {
       setIsLoadingFeatures(true);
       console.log("🔍 Fetching features from:", `${API_BASE_URL}/api/features`);
 
-      const response = await fetch(`${API_BASE_URL}/api/features`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await apiGet("features");
 
-      if (!response.ok) {
+      if (response.status !== 200 && response.status !== 201) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
+      const result = response.data;
       console.log("📊 Features API Response:", result);
 
       let featuresArray: Feature[] = [];
@@ -605,20 +600,14 @@ export function EmployeesPage() {
   const fetchEmployeesByRole = async (roleId: number | string) => {
     try {
       console.log("🔍 Fetching employees by role ID:", roleId);
-      const response = await fetch(
-        `${API_BASE_URL}/api/employees/role/${roleId}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      const response = await apiGet(`employees/role/${roleId}`);
 
-      if (!response.ok) {
+      if (response.status !== 200 && response.status !== 201) {
         console.log("⚠️ Employees by role API failed:", response.status);
         return [];
       }
 
-      const result = await response.json();
+      const result = response.data;
       console.log("📊 Employees by role API response:", result);
 
       if (result.success && Array.isArray(result.data)) {
@@ -641,28 +630,20 @@ export function EmployeesPage() {
   ) => {
     try {
       console.log("🔄 Assigning roles to employee:", { employeeId, roleIds });
-      const response = await fetch(
-        `${API_BASE_URL}/api/employees/${employeeId}/roles`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            roles: roleIds.map((roleId) => ({ role_id: roleId })),
-          }),
-        },
-      );
+      const response = await apiPost(`employees/${employeeId}/roles`, {
+        roles: roleIds.map((roleId) => ({ role_id: roleId })),
+      });
 
       console.log("📡 Assign roles response status:", response.status);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Assign roles failed:", errorText);
+      if (response.status !== 200 && response.status !== 201) {
+        console.error("❌ Assign roles failed:", response.data);
         throw new Error(
-          `HTTP error! status: ${response.status} - ${errorText}`,
+          response.data?.message || `HTTP error! status: ${response.status}`,
         );
       }
 
-      const result = await response.json();
+      const result = response.data;
       console.log("✅ Assign roles result:", result);
 
       if (result.success) {
@@ -686,13 +667,10 @@ export function EmployeesPage() {
   const fetchEmployeeRoles = async () => {
     try {
       console.log("🔍 Checking for employee roles API...");
-      const response = await fetch(`${API_BASE_URL}/api/employee-roles`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await apiGet("employee-roles");
 
-      if (response.ok) {
-        const result = await response.json();
+      if (response.status === 200 || response.status === 201) {
+        const result = response.data;
         console.log("📊 Employee roles API response:", result);
         return result.data || result || [];
       } else {
@@ -721,10 +699,7 @@ export function EmployeesPage() {
       const employeeRoles = await fetchEmployeeRoles();
       console.log("📊 Employee roles from separate API:", employeeRoles);
 
-      const response = await fetch(`${API_BASE_URL}/api/employees/`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await apiGet("employees/");
 
       console.log(
         "📡 Fetch employees response status:",
@@ -732,13 +707,13 @@ export function EmployeesPage() {
         response.statusText,
       );
 
-      if (!response.ok) {
+      if (response.status !== 200 && response.status !== 201) {
         console.log("⚠️ Employees API not available, using empty array");
         setEmployees([]);
         return;
       }
 
-      const result = await response.json();
+      const result = response.data;
       console.log(
         "📊 COMPLETE EMPLOYEES API Response:",
         JSON.stringify(result, null, 2),
@@ -1738,29 +1713,22 @@ export function EmployeesPage() {
     try {
       if (editMode && editingId) {
         // Update existing employee via API
-        const response = await fetch(
-          `${API_BASE_URL}/api/employees/${editingId}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              first_name: processedFirstName,
-              last_name: processedLastName,
-              email: formData.email,
-              mobile: formData.mobile,
-              address: formData.address,
-              roles: formData.roles,
-              salary: formData.salary ? parseFloat(formData.salary) : null,
-              feature_permissions: formData.feature_permissions,
-            }),
-          },
-        );
+        const response = await apiPut(`employees/${editingId}`, {
+          first_name: processedFirstName,
+          last_name: processedLastName,
+          email: formData.email,
+          mobile: formData.mobile,
+          address: formData.address,
+          roles: formData.roles,
+          salary: formData.salary ? parseFloat(formData.salary) : null,
+          feature_permissions: formData.feature_permissions,
+        });
 
-        if (!response.ok) {
+        if (response.status !== 200 && response.status !== 201) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const result = await response.json();
+        const result = response.data;
 
         if (result.success) {
           // Update local state
@@ -1801,26 +1769,22 @@ export function EmployeesPage() {
         });
 
 
-        const response = await fetch(`${API_BASE_URL}/api/employees`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            first_name: processedFirstName,
-            last_name: processedLastName,
-            email: formData.email,
-            mobile: formData.mobile,
-            address: formData.address,
-            joining_date: formData.joining_date,
-            roles: formData.roles,
-            salary: formData.salary ? parseFloat(formData.salary) : null,
-            feature_permissions: formData.feature_permissions,
-          }),
+        const response = await apiPost("employees", {
+          first_name: processedFirstName,
+          last_name: processedLastName,
+          email: formData.email,
+          mobile: formData.mobile,
+          address: formData.address,
+          joining_date: formData.joining_date,
+          roles: formData.roles,
+          salary: formData.salary ? parseFloat(formData.salary) : null,
+          feature_permissions: formData.feature_permissions,
         });
 
         console.log("📡 Employee creation response status:", response.status);
 
-        if (!response.ok) {
-          const errorData = await response.text();
+        if (response.status !== 200 && response.status !== 201) {
+          const errorData = response.data;
           console.log("❌ Employee creation failed:", errorData);
           toast.error(
             errorData?.errors ||
@@ -1845,7 +1809,7 @@ export function EmployeesPage() {
           return;
         }
 
-        const result = await response.json();
+        const result = response.data;
         console.log("📊 Employee creation result:", result);
 
         if (result.success) {
@@ -1946,19 +1910,13 @@ export function EmployeesPage() {
     if (!employeeToDelete) return;
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/employees/${employeeToDelete.id}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      const response = await apiDelete(`employees/${employeeToDelete.id}`);
 
-      if (!response.ok) {
+      if (response.status !== 200 && response.status !== 201) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
+      const result = response.data;
 
       if (result.success) {
         // Remove from local state
@@ -2040,36 +1998,25 @@ export function EmployeesPage() {
     setIsCreatingRole(true);
 
     try {
-      const createRoleUrl = `${API_BASE_URL}/api/roles`;
+      const createRoleUrl = `roles`;
       const requestBody = { role_name: capitalizedRole };
 
       console.log("🚀 Creating role with:", {
         url: createRoleUrl,
         body: requestBody,
-        apiBaseUrl: API_BASE_URL,
         headers: { "Content-Type": "application/json" },
       });
 
-      // First test if the server is reachable
-      console.log("🔍 Testing server connectivity...");
-
-      const response = await fetch(createRoleUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await apiPost(createRoleUrl, requestBody);
 
       console.log("📡 Create role response:", {
         status: response.status,
         statusText: response.statusText,
-        ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries()),
+        ok: response.status === 200 || response.status === 201,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
+      if (response.status !== 200 && response.status !== 201) {
+        const errorText = response.data?.message || response.data?.error || "Unknown error";
         console.error("❌ Create role failed:", {
           status: response.status,
           statusText: response.statusText,
@@ -2098,7 +2045,7 @@ export function EmployeesPage() {
         }
       }
 
-      const result = await response.json();
+      const result = response.data;
       console.log("📊 Create role result:", result);
 
       // Handle different possible response formats
@@ -2209,117 +2156,21 @@ export function EmployeesPage() {
         roleIdType: typeof roleId,
       });
 
-      let response: Response | undefined;
-      let deleteAttempted = false;
+      // Try DELETE with role name in URL (most common pattern)
+      const deleteUrl = `roles/${encodeURIComponent(roleName)}`;
+      console.log("🔄 Attempting DELETE with role name in URL:", deleteUrl);
 
-      // Method 1: Try DELETE with role name in URL (most common pattern)
-      try {
-        const deleteUrl = `${API_BASE_URL}/api/roles/${encodeURIComponent(roleName)}`;
-        console.log("🔄 Trying Method 1 - DELETE by name in URL:", deleteUrl);
+      const response = await apiDelete(deleteUrl);
 
-        response = await fetch(deleteUrl, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        });
+      console.log(
+        "📡 Delete response:",
+        response.status,
+        response.statusText,
+      );
 
-        console.log(
-          "📡 Method 1 response:",
-          response.status,
-          response.statusText,
-        );
-        deleteAttempted = true;
-
-        if (response.ok) {
-          console.log("✅ Method 1 succeeded");
-        } else {
-          throw new Error("Method 1 failed");
-        }
-      } catch (error) {
-        console.log("❌ Method 1 failed:", error);
-
-        // Method 2: Try DELETE with role name in request body
-        try {
-          console.log("🔄 Trying Method 2 - DELETE with role name in body");
-          response = await fetch(`${API_BASE_URL}/api/roles`, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role_name: roleName }),
-          });
-
-          console.log(
-            "📡 Method 2 response:",
-            response.status,
-            response.statusText,
-          );
-          deleteAttempted = true;
-
-          if (response.ok) {
-            console.log("✅ Method 2 succeeded");
-          } else {
-            throw new Error("Method 2 failed");
-          }
-        } catch (error2) {
-          console.log("❌ Method 2 failed:", error2);
-
-          // Method 3: Try with roleId if it exists and is valid
-          if (roleId && typeof roleId === "number") {
-            try {
-              console.log("🔄 Trying Method 3 - DELETE by ID");
-              response = await fetch(`${API_BASE_URL}/api/roles/${roleId}`, {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-              });
-
-              console.log(
-                "📡 Method 3 response:",
-                response.status,
-                response.statusText,
-              );
-              deleteAttempted = true;
-
-              if (!response.ok) {
-                throw new Error("Method 3 failed");
-              }
-              console.log("✅ Method 3 succeeded");
-            } catch (error3) {
-              console.log("❌ Method 3 failed:", error3);
-              throw new Error(
-                `All delete methods failed for role: ${roleName}`,
-              );
-            }
-          } else {
-            throw new Error(
-              `All available delete methods failed for role: ${roleName}`,
-            );
-          }
-        }
-      }
-
-      if (!deleteAttempted || !response || !response.ok) {
-        // Try to get the error message from the response
-        let errorMessage = `Failed to delete role: ${roleName}`;
-
-        if (response) {
-          try {
-            const errorData = await response.text();
-            console.log("🔍 Error response body:", errorData);
-
-            // Check if it's a JSON error message
-            try {
-              const parsedError = JSON.parse(errorData);
-              errorMessage =
-                parsedError.message || parsedError.error || errorMessage;
-            } catch {
-              // If not JSON, use the text directly (removing quotes)
-              if (errorData && errorData.length > 0) {
-                errorMessage = errorData.replace(/^"|"$/g, ""); // Remove surrounding quotes
-              }
-            }
-          } catch (parseError) {
-            console.log("Could not parse error response:", parseError);
-          }
-        }
-
+      if (response.status !== 200 && response.status !== 201) {
+        const errorMessage =
+          response.data?.message || response.data?.error || `Failed to delete role: ${roleName}`;
         throw new Error(errorMessage);
       }
 

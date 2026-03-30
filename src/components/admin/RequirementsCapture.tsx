@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
@@ -11,15 +12,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "../ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,10 +20,9 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, Search, Loader, Edit2, X, Download, ChevronDown, Trash2 } from "lucide-react";
-import { createEstimation, getEstimations, updateEstimation, deleteEstimation, createInvoice, createTaxInvoice } from "../../api";
-import { getInverterTypes, getProductDescriptions, getStructures } from "../../api/api";
-import { solarPanelOptions, inverterOptions, structureOptions, gstOptions } from "../../lib/solarOptions";
+import { Plus, Search, Loader, Edit2, Download, ChevronDown, Trash2 } from "lucide-react";
+import { getEstimations, deleteEstimation, createInvoice, createTaxInvoice, getRunningEstimations, getPendingEstimations, getWaitingApprovalEstimations, getCompletedEstimations, convertEstimationToJob } from "../../api";
+import { gstOptions } from "../../lib/solarOptions";
 
 // Add this type declaration at the top of your file (or in a global .d.ts file)
 interface ImportMetaEnv {
@@ -72,53 +64,39 @@ interface Requirement {
 }
 
 export function RequirementsCapture() {
+  const navigate = useNavigate();
   const [requirements, setRequirements] = useState<Requirement[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [runningEstimations, setRunningEstimations] = useState<Requirement[]>([]);
+  const [pendingEstimations, setPendingEstimations] = useState<Requirement[]>([]);
+  const [waitingApprovalEstimations, setWaitingApprovalEstimations] = useState<Requirement[]>([]);
+  const [completedEstimations, setCompletedEstimations] = useState<Requirement[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
-  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [generateTarget, setGenerateTarget] = useState<Requirement | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateForm, setGenerateForm] = useState<{ amount: number; productDescription: string }>({ amount: 0, productDescription: '' });
   const [isTaxDialogOpen, setIsTaxDialogOpen] = useState(false);
-const [taxTarget, setTaxTarget] = useState<Requirement | null>(null);
-const [isTaxGenerating, setIsTaxGenerating] = useState(false);
+  const [taxTarget, setTaxTarget] = useState<Requirement | null>(null);
+  const [isTaxGenerating, setIsTaxGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [inverterTypes, setInverterTypes] = useState<Array<{ id: number; name: string }>>([]);
-  const [isLoadingInverters, setIsLoadingInverters] = useState(false);
-  const [productDescriptions, setProductDescriptions] = useState<Array<{ id: number; name: string }>>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
-  const [structures, setStructures] = useState<Array<{ id: number; name: string }>>([]);
-  const [isLoadingStructures, setIsLoadingStructures] = useState(false);
+
+  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
+  const [selectedEstimationForConvert, setSelectedEstimationForConvert] = useState<Requirement | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertForm, setConvertForm] = useState<{ job_code_override: string }>({ job_code_override: '' });
 
   const [taxForm, setTaxForm] = useState<{
-  amount: number;
-  product_description: string;
-  gst_percentage: number;
-}>({
-  amount: 0,
-  product_description: '',
-  gst_percentage: 0,
-});
-  // Form states
-  const [formData, setFormData] = useState<Requirement>({
-    customerName: "",
-    doorNo: "",
-    area: "",
-    city: "",
-    district: "",
-    state: "",
-    pincode: "",
-    mobile: "",
-    capacityKw: "",
+    amount: number;
+    product_description: string;
+    gst_percentage: number;
+  }>({
     amount: 0,
-    gstPercentage: 0,
-    productDescription: "",
-    structure: "",
+    product_description: '',
+    gst_percentage: 0,
   });
 
   // Fetch estimations on component mount
@@ -164,119 +142,197 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
     fetchEstimations();
   }, []);
 
-  // Fetch inverter types, product descriptions, and structures on component mount
   useEffect(() => {
-    let isMounted = true;
-
-    const loadDataAsync = async () => {
+    const fetchRunningEstimations = async () => {
       try {
-        const token = localStorage.getItem('authToken');
-
-        // Fetch all three in parallel
-        const [invertersResponse, productsResponse, structuresResponse] = await Promise.all([
-          getInverterTypes(token || undefined),
-          getProductDescriptions(token || undefined),
-          getStructures(token || undefined)
-        ]);
-
-        if (isMounted) {
-          // Handle inverter types
-          if (invertersResponse.ok && Array.isArray(invertersResponse.data)) {
-            setInverterTypes(invertersResponse.data);
-            console.log('Inverter types loaded successfully:', invertersResponse.data);
-          } else {
-            console.warn('Failed to fetch inverter types:', invertersResponse.error);
-            // Fallback to mock data
-            setInverterTypes(
-              inverterOptions.map((name, idx) => ({ id: idx + 1, name }))
-            );
-          }
-          setIsLoadingInverters(false);
-
-          // Handle product descriptions
-          if (productsResponse.ok && Array.isArray(productsResponse.data)) {
-            setProductDescriptions(productsResponse.data);
-            console.log('Product descriptions loaded successfully:', productsResponse.data);
-          } else {
-            console.warn('Failed to fetch product descriptions:', productsResponse.error);
-            // Fallback to mock data
-            setProductDescriptions(
-              solarPanelOptions.map((name, idx) => ({ id: idx + 1, name }))
-            );
-          }
-          setIsLoadingProducts(false);
-
-          // Handle structures
-          if (structuresResponse.ok && Array.isArray(structuresResponse.data)) {
-            setStructures(structuresResponse.data);
-            console.log('Structures loaded successfully:', structuresResponse.data);
-          } else {
-            console.warn('Failed to fetch structures:', structuresResponse.error);
-            // Fallback to mock data
-            setStructures(
-              structureOptions.map((name, idx) => ({ id: idx + 1, name }))
-            );
-          }
-          setIsLoadingStructures(false);
+        const response = await getRunningEstimations();
+        
+        if (response.ok && response.data) {
+          // Convert API response to component format
+          const formattedRunningEstimations = Array.isArray(response.data.data) 
+            ? response.data.data.map((item: any) => ({
+                id: item.id,
+                customerName: item.customer_name,
+                doorNo: item.door_no,
+                area: item.area,
+                city: item.city,
+                district: item.district,
+                state: item.state,
+                pincode: item.pincode,
+                mobile: item.mobile,
+                capacityKw: item.requested_watts,
+                amount: parseFloat(item.amount) || 0,
+                gstPercentage: parseFloat(item.gst) || 0,
+                productDescription: item.product_description,
+                structure: item.structure,
+                createdAt: item.created_at,
+                status: item.status,
+              }))
+            : [];
+          setRunningEstimations(formattedRunningEstimations);
+        } else {
+          console.warn("Failed to fetch running estimations:", response.error);
         }
       } catch (error) {
-        console.error('Error loading data:', error);
-        if (isMounted) {
-          // Fallback to mock data
-          setInverterTypes(
-            inverterOptions.map((name, idx) => ({ id: idx + 1, name }))
-          );
-          setProductDescriptions(
-            solarPanelOptions.map((name, idx) => ({ id: idx + 1, name }))
-          );
-          setStructures(
-            structureOptions.map((name, idx) => ({ id: idx + 1, name }))
-          );
-          setIsLoadingInverters(false);
-          setIsLoadingProducts(false);
-          setIsLoadingStructures(false);
-        }
+        console.error("Error fetching running estimations:", error);
       }
     };
 
-    setIsLoadingInverters(true);
-    setIsLoadingProducts(true);
-    setIsLoadingStructures(true);
-    loadDataAsync();
-
-    return () => {
-      isMounted = false;
-    };
+    fetchRunningEstimations();
   }, []);
-   const handleTaxInvoiceSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!taxTarget) return;
 
-  setIsTaxGenerating(true);
-  try {
-    const payload = {
-      estimationId: taxTarget.id,
-      amount: taxForm.amount,
-      product_description: taxForm.product_description,
-      gst_percentage: taxForm.gst_percentage,
+  useEffect(() => {
+    const fetchPendingEstimations = async () => {
+      try {
+        const response = await getPendingEstimations();
+        
+        if (response.ok && response.data) {
+          // Convert API response to component format
+          const formattedPendingEstimations = Array.isArray(response.data.data) 
+            ? response.data.data.map((item: any) => ({
+                id: item.id,
+                customerName: item.customer_name,
+                doorNo: item.door_no,
+                area: item.area,
+                city: item.city,
+                district: item.district,
+                state: item.state,
+                pincode: item.pincode,
+                mobile: item.mobile,
+                capacityKw: item.requested_watts,
+                amount: parseFloat(item.amount) || 0,
+                gstPercentage: parseFloat(item.gst) || 0,
+                productDescription: item.product_description,
+                structure: item.structure,
+                createdAt: item.created_at,
+                status: item.status,
+              }))
+            : [];
+          setPendingEstimations(formattedPendingEstimations);
+        } else {
+          console.warn("Failed to fetch pending estimations:", response.error);
+        }
+      } catch (error) {
+        console.error("Error fetching pending estimations:", error);
+      }
     };
 
-    const resp = await createTaxInvoice(payload);
+    fetchPendingEstimations();
+  }, []);
 
-    if (resp.ok) {
-      toast.success('Tax Invoice generated successfully');
-      setIsTaxDialogOpen(false);
-      setTaxTarget(null);
-    } else {
-      toast.error(resp.error || 'Failed to generate tax invoice');
+  useEffect(() => {
+    const fetchWaitingApprovalEstimations = async () => {
+      try {
+        const response = await getWaitingApprovalEstimations();
+        
+        if (response.ok && response.data) {
+          const formattedData = Array.isArray(response.data.data) 
+            ? response.data.data.map((item: any) => ({
+                id: item.id,
+                customerName: item.customer_name,
+                doorNo: item.door_no,
+                area: item.area,
+                city: item.city,
+                district: item.district,
+                state: item.state,
+                pincode: item.pincode,
+                mobile: item.mobile,
+                capacityKw: item.requested_watts,
+                amount: parseFloat(item.amount) || 0,
+                gstPercentage: parseFloat(item.gst) || 0,
+                productDescription: item.product_description,
+                structure: item.structure,
+                createdAt: item.created_at,
+                status: item.status,
+              }))
+            : [];
+          setWaitingApprovalEstimations(formattedData);
+        } else {
+          console.warn("Failed to fetch waiting approval estimations:", response.error);
+        }
+      } catch (error) {
+        console.error("Error fetching waiting approval estimations:", error);
+      }
+    };
+
+    fetchWaitingApprovalEstimations();
+  }, []);
+
+  useEffect(() => {
+    const fetchCompletedEstimations = async () => {
+      try {
+        const response = await getCompletedEstimations();
+        
+        if (response.ok && response.data) {
+          const formattedData = Array.isArray(response.data.data) 
+            ? response.data.data.map((item: any) => ({
+                id: item.id,
+                customerName: item.customer_name,
+                doorNo: item.door_no,
+                area: item.area,
+                city: item.city,
+                district: item.district,
+                state: item.state,
+                pincode: item.pincode,
+                mobile: item.mobile,
+                capacityKw: item.requested_watts,
+                amount: parseFloat(item.amount) || 0,
+                gstPercentage: parseFloat(item.gst) || 0,
+                productDescription: item.product_description,
+                structure: item.structure,
+                createdAt: item.created_at,
+                status: item.status,
+              }))
+            : [];
+          setCompletedEstimations(formattedData);
+        } else {
+          console.warn("Failed to fetch completed estimations:", response.error);
+        }
+      } catch (error) {
+        console.error("Error fetching completed estimations:", error);
+      }
+    };
+
+    fetchCompletedEstimations();
+  }, []);
+
+
+  const openTaxInvoiceDialog = (req: Requirement) => {
+    setTaxTarget(req);
+    setTaxForm({
+      amount: req.amount || 0,
+      product_description: req.productDescription || req.product_description || '',
+      gst_percentage: req.gstPercentage || req.gst || 0,
+    });
+    setIsTaxDialogOpen(true);
+  };
+
+  const handleConvertToJob = useCallback(async () => {
+    if (!selectedEstimationForConvert || !selectedEstimationForConvert.id) return;
+    
+    try {
+      setIsConverting(true);
+      const response = await convertEstimationToJob(
+        selectedEstimationForConvert.id,
+        convertForm.job_code_override || undefined
+      );
+      
+      if (response.ok) {
+        toast.success(`Job created successfully! Job ID: ${response.data?.data?.job?.id || 'N/A'}`);
+        setIsConvertDialogOpen(false);
+        setSelectedEstimationForConvert(null);
+        setConvertForm({ job_code_override: '' });
+        // Optionally refresh the estimations lists
+      } else {
+        toast.error(response.error || 'Failed to convert estimation to job');
+      }
+    } catch (error) {
+      console.error('Error converting estimation to job:', error);
+      toast.error('Error converting estimation to job');
+    } finally {
+      setIsConverting(false);
     }
-  } catch (err) {
-    console.error('Tax invoice error', err);
-    toast.error('Failed to generate tax invoice');
-  } finally {
-    setIsTaxGenerating(false);
-  }
-};
+  }, [selectedEstimationForConvert, convertForm]);
 
   const states = [
     "Andhra Pradesh",
@@ -385,56 +441,6 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
     Others: ["Other District"],
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === "amount" || name === "gstPercentage"
-          ? parseFloat(value) || 0
-          : value,
-    }));
-  };
-  const openTaxInvoiceDialog = (req: Requirement) => {
-  setTaxTarget(req);
-  setTaxForm({
-    amount: req.amount || 0,
-    product_description: req.productDescription || req.product_description || '',
-    gst_percentage: req.gstPercentage || req.gst || 0,
-  });
-  setIsTaxDialogOpen(true);
-};
-
-
-  const handleSelectChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleEditClick = (requirement: Requirement) => {
-    setEditingId(requirement.id || null);
-    setFormData({
-      customerName: requirement.customerName || requirement.customer_name || "",
-      doorNo: requirement.doorNo || requirement.door_no || "",
-      area: requirement.area || "",
-      city: requirement.city || "",
-      district: requirement.district || "",
-      state: requirement.state || "",
-      pincode: requirement.pincode || "",
-      mobile: requirement.mobile || "",
-      capacityKw: requirement.capacityKw || 0,
-      amount: requirement.amount || 0,
-      gstPercentage: requirement.gstPercentage || requirement.gst || 0,
-      productDescription: requirement.productDescription || requirement.product_description || "",
-      structure: requirement.structure || "",
-    });
-    setIsDialogOpen(true);
-  };
-
   const openGenerateDialog = (requirement: Requirement) => {
     setGenerateTarget(requirement);
     setGenerateForm({ amount: requirement.amount || 0, productDescription: requirement.productDescription || requirement.product_description || '' });
@@ -494,24 +500,57 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
     }
   };
 
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setFormData({
-      customerName: "",
-      doorNo: "",
-      area: "",
-      city: "",
-      district: "",
-      state: "",
-      pincode: "",
-      mobile: "",
-      capacityKw: "",
-      amount: 0,
-      gstPercentage: 0,
-      productDescription: "",
-      structure: "",
-    });
-    setIsDialogOpen(false);
+  const handleTaxInvoiceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!taxTarget) return;
+    setIsTaxGenerating(true);
+    try {
+      const payload = {
+        estimationId: taxTarget.id!,
+        amount: taxForm.amount,
+        product_description: taxForm.product_description,
+        gst_percentage: taxForm.gst_percentage,
+      };
+
+      const resp = await createTaxInvoice(payload);
+      if (resp.ok) {
+        toast.success('Tax Invoice generated successfully');
+        // refresh list
+        const refreshResponse = await getEstimations();
+        if (refreshResponse.ok && refreshResponse.data) {
+          const formattedRequirements = Array.isArray(refreshResponse.data.data)
+            ? refreshResponse.data.data.map((item: any) => ({
+                id: item.id,
+                customerName: item.customer_name,
+                doorNo: item.door_no,
+                area: item.area,
+                city: item.city,
+                district: item.district,
+                state: item.state,
+                pincode: item.pincode,
+                mobile: item.mobile,
+                capacityKw: item.requested_watts,
+                amount: parseFloat(item.amount) || 0,
+                gstPercentage: parseFloat(item.gst) || 0,
+                productDescription: item.product_description,
+                structure: item.structure,
+                createdAt: item.created_at,
+                status: item.status,
+              }))
+            : [];
+          setRequirements(formattedRequirements);
+        }
+        setIsTaxDialogOpen(false);
+        setTaxTarget(null);
+      } else {
+        toast.error(resp.error || 'Failed to create tax invoice');
+      }
+    } catch (err) {
+      console.error('Tax invoice creation error', err);
+      toast.error('Failed to create tax invoice');
+    } finally {
+      setIsTaxGenerating(false);
+    }
   };
 
   const handleDownload = async (requirement: Requirement) => {
@@ -587,7 +626,7 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
 
     setIsLoading(true);
     try {
-      const response = await deleteEstimation(requirement.id);
+      const response = await deleteEstimation(requirement.id!);
 
       if (response.ok) {
         // Remove from state
@@ -603,235 +642,6 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
     } catch (error) {
       console.error("Error deleting requirement:", error);
       toast.error("An error occurred while deleting the requirement");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const validateForm = (): boolean => {
-    if (!formData.customerName?.trim()) {
-      toast.error("Customer name is required");
-      return false;
-    }
-    if (!formData?.mobile?.trim()) {
-      toast.error("Mobile number is required");
-      return false;
-    }
-    if (!/^\d{10}$/.test(formData.mobile)) {
-      toast.error("Please enter a valid 10-digit mobile number");
-      return false;
-    }
-    if (!formData.doorNo?.trim()) {
-      toast.error("Door No / House No is required");
-      return false;
-    }
-    if (!formData.area?.trim()) {
-      toast.error("Area / Street Name is required");
-      return false;
-    }
-    if (!formData.city?.trim()) {
-      toast.error("City is required");
-      return false;
-    }
-    if (!formData.district) {
-      toast.error("District is required");
-      return false;
-    }
-    if (!formData.state) {
-      toast.error("State is required");
-      return false;
-    }
-    if (!formData.pincode?.trim()) {
-      toast.error("Pincode is required");
-      return false;
-    }
-    if (!formData.capacityKw || formData.capacityKw.toString().trim() === "") {
-      toast.error("Capacity Required (kW) is required");
-      return false;
-    }
-    if (!formData.productDescription?.trim()) {
-      toast.error("Product Description is required");
-      return false;
-    }
-    if (!formData.structure?.trim()) {
-      toast.error("Structure is required");
-      return false;
-    }
-    if (!formData.amount || formData.amount <= 0) {
-      toast.error("Estimated Amount is required and must be greater than 0");
-      return false;
-    }
-    if (!formData.gstPercentage || formData.gstPercentage < 0 || formData.gstPercentage > 100) {
-      toast.error("GST percentage is required and must be between 0 and 100");
-      return false;
-    }
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    try {
-      setIsLoading(true);
-
-      if (editingId) {
-        // EDIT MODE - Update existing requirement
-        try {
-          console.log("Updating requirement:", editingId, formData);
-          
-          const apiPayload = {
-            customer_name: formData.customerName,
-            door_no: formData.doorNo,
-            area: formData.area,
-            city: formData.city,
-            district: formData.district,
-            state: formData.state,
-            pincode: formData.pincode,
-            mobile: formData.mobile,
-            product_description: formData.productDescription,
-            requested_watts: formData.capacityKw,
-            gst: formData.gstPercentage,
-            amount: formData.amount,
-           
-          };
-          
-         
-
-          const response = await updateEstimation(editingId, apiPayload);
-          console.log("Update Response:", response);
-
-          if (response.ok) {
-            toast.success("Requirement updated successfully!");
-            // Refresh the requirements list
-            const refreshResponse = await getEstimations();
-            if (refreshResponse.ok && refreshResponse.data) {
-              const formattedRequirements = Array.isArray(refreshResponse.data.data) 
-                ? refreshResponse.data.data.map((item: any) => ({
-                    id: item.id,
-                    customerName: item.customer_name,
-                    doorNo: item.door_no,
-                    area: item.area,
-                    city: item.city,
-                    district: item.district,
-                    state: item.state,
-                    pincode: item.pincode,
-                    mobile: item.mobile,
-                    capacityKw: item.requested_watts,
-                    amount: parseFloat(item.amount) || 0,
-                    gstPercentage: parseFloat(item.gst) || 0,
-                    productDescription: item.product_description,
-                    structure: item.structure,
-                    createdAt: item.created_at,
-                    status: item.status,
-                  }))
-                : [];
-              setRequirements(formattedRequirements);
-            }
-          } else {
-            console.warn("API update warning:", response.error);
-            toast.error("Failed to update requirement");
-          }
-        } catch (apiError) {
-          console.error("API error during update:", apiError);
-          toast.error("Error updating requirement");
-        }
-      } else {
-        // CREATE MODE - Add new requirement
-        // Save to state first
-        const newRequirement: Requirement = {
-          ...formData,
-          id: Date.now().toString(),
-          createdAt: new Date().toISOString(),
-        };
-
-        setRequirements((prev) => [newRequirement, ...prev]);
-       
-
-        // Try to save to API
-        try {
-          console.log("Saving requirement to API:", formData);
-          
-          // Transform data to match API payload format
-          const apiPayload = {
-            customer_name: formData.customerName,
-            door_no: formData.doorNo,
-            area: formData.area,
-            city: formData.city,
-            district: formData.district,
-            state: formData.state,
-            pincode: formData.pincode,
-            mobile: formData.mobile,
-            product_description: formData.productDescription,
-            requested_watts: formData.capacityKw ,
-            gst: formData.gstPercentage,
-            amount: formData.amount,
-             structure: formData.structure,
-          };
-          
-          
-          const response = await createEstimation(apiPayload);
-
-          if (response.ok) {
-            toast.success("Requirements captured successfully!");
-            // Refresh the requirements list
-            const refreshResponse = await getEstimations();
-            if (refreshResponse.ok && refreshResponse.data) {
-              const formattedRequirements = Array.isArray(refreshResponse.data.data) 
-                ? refreshResponse.data.data.map((item: any) => ({
-                    id: item.id,
-                    customerName: item.customer_name,
-                    doorNo: item.door_no,
-                    area: item.area,
-                    city: item.city,
-                    district: item.district,
-                    state: item.state,
-                    pincode: item.pincode,
-                    mobile: item.mobile,
-                    capacityKw: item.requested_watts ,
-                    amount: parseFloat(item.amount) || 0,
-                    gstPercentage: parseFloat(item.gst) || 0,
-                    productDescription: item.product_description,
-                    structure: item.structure,
-                    createdAt: item.created_at,
-                    status: item.status,
-                  }))
-                : [];
-              setRequirements(formattedRequirements);
-            }
-          } else {
-            console.warn("API save warning:", response.error);
-            toast.success("Requirements captured (local save)");
-          }
-        } catch (apiError) {
-          console.warn("API error, but requirement saved locally:", apiError);
-          toast.success("Requirements captured (local save)");
-        }
-      }
-
-      // Reset form
-      setFormData({
-        customerName: "",
-        doorNo: "",
-        area: "",
-        city: "",
-        district: "",
-        state: "",
-        pincode: "",
-        mobile: "",
-        capacityKw: "",
-        amount: 0,
-        gstPercentage: 0,
-        productDescription: "",
-        structure: "",
-      });
-
-      setEditingId(null);
-      setIsDialogOpen(false);
-    } catch (error) {
-      console.error("Error saving requirement:", error);
-      toast.error("Failed to save requirement");
     } finally {
       setIsLoading(false);
     }
@@ -887,355 +697,13 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
             Capture customer solar requirements
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 bg-orange-500 hover:bg-orange-600 text-white cursor-pointer">
-              <Plus className="h-4 w-4" />
-              New Requirement
-            </Button>
-          </DialogTrigger>
-          <DialogContent
-            style={{
-              width: "90vw",
-              maxWidth: "90vw",
-              minWidth: "90vw",
-              maxHeight: "98vh",
-              overflowY: "auto",
-              margin: "0 auto",
-              padding: "16px",
-            }}
-          >
-            <DialogHeader className="pb-1">
-              <div className="flex justify-between items-center w-full">
-                <div>
-                  <DialogTitle>
-                    {editingId ? "Edit Requirement" : "Capture Customer Requirements"}
-                  </DialogTitle>
-                  <DialogDescription className="text-xs">
-                    {editingId 
-                      ? "Update the customer details and solar capacity requirements"
-                      : "Enter the customer details and solar capacity requirements"}
-                  </DialogDescription>
-                </div>
-                {editingId && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCancelEdit}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {/* Customer Information Section */}
-              <div className="space-y-1">
-                <h3 className="font-semibold text-sm text-blue-600">
-                  Customer Information
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="customerName" className="text-xs text-black">Customer Name *</Label>
-                    <Input
-                      id="customerName"
-                      name="customerName"
-                      placeholder="Enter customer name"
-                      value={formData.customerName}
-                      onChange={handleInputChange}
-                      required
-                      className="h-8"
-                    />
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Label htmlFor="mobile" className="text-xs text-black">Mobile Number *</Label>
-                    <Input
-                      id="mobile"
-                      name="mobile"
-                      placeholder="Enter 10-digit mobile number"
-                      value={formData.mobile}
-                      onChange={handleInputChange}
-                      maxLength={10}
-                      required
-                      className="h-8"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Address Information Section */}
-              <div className="space-y-1">
-                <h3 className="font-semibold text-sm text-blue-600">
-                  Address Information
-                </h3>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="doorNo" className="text-xs text-black">Door No / House No *</Label>
-                    <Input
-                      id="doorNo"
-                      name="doorNo"
-                      placeholder="E.g., 45-B"
-                      value={formData.doorNo}
-                      onChange={handleInputChange}
-                      className="h-8"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Label htmlFor="area" className="text-xs text-black">Area / Street Name *</Label>
-                    <Input
-                      id="area"
-                      name="area"
-                      placeholder="E.g., Lakshmi Nagar"
-                      value={formData.area}
-                      onChange={handleInputChange}
-                      className="h-8"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Label htmlFor="state" className="text-xs text-black">State *</Label>
-                    <Select
-                      value={formData.state}
-                      onValueChange={(value) => {
-                        handleSelectChange("state", value);
-                        handleSelectChange("district", "");
-                      }}
-                    >
-                      <SelectTrigger id="state" className="h-8">
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {states.map((state) => (
-                          <SelectItem key={state} value={state}>
-                            {state}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Label htmlFor="district" className="text-xs text-black">District *</Label>
-                    <Select
-                      value={formData.district}
-                      onValueChange={(value) =>
-                        handleSelectChange("district", value)
-                      }
-                      disabled={!formData.state}
-                    >
-                      <SelectTrigger id="district" className="h-8">
-                        <SelectValue placeholder="Select district" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formData.state &&
-                          districts[formData.state]?.map((district) => (
-                            <SelectItem key={district} value={district}>
-                              {district}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Label htmlFor="city" className="text-xs text-black">City *</Label>
-                    <Input
-                      id="city"
-                      name="city"
-                      placeholder="Enter city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      required
-                      className="h-8"
-                    />
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Label htmlFor="pincode" className="text-xs text-black">Pincode *</Label>
-                    <Input
-                      id="pincode"
-                      name="pincode"
-                      placeholder="6-digit pincode"
-                      value={formData.pincode}
-                      onChange={handleInputChange}
-                      maxLength={6}
-                      required
-                      className="h-8"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Solar Capacity Section */}
-              <div className="space-y-1">
-                <h3 className="font-semibold text-sm text-blue-600">
-                  Solar Capacity Requirement
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="capacityKw" className="text-xs text-black">Inverter type *</Label>
-                    <Select
-                      value={formData.capacityKw?.toString() || ""}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, capacityKw: value }))}
-                      disabled={isLoadingInverters}
-                    >
-                      <SelectTrigger id="capacityKw" className="h-8">
-                        <SelectValue placeholder={isLoadingInverters ? "Loading..." : "Select inverter type"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {inverterTypes.length > 0 ? (
-                          inverterTypes.map((inverter) => (
-                            <SelectItem key={inverter.id} value={inverter.name}>
-                              {inverter.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          inverterOptions.map((option) => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Label htmlFor="productDescription" className="text-xs text-black">Product Description (KW) *</Label>
-                    <Select
-                      value={formData.productDescription || ""}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, productDescription: value }))}
-                      disabled={isLoadingProducts}
-                    >
-                      <SelectTrigger id="productDescription" className="h-8">
-                        <SelectValue placeholder={isLoadingProducts ? "Loading..." : "Select solar panel product"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {productDescriptions.length > 0 ? (
-                          productDescriptions.map((product) => (
-                            <SelectItem key={product.id} value={product.name}>
-                              {product.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          solarPanelOptions.map((option) => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Label htmlFor="structure" className="text-xs text-black">Structure *</Label>
-                    <Select
-                      value={formData.structure || ""}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, structure: value }))}
-                      disabled={isLoadingStructures}
-                    >
-                      <SelectTrigger id="structure" className="h-8">
-                        <SelectValue placeholder={isLoadingStructures ? "Loading..." : "Select structure type"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {structures.length > 0 ? (
-                          structures.map((struct) => (
-                            <SelectItem key={struct.id} value={struct.name}>
-                              {struct.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          structureOptions.map((option) => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Amount and GST Section */}
-              <div className="space-y-1">
-                <h3 className="font-semibold text-sm text-blue-600">
-                  Quotation Details
-                </h3>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="amount" className="text-xs text-black">Total Amount (₹) (Inclusive of GST) *</Label>
-                    <Input
-                      id="amount"
-                      name="amount"
-                      type="number"
-                      placeholder="Enter total amount inclusive of GST"
-                      value={formData.amount || ""}
-                      onChange={handleInputChange}
-                      step="0.01"
-                      min="0"
-                      required
-                      className="h-8"
-                    />
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Label htmlFor="gstPercentage" className="text-xs text-black">GST Percentage (%) *</Label>
-                    <Select
-                      value={formData.gstPercentage?.toString() || ""}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, gstPercentage: parseFloat(value) }))}
-                    >
-                      <SelectTrigger id="gstPercentage" className="h-8">
-                        <SelectValue placeholder="Select GST %" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {gstOptions.map((option) => (
-                          <SelectItem key={option} value={option.toString()}>{option}%</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {formData.amount && formData.amount > 0 && formData.gstPercentage && formData.gstPercentage > 0 && (
-                    <div className="bg-blue-50 p-2 rounded-md border border-blue-200">
-                      <p className="text-xs font-semibold text-blue-900">
-                        Total (Inclusive of GST): ₹{formData.amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                      </p>
-                      <p className="text-xs text-blue-800">
-                        Base Amount: ₹{(formData.amount / (1 + formData.gstPercentage / 100)).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                      </p>
-                      <p className="text-xs text-blue-800 border-t border-blue-200 pt-1 mt-1">
-                        GST ({formData.gstPercentage}%): ₹{(formData.amount - (formData.amount / (1 + formData.gstPercentage / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <div className="flex justify-end gap-2 pt-2 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancelEdit}
-                  disabled={isLoading}
-                  className="h-8 border-orange-300 text-orange-600 hover:bg-orange-50 cursor-pointer"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isLoading} className="h-8 bg-orange-500 hover:bg-orange-600 text-white cursor-pointer">
-                  {isLoading 
-                    ? (editingId ? "Updating..." : "Saving...") 
-                    : (editingId ? "Update Requirement" : "Save Requirements")}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button 
+          onClick={() => navigate("/add-requirement")}
+          className="gap-2 bg-orange-500 hover:bg-orange-600 text-white cursor-pointer"
+        >
+          <Plus className="h-4 w-4" />
+          New Requirement
+        </Button>
         {/* Generate Invoice Dialog */}
         <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
           <DialogContent style={{ width: 640, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto', padding: 16 }}>
@@ -1423,10 +891,11 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
 
       {/* Requirements Tabs */}
       <Tabs defaultValue="running" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="running">Running Estimations</TabsTrigger>
-          <TabsTrigger value="pending">Pending Estimations</TabsTrigger>
-          <TabsTrigger value="waiting">Waiting for Approval</TabsTrigger>
+        <TabsList className="flex w-full h-auto">
+          <TabsTrigger value="running" className="flex-1">Running Estimations</TabsTrigger>
+          <TabsTrigger value="pending" className="flex-1">Pending Estimations</TabsTrigger>
+          <TabsTrigger value="waiting" className="flex-1">Waiting for Approval</TabsTrigger>
+          <TabsTrigger value="completed" className="flex-1">Completed Estimations</TabsTrigger>
         </TabsList>
 
         {/* Running Estimations Tab */}
@@ -1434,7 +903,7 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
           <Card>
             <CardHeader className="py-3 px-6 flex flex-row items-center justify-between gap-6">
               <CardTitle className="text-lg flex-shrink-0 font-bold">
-                Running Estimations ({filteredRequirements.length})
+                Running Estimations ({runningEstimations.length})
               </CardTitle>
               <div className="flex gap-4 items-center flex-1">
                 <div className="flex-1 flex gap-2">
@@ -1474,7 +943,7 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                   <Loader className="h-6 w-6 animate-spin text-blue-600 mr-2" />
                   <p className="text-muted-foreground">Loading estimations...</p>
                 </div>
-              ) : filteredRequirements.length === 0 ? (
+              ) : runningEstimations.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <p>No running estimations</p>
                   <p className="text-sm">
@@ -1500,10 +969,10 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                         </tr>
                       </thead>
                       <tbody>
-                        {paginatedRequirements.map((req, index) => (
+                        {runningEstimations.map((req, index) => (
                           <tr key={req.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                             <td className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-12">
-                              {startIndex + index + 1}
+                              {index + 1}
                             </td>
                             <td className="border border-gray-300 px-4 py-3 text-sm font-medium">
                               <span>{req.customerName || req.customer_name}</span>
@@ -1569,7 +1038,7 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => handleEditClick(req)}
+                                  onClick={() => navigate(`/add-requirement?id=${req.id}`)}
                                   className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer"
                                   title="Edit"
                                   style={{ pointerEvents: 'auto' }}
@@ -1591,6 +1060,20 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                                     <Trash2 className="h-4 w-4 text-red-600" />
                                   )}
                                 </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedEstimationForConvert(req);
+                                    setConvertForm({ job_code_override: '' });
+                                    setIsConvertDialogOpen(true);
+                                  }}
+                                  className="h-8 px-2 hover:bg-purple-100 cursor-pointer text-xs font-semibold text-purple-600"
+                                  title="Convert to Job"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  Convert
+                                </Button>
                               </div>
                             </td>
                           </tr>
@@ -1602,42 +1085,7 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between mt-4 px-4 py-3 bg-orange-50 rounded border border-orange-200">
                     <div className="text-sm text-muted-foreground">
-                      Showing {startIndex + 1} to {Math.min(endIndex, filteredRequirements.length)} of {filteredRequirements.length} estimations
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer"
-                      >
-                        Previous
-                      </Button>
-                      
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                          <Button
-                            key={page}
-                            variant={currentPage === page ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setCurrentPage(page)}
-                            className={`w-8 h-8 p-0 cursor-pointer ${currentPage === page ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-orange-300 text-orange-600 hover:bg-orange-100"}`}
-                          >
-                            {page}
-                          </Button>
-                        ))}
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        disabled={currentPage === totalPages}
-                        className="border-orange-300 text-orange-600 hover:bg-orange-100 cursor-pointer"
-                      >
-                        Next
-                      </Button>
+                      Showing {runningEstimations.length} estimations
                     </div>
                   </div>
                 </div>
@@ -1649,27 +1097,599 @@ const [isTaxGenerating, setIsTaxGenerating] = useState(false);
         {/* Pending Estimations Tab */}
         <TabsContent value="pending" className="mt-4">
           <Card>
-            <CardContent className="py-12">
-              <div className="text-center text-muted-foreground">
-                <p className="text-lg">No pending estimations</p>
-                <p className="text-sm">API configuration pending</p>
+            <CardHeader className="py-3 px-6 flex flex-row items-center justify-between gap-6">
+              <CardTitle className="text-lg flex-shrink-0 font-bold">
+                Pending Estimations ({pendingEstimations.length})
+              </CardTitle>
+              <div className="flex gap-4 items-center flex-1">
+                <div className="flex-1 flex gap-2">
+                  <Input
+                    placeholder="Search by customer name, mobile, or city..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button variant="outline" size="icon" className="cursor-pointer">
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="w-48">
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                {startDate && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setStartDate("")}
+                    className="h-10"
+                  >
+                    Clear Date
+                  </Button>
+                )}
               </div>
+            </CardHeader>
+            <CardContent>
+              {isFetching ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+                  <p className="text-muted-foreground">Loading estimations...</p>
+                </div>
+              ) : pendingEstimations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No pending estimations</p>
+                  <p className="text-sm">
+                    Estimations with pending or portal pending status will appear here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-blue-50">
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm w-12">S.No</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Customer Name</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Address & Location</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Capacity</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Product</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Base Amount (₹)</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">GST%</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Total (₹)</th>
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Status</th>
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingEstimations.map((req, index) => (
+                          <tr key={req.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                            <td className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-12">
+                              {index + 1}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm font-medium">
+                              <span>{req.customerName || req.customer_name}</span>
+                              <span className="block text-xs text-gray-500 mt-1">{req.mobile}</span>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm">
+                              <div className="space-y-1">
+                                <p>{(req.doorNo || req.door_no)} {req.area}</p>
+                                <p className="text-xs text-muted-foreground">{req.city}, {req.district}, {req.state} - {req.pincode}</p>
+                              </div>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-black font-semibold">
+                              {req.capacityKw || "N/A"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm">
+                              {(req.productDescription || req.product_description) ? (
+                                <span title={req.productDescription || req.product_description} className="truncate block max-w-xs">
+                                  {req.productDescription || req.product_description}
+                                </span>
+                              ) : (
+                                "-"
+                              )}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-green-600 font-semibold">
+                              {(req.amount || 0) > 0 ? `₹${((req.amount || 0) / (1 + ((req.gstPercentage || req.gst || 0) / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-orange-600">
+                              {(req.gstPercentage || req.gst) || 0}%
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-purple-600 font-semibold">
+                              {(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-center font-medium">
+                              <span className="inline-block px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800">
+                                {req.status || "Pending"}
+                              </span>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-center">
+                              <div className="flex justify-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDownload(req)}
+                                  className="h-8 w-8 p-0 hover:bg-green-100 cursor-pointer"
+                                  title="Download"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  <Download className="h-4 w-4 text-green-600" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => navigate(`/add-requirement?id=${req.id}`)}
+                                  className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer"
+                                  title="Edit"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  <Edit2 className="h-4 w-4 text-blue-600" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDelete(req)}
+                                  className="h-8 w-8 p-0 hover:bg-red-100 cursor-pointer"
+                                  title="Delete"
+                                  disabled={isLoading}
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  {isLoading ? (
+                                    <Loader className="h-4 w-4 text-red-600 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedEstimationForConvert(req);
+                                    setConvertForm({ job_code_override: '' });
+                                    setIsConvertDialogOpen(true);
+                                  }}
+                                  className="h-8 px-2 hover:bg-purple-100 cursor-pointer text-xs font-semibold text-purple-600"
+                                  title="Convert to Job"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  Convert
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between mt-4 px-4 py-3 bg-yellow-50 rounded border border-yellow-200">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {pendingEstimations.length} estimations
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Waiting for Approval Tab */}
+        {/* Waiting for Approval Tab */}
         <TabsContent value="waiting" className="mt-4">
           <Card>
-            <CardContent className="py-12">
-              <div className="text-center text-muted-foreground">
-                <p className="text-lg">No estimations waiting for approval</p>
-                <p className="text-sm">API configuration pending</p>
+            <CardHeader className="py-3 px-6 flex flex-row items-center justify-between gap-6">
+              <CardTitle className="text-lg flex-shrink-0 font-bold">
+                Waiting for Approval ({waitingApprovalEstimations.length})
+              </CardTitle>
+              <div className="flex gap-4 items-center flex-1">
+                <div className="flex-1 flex gap-2">
+                  <Input
+                    placeholder="Search by customer name, mobile, or city..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button variant="outline" size="icon" className="cursor-pointer">
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="w-48">
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                {startDate && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setStartDate("")}
+                    className="h-10"
+                  >
+                    Clear Date
+                  </Button>
+                )}
               </div>
+            </CardHeader>
+            <CardContent>
+              {isFetching ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+                  <p className="text-muted-foreground">Loading estimations...</p>
+                </div>
+              ) : waitingApprovalEstimations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No estimations waiting for approval</p>
+                  <p className="text-sm">
+                    Estimations pending approval will appear here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-blue-50">
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm w-12">S.No</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Customer Name</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Address & Location</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Capacity</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Product</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Base Amount (₹)</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">GST%</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Total (₹)</th>
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Status</th>
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {waitingApprovalEstimations.map((req, index) => (
+                          <tr key={req.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                            <td className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-12">
+                              {index + 1}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm font-medium">
+                              <span>{req.customerName || req.customer_name}</span>
+                              <span className="block text-xs text-gray-500 mt-1">{req.mobile}</span>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm">
+                              <div className="space-y-1">
+                                <p>{(req.doorNo || req.door_no)} {req.area}</p>
+                                <p className="text-xs text-muted-foreground">{req.city}, {req.district}, {req.state} - {req.pincode}</p>
+                              </div>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-black font-semibold">
+                              {req.capacityKw || "N/A"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm">
+                              {(req.productDescription || req.product_description) ? (
+                                <span title={req.productDescription || req.product_description} className="truncate block max-w-xs">
+                                  {req.productDescription || req.product_description}
+                                </span>
+                              ) : (
+                                "-"
+                              )}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-green-600 font-semibold">
+                              {(req.amount || 0) > 0 ? `₹${((req.amount || 0) / (1 + ((req.gstPercentage || req.gst || 0) / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-orange-600">
+                              {(req.gstPercentage || req.gst) || 0}%
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-purple-600 font-semibold">
+                              {(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-center">
+                              <div className="flex justify-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDownload(req)}
+                                  className="h-8 w-8 p-0 hover:bg-green-100 cursor-pointer"
+                                  title="Download"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  <Download className="h-4 w-4 text-green-600" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => navigate(`/add-requirement?id=${req.id}`)}
+                                  className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer"
+                                  title="Edit"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  <Edit2 className="h-4 w-4 text-blue-600" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDelete(req)}
+                                  className="h-8 w-8 p-0 hover:bg-red-100 cursor-pointer"
+                                  title="Delete"
+                                  disabled={isLoading}
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  {isLoading ? (
+                                    <Loader className="h-4 w-4 text-red-600 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedEstimationForConvert(req);
+                                    setConvertForm({ job_code_override: '' });
+                                    setIsConvertDialogOpen(true);
+                                  }}
+                                  className="h-8 px-2 hover:bg-purple-100 cursor-pointer text-xs font-semibold text-purple-600"
+                                  title="Convert to Job"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  Convert
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex items-center justify-between mt-4 px-4 py-3 bg-blue-50 rounded border border-blue-200">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {waitingApprovalEstimations.length} estimations
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Completed Estimations Tab */}
+        <TabsContent value="completed" className="mt-4">
+          <Card>
+            <CardHeader className="py-3 px-6 flex flex-row items-center justify-between gap-6">
+              <CardTitle className="text-lg flex-shrink-0 font-bold">
+                Completed Estimations ({completedEstimations.length})
+              </CardTitle>
+              <div className="flex gap-4 items-center flex-1">
+                <div className="flex-1 flex gap-2">
+                  <Input
+                    placeholder="Search by customer name, mobile, or city..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button variant="outline" size="icon" className="cursor-pointer">
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="w-48">
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                {startDate && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setStartDate("")}
+                    className="h-10"
+                  >
+                    Clear Date
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isFetching ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+                  <p className="text-muted-foreground">Loading estimations...</p>
+                </div>
+              ) : completedEstimations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No completed estimations</p>
+                  <p className="text-sm">
+                    Completed estimations will appear here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-green-50">
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm w-12">S.No</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Customer Name</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Address & Location</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Capacity</th>
+                          <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-sm">Product</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Base Amount (₹)</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">GST%</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-sm">Total (₹)</th>
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Status</th>
+                          <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-sm">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {completedEstimations.map((req, index) => (
+                          <tr key={req.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                            <td className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-12">
+                              {index + 1}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm font-medium">
+                              <span>{req.customerName || req.customer_name}</span>
+                              <span className="block text-xs text-gray-500 mt-1">{req.mobile}</span>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm">
+                              <div className="space-y-1">
+                                <p>{(req.doorNo || req.door_no)} {req.area}</p>
+                                <p className="text-xs text-muted-foreground">{req.city}, {req.district}, {req.state} - {req.pincode}</p>
+                              </div>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-black font-semibold">
+                              {req.capacityKw || "N/A"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm">
+                              {(req.productDescription || req.product_description) ? (
+                                <span title={req.productDescription || req.product_description} className="truncate block max-w-xs">
+                                  {req.productDescription || req.product_description}
+                                </span>
+                              ) : (
+                                "-"
+                              )}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-green-600 font-semibold">
+                              {(req.amount || 0) > 0 ? `₹${((req.amount || 0) / (1 + ((req.gstPercentage || req.gst || 0) / 100))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-orange-600">
+                              {(req.gstPercentage || req.gst) || 0}%
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-sm text-right text-purple-600 font-semibold">
+                              {(req.amount || 0) > 0 ? `₹${(req.amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "-"}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-center">
+                              <div className="flex justify-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDownload(req)}
+                                  className="h-8 w-8 p-0 hover:bg-green-100 cursor-pointer"
+                                  title="Download"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  <Download className="h-4 w-4 text-green-600" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => navigate(`/add-requirement?id=${req.id}`)}
+                                  className="h-8 w-8 p-0 hover:bg-blue-100 cursor-pointer"
+                                  title="Edit"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  <Edit2 className="h-4 w-4 text-blue-600" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDelete(req)}
+                                  className="h-8 w-8 p-0 hover:bg-red-100 cursor-pointer"
+                                  title="Delete"
+                                  disabled={isLoading}
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  {isLoading ? (
+                                    <Loader className="h-4 w-4 text-red-600 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedEstimationForConvert(req);
+                                    setConvertForm({ job_code_override: '' });
+                                    setIsConvertDialogOpen(true);
+                                  }}
+                                  className="h-8 px-2 hover:bg-purple-100 cursor-pointer text-xs font-semibold text-purple-600"
+                                  title="Convert to Job"
+                                  style={{ pointerEvents: 'auto' }}
+                                >
+                                  Convert
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex items-center justify-between mt-4 px-4 py-3 bg-green-50 rounded border border-green-200">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {completedEstimations.length} estimations
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Convert Estimation to Job Dialog */}
+      <Dialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Convert Estimation to Job</DialogTitle>
+            <DialogDescription>
+              Convert this estimation into a job. Job code is optional.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-semibold text-gray-700">Estimation Details</p>
+              <p className="text-sm text-gray-600 mt-1">
+                Customer: <span className="font-semibold">{selectedEstimationForConvert?.customerName || 'N/A'}</span>
+              </p>
+              <p className="text-sm text-gray-600">
+                Capacity: <span className="font-semibold">{selectedEstimationForConvert?.capacityKw || 'N/A'}</span>
+              </p>
+              <p className="text-sm text-gray-600">
+                Amount: <span className="font-semibold">₹{(selectedEstimationForConvert?.amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="jobCodeOverride" className="text-gray-700 font-semibold">Job Code (Optional)</Label>
+              <Input
+                id="jobCodeOverride"
+                placeholder="e.g., JOB-2026-001"
+                value={convertForm.job_code_override}
+                onChange={(e) => setConvertForm({ ...convertForm, job_code_override: e.target.value })}
+                className="mt-1"
+              />
+              <p className="text-xs text-gray-500 mt-1">Leave blank to auto-generate a job code</p>
+            </div>
+          </div>
+          <div className="flex gap-3 justify-end mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setIsConvertDialogOpen(false)}
+              disabled={isConverting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConvertToJob}
+              disabled={isConverting}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isConverting ? (
+                <>
+                  <Loader className="h-4 w-4 mr-2 animate-spin" />
+                  Converting...
+                </>
+              ) : (
+                'Convert to Job'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

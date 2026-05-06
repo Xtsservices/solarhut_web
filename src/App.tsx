@@ -59,6 +59,7 @@ import { LocationsPage } from './components/admin/LocationsPage';
 import { JobsPage } from './components/admin/JobsPage';
 import { MyTasks } from './components/admin/MyTasks';
 import { RequirementsCapture } from './components/admin/RequirementsCapture';
+import { AddRequirementPage } from './components/admin/AddRequirementPage';
 import { TaxInvoicePage } from './components/admin/TaxInvoicePage';
 import { InvoicePage } from './components/admin/InvoicePage';
 interface RootState {
@@ -286,6 +287,7 @@ console.log("loginuser", user);
                 <Route path="/jobs" element={<JobsPage />} />
                 <Route path="/My-Tasks" element={<MyTasks />} />
                 <Route path="/estimations" element={<RequirementsCapture />} />
+                <Route path="/add-requirement" element={<AddRequirementPage />} />
                 <Route path="/tax-invoice" element={<TaxInvoicePage />} />
                 <Route path="/expenditures" element={<ExpendituresPage />} />
                 <Route path="/solar-capacities" element={<SolarCapacitiesPage />} />

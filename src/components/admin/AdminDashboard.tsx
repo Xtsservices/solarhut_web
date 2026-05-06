@@ -204,16 +204,20 @@ const paymentData = [
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           const isClickable = index === 0 || index === 1 || index === 2;
-          const getNavigationPath = () => {
-            if (index === 0) return '/enquiries';
-            if (index === 1) return '/jobs';
-            if (index === 2) return '/payments';
+          const handleCardClick = () => {
+            if (index === 0) {
+              navigate('/My-Tasks', { state: { tab: 'leads' } });
+            } else if (index === 1) {
+              navigate('/My-Tasks', { state: { tab: 'jobs' } });
+            } else if (index === 2) {
+              navigate('/payments');
+            }
           };
           return (
             <Card 
               key={index} 
               className={`overflow-hidden ${isClickable ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
-              onClick={() => isClickable && navigate(getNavigationPath())}
+              onClick={() => isClickable && handleCardClick()}
             >
               <CardContent className="p-3 sm:p-4 md:p-5">
                 <div className="flex flex-col gap-2">

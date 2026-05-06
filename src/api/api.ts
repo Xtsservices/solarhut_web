@@ -73,6 +73,8 @@ export interface Lead {
   message: string;
   location: string;
   property_type: string; // Changed from home_type to property_type to match API
+  assigned_to_name?: string | null;
+  assigned_to_mobile?: string | null;
 }
 
 export interface Contact {
@@ -138,7 +140,7 @@ const getBaseURL = (): string => {
   }
   
   // Fallback to current configuration
-  return 'http://172.16.4.161:3200';
+  return 'http://172.16.16.75:3200';
 };
 
 // Create Axios instance
@@ -146,18 +148,23 @@ const api: AxiosInstance = axios.create({
   baseURL: getBaseURL(),
   timeout: 30000, // 30 seconds
   headers: {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
 });
 
-// Request interceptor - attach auth token
+// Request interceptor - attach auth token and set Content-Type for non-FormData
 api.interceptors.request.use(
   (config) => {
     // Get token from localStorage
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Only set Content-Type to application/json if data is not FormData
+    // FormData needs to be multipart/form-data (browser will set this automatically)
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
     }
     
     // Log request for debugging
@@ -313,6 +320,42 @@ export const getEstimations = async (
   return makeRequest(
     () => api.get('/api/estimations', { cancelToken }),
     'Estimations fetched successfully!'
+  );
+};
+
+export const getRunningEstimations = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.get('/api/estimations/my-running', { cancelToken }),
+    'Running estimations fetched successfully!'
+  );
+};
+
+export const getPendingEstimations = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.get('/api/estimations/my-pending', { cancelToken }),
+    'Pending estimations fetched successfully!'
+  );
+};
+
+export const getWaitingApprovalEstimations = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.get('/api/estimations/my-waiting-approval', { cancelToken }),
+    'Waiting approval estimations fetched successfully!'
+  );
+};
+
+export const getCompletedEstimations = async (
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.get('/api/estimations/my-completed', { cancelToken }),
+    'Completed estimations fetched successfully!'
   );
 };
 
@@ -545,6 +588,31 @@ export const deleteContact = async (
   return makeRequest(
     () => api.delete(`/api/contacts/delete/${id}`, { cancelToken }),
     'Contact deleted successfully!'
+  );
+};
+
+// ===========================================
+// CUSTOMER ENDPOINTS
+// ===========================================
+
+export const updateCustomer = async (
+  customerId: string | number,
+  data: any,
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.put(`/api/customers/${customerId}`, data, { cancelToken }),
+    'Customer updated successfully!'
+  );
+};
+
+export const deleteCustomer = async (
+  customerId: string | number,
+  cancelToken?: CancelToken
+): Promise<ApiResponse> => {
+  return makeRequest(
+    () => api.delete(`/api/customers/${customerId}`, { cancelToken }),
+    'Customer deleted successfully!'
   );
 };
 
@@ -1462,5 +1530,83 @@ export const deleteBankDetail = async (
 ): Promise<ApiResponse<BankDetailResponse>> => {
   return makeRequest(
     () => api.delete<BankDetailResponse>(`/api/bank-details/${id}`, { cancelToken })
+  );
+};
+
+// ===========================================
+// JOB STATUS UPDATE
+// ===========================================
+
+export const updateJobStatus = async (
+  jobId: number | string,
+  newStatus: string,
+  statusReason: string,
+  comments?: string,
+  attachments?: File[],
+  cancelToken?: CancelToken
+): Promise<ApiResponse<any>> => {
+  const data = new FormData();
+  
+  // Append required fields
+  data.append('new_status', newStatus);
+  data.append('status_reason', statusReason);
+  
+  // Append optional comments field
+  if (comments) {
+    data.append('comments', comments);
+  }
+  
+  // Append files with same field name (multiple files)
+  if (attachments && attachments.length > 0) {
+    attachments.forEach((file) => {
+      data.append('attachments', file);
+    });
+  }
+
+  return makeRequest(
+    () => api.put(`/api/jobs/${jobId}/status`, data, { cancelToken }),
+    'Job status updated successfully!'
+  );
+};
+
+// ===========================================
+// JOB ASSIGNMENT
+// ===========================================
+
+export const assignJobToEmployee = async (
+  jobId: number | string,
+  employeeId: number | string,
+  role?: string,
+  cancelToken?: CancelToken
+): Promise<ApiResponse<any>> => {
+  const payload = {
+    job_id: jobId,
+    employee_id: employeeId,
+    ...(role && { role }),
+  };
+
+  return makeRequest(
+    () => api.post('/api/jobs/assignment/create', payload, { cancelToken }),
+    'Job assigned successfully!'
+  );
+};
+
+// ===========================================
+// ESTIMATION TO JOB CONVERSION
+// ===========================================
+
+export const convertEstimationToJob = async (
+  estimationId: number | string,
+  jobCodeOverride?: string,
+  cancelToken?: CancelToken
+): Promise<ApiResponse<any>> => {
+  const payload: any = {};
+  if (jobCodeOverride) {
+    payload.job_code_override = jobCodeOverride;
+  }
+
+  return makeRequest(
+    () => api.post(`/api/estimations/${estimationId}/convert-to-job`, payload, { cancelToken }),
+    'Estimation converted to job successfully!'
   );
 };

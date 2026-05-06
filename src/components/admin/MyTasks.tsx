@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import {
@@ -27,6 +28,9 @@ import {
   UserCheck,
   Eye,
   RefreshCw,
+  MessageSquare,
+  Edit2,
+  Users,
 } from "lucide-react";
 import { Input } from "../ui/input";
 import {
@@ -41,7 +45,7 @@ import { Calendar } from "../ui/calendar";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { apiGet, apiPut, apiPost } from "../../api/commonApi";
-import { updateLeadStatus } from "../../api/api";
+import { updateLeadStatus, updateJobStatus, assignJobToEmployee } from "../../api/api";
 import {
   Dialog,
   DialogContent,
@@ -177,6 +181,7 @@ const PAYMENT_METHODS = [
 ] as const;
 
 export function MyTasks() {
+  const location = useLocation();
   const user = useSelector((state: any) => state.currentUserData);
 
   // Check if user has 'leads' or 'enquiries' permission — only then show the Leads tab
@@ -193,11 +198,31 @@ export function MyTasks() {
     return perms.some(p => p === 'leads' || p === 'enquiries');
   }, [user]);
 
-  const [activeTab, setActiveTab] = useState<"leads" | "jobs" | "jobs_done">("jobs");
+  // Initialize activeTab from localStorage or navigation state
+  const [activeTab, setActiveTab] = useState<"leads" | "jobs" | "jobs_done">(() => {
+    const saved = localStorage.getItem('myTasksActiveTab');
+    if (saved === 'leads' || saved === 'jobs' || saved === 'jobs_done') {
+      return saved;
+    }
+    return 'jobs';
+  });
   const [leads, setLeads] = useState<Lead[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobsRawData, setJobsRawData] = useState<any[]>([]);
   const [summary, setSummary] = useState<TaskSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Effect to handle tab from navigation state (takes priority over localStorage)
+  useEffect(() => {
+    if (location.state?.tab === 'leads' || location.state?.tab === 'jobs') {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state?.tab]);
+
+  // Effect to persist activeTab to localStorage
+  useEffect(() => {
+    localStorage.setItem('myTasksActiveTab', activeTab);
+  }, [activeTab]);
 
   // Filters
   const [leadFilters, setLeadFilters] = useState({
@@ -244,6 +269,7 @@ export function MyTasks() {
   const [actionId, setActionId] = useState<number | null>(null);
   const [newStatus, setNewStatus] = useState<string>("");
   const [comment, setComment] = useState("");
+  const [actionAttachments, setActionAttachments] = useState<File[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Job Creation States
@@ -304,6 +330,32 @@ export function MyTasks() {
     payment_method: "",
     transaction_id: "",
   });
+
+  // Job Status Update States
+  const [editJobDialogOpen, setEditJobDialogOpen] = useState(false);
+  const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
+  const [jobStatusForm, setJobStatusForm] = useState({
+    new_status: "",
+    status_reason: "",
+    comments: "",
+  });
+  const [jobStatusAttachments, setJobStatusAttachments] = useState<File[]>([]);
+  const [isUpdatingJobStatus, setIsUpdatingJobStatus] = useState(false);
+
+  // Job Details View States
+  const [viewJobDetailsDialogOpen, setViewJobDetailsDialogOpen] = useState(false);
+  const [selectedJobForView, setSelectedJobForView] = useState<any>(null);
+
+  // Attachment Viewer States
+  const [attachmentViewerOpen, setAttachmentViewerOpen] = useState(false);
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+
+  // Job Assignment States
+  const [assignJobDialogOpen, setAssignJobDialogOpen] = useState(false);
+  const [selectedJobForAssign, setSelectedJobForAssign] = useState<any>(null);
+  const [selectedJobRole, setSelectedJobRole] = useState("");
+  const [selectedJobEmployee, setSelectedJobEmployee] = useState("");
+  const [assigningJob, setAssigningJob] = useState(false);
 
   // Leads/Enquiries Management States
   const [selectedLead, setSelectedLead] = useState<any>(null);
@@ -706,9 +758,9 @@ export function MyTasks() {
                 "Unknown",
               mobile: l.mobile || l.phone || l.contact || "",
               email: l.email || "",
+              service_type: l.service_type || "",
               solar_service:
                 l.solar_service ||
-                l.service_type ||
                 l.serviceType ||
                 l.type ||
                 "",
@@ -718,6 +770,8 @@ export function MyTasks() {
               property_type: l.property_type || l.home_type || "",
               channel: l.channel || l.lead_source || "",
               assigned_at: l.created_at || l.createdAt || l.updated_at || "",
+              assigned_to_name: l.assigned_to_name || null,
+              assigned_to_mobile: l.assigned_to_mobile || null,
             }));
 
             allLeadsRef.current = mapped;
@@ -813,7 +867,7 @@ export function MyTasks() {
           }),
         });
 
-        const response = await apiGet(`/jobs/allJobs?${params.toString()}`);
+        const response = await apiGet(`/jobs/allJobs`);
         if (response?.data?.success) {
           const jobsData: any[] = Array.isArray(response.data.data) ? response.data.data : [];
           
@@ -836,12 +890,12 @@ export function MyTasks() {
                 mobile: c.customer_mobile,
               },
               location: { 
-                city: l.city, 
-                pincode: l.pincode 
+                city: l.city || l.address_line_1 || "-", 
+                pincode: l.pincode || "-"
               },
               solar_service: j.solar_service,
               package_name: p.package_name || "-",
-              package_capacity: p.package_capacity || "-",
+              package_capacity: j.capacity || p.package_capacity || "-",
               estimated_cost: Number(p.package_price || j.estimated_cost || 0),
               scheduled_date: j.scheduled_date ? j.scheduled_date.split("T")[0] : "",
               job_priority: j.job_priority,
@@ -850,6 +904,7 @@ export function MyTasks() {
           });
           
           setJobs(mapped);
+          setJobsRawData(jobsData);
           setJobPagination({
             current_page: response.data.pagination?.current_page || 1,
             total_pages: response.data.pagination?.total_pages || 1,
@@ -910,36 +965,30 @@ export function MyTasks() {
           toast.error(result.error || "Failed to update lead status");
         }
       } else {
-        // Jobs continue to use existing API (PUT) with additional payload
-        const endpoint = `/jobs/${actionId}/status`;
-        const payload: any = {
-          new_status: newStatus,
-          comments: comment.trim(),
-        };
+        // Jobs use the updateJobStatus function with FormData
+        let statusReason = comment.trim();
 
+        // For Completed status, use the explicit status_reason field
         if (actionType === "job" && newStatus === "Completed") {
-          payload.status_reason = completionData.status_reason.trim();
-          payload.payment_details = {
-            amount: completionData.amount,
-            discount_amount: completionData.discount_amount
-              ? Number(completionData.discount_amount)
-              : 0,
-            payment_method: completionData.payment_method,
-            payment_status: "Completed",
-            transaction_id: completionData.transaction_id.trim(),
-          };
+          statusReason = completionData.status_reason.trim() || comment.trim();
         }
 
-        const response = await apiPut(endpoint, payload);
+        const result = await updateJobStatus(
+          actionId as number,
+          newStatus,
+          statusReason,
+          comment.trim() || undefined,
+          actionAttachments.length > 0 ? actionAttachments : undefined
+        );
 
-        if (response?.data?.success) {
+        if (result.ok) {
           toast.success(`Job status updated to ${newStatus}`);
           setActionOpen(false);
           resetModal();
           fetchMyJobs(jobPage);
           fetchOverview();
         } else {
-          toast.error("Failed to update status");
+          toast.error(result.error || "Failed to update status");
         }
       }
     } catch (error: any) {
@@ -953,6 +1002,7 @@ export function MyTasks() {
   const resetModal = () => {
     setNewStatus("");
     setComment("");
+    setActionAttachments([]);
     setCompletionData({
       status_reason: "",
       amount: 0,
@@ -982,6 +1032,50 @@ export function MyTasks() {
     }
 
     setActionOpen(true);
+  };
+
+  // Handle Update Job Status
+  const handleUpdateJobStatus = async () => {
+    if (!selectedJobForEdit || !jobStatusForm.new_status || !jobStatusForm.status_reason.trim()) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsUpdatingJobStatus(true);
+    try {
+      const result = await updateJobStatus(
+        selectedJobForEdit.id,
+        jobStatusForm.new_status,
+        jobStatusForm.status_reason,
+        jobStatusForm.comments || undefined,
+        jobStatusAttachments.length > 0 ? jobStatusAttachments : undefined
+      );
+
+      if (result.ok) {
+        toast.success(
+          `Job status updated to ${jobStatusForm.new_status}${
+            result.data?.estimations_synced
+              ? ` (${result.data.estimations_synced} estimations synced)`
+              : ""
+          }${
+            result.data?.attachments?.length ? ` with ${result.data.attachments.length} file(s)` : ""
+          }`
+        );
+        setEditJobDialogOpen(false);
+        setJobStatusForm({ new_status: "", status_reason: "", comments: "" });
+        setJobStatusAttachments([]);
+        setSelectedJobForEdit(null);
+        // Refresh jobs list
+        fetchMyJobs(jobPage);
+      } else {
+        toast.error(result.error || "Failed to update job status");
+      }
+    } catch (error) {
+      console.error("Error updating job status:", error);
+      toast.error("An error occurred while updating job status");
+    } finally {
+      setIsUpdatingJobStatus(false);
+    }
   };
 
   useEffect(() => {
@@ -1158,6 +1252,51 @@ export function MyTasks() {
     }
   };
 
+  // Assign Job to Employee
+  const handleAssignJob = async () => {
+    if (!selectedJobEmployee) {
+      toast.error("Please select an employee");
+      return;
+    }
+    if (!selectedJobRole) {
+      toast.error("Please select a role");
+      return;
+    }
+    if (!selectedJobForAssign) {
+      toast.error("No job selected");
+      return;
+    }
+
+    setAssigningJob(true);
+    try {
+      const jobId = selectedJobForAssign.id;
+      const employeeId = parseInt(selectedJobEmployee, 10);
+
+      const response = await assignJobToEmployee(
+        jobId,
+        employeeId,
+        selectedJobRole
+      );
+
+      if (response.ok) {
+        const assignmentData = response.data?.data;
+        toast.success(`Job assigned to ${assignmentData?.employee_name || 'employee'} successfully`);
+        setAssignJobDialogOpen(false);
+        setSelectedJobForAssign(null);
+        setSelectedJobEmployee("");
+        setSelectedJobRole("");
+        await fetchMyJobs(jobPage);
+      } else {
+        toast.error(response.error || "Failed to assign job");
+      }
+    } catch (error: any) {
+      console.error("Error assigning job:", error);
+      toast.error(error?.message || "Failed to assign job");
+    } finally {
+      setAssigningJob(false);
+    }
+  };
+
   // Assign Lead to Employee
   const handleAssignLead = async () => {
     if (!selectedLeadEmployee) {
@@ -1207,6 +1346,17 @@ export function MyTasks() {
 
   const getStatusBadge = (status: string, type: "lead" | "job") => {
     const colors: Record<string, string> = {
+      New: "bg-gray-200 text-gray-800",
+      Active: "bg-blue-100 text-blue-700",
+      "Site Visit": "bg-orange-100 text-orange-700",
+      "Estimation Generated": "bg-purple-100 text-purple-700",
+      Processed: "bg-indigo-100 text-indigo-700",
+      "Pending on Portal": "bg-yellow-100 text-yellow-700",
+      "Payment Pending": "bg-yellow-100 text-yellow-700",
+      "Partial Payment Done": "bg-amber-100 text-amber-700",
+      "Payment Done": "bg-lime-100 text-lime-700",
+      "Invoice Generated": "bg-cyan-100 text-cyan-700",
+      "Job Done": "bg-green-100 text-green-700",
       Assigned: "bg-blue-100 text-blue-700",
       "In Progress": "bg-purple-100 text-purple-700",
       "On Hold": "bg-yellow-100 text-yellow-700",
@@ -1219,7 +1369,7 @@ export function MyTasks() {
       Pending: "bg-yellow-100 text-yellow-700",
       Created: "bg-yellow-100 text-yellow-700",
     };
-    return <Badge className={colors[status] || "bg-gray-100"}>{status}</Badge>;
+    return <Badge className={colors[status] || "bg-gray-100 text-gray-800"}>{status}</Badge>;
   };
 
   return (
@@ -1252,12 +1402,68 @@ export function MyTasks() {
 
         {/* Leads Tab */}
         <TabsContent value="leads" className="space-y-6">
-          {/* Header + Stats */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
+          {/* Header with Filters */}
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
               <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
-              <p className="text-gray-600">Manage all customer leads and enquiries</p>
+              {/* Lead Filters - beside heading */}
+              <div className="flex flex-col sm:flex-row gap-2 lg:gap-3 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none sm:min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search leads..."
+                    value={leadFilters.search}
+                    onChange={(e) => setLeadFilters({ ...leadFilters, search: e.target.value })}
+                    className="pl-10 h-9"
+                  />
+                </div>
+                <Select
+                  value={leadFilters.status}
+                  onValueChange={(v) => setLeadFilters({ ...leadFilters, status: v })}
+                >
+                  <SelectTrigger className="flex-1 sm:flex-none sm:min-w-[150px] h-9">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="assigned">Assigned</SelectItem>
+                    <SelectItem value="contacted">Contacted</SelectItem>
+                    <SelectItem value="qualified">Qualified</SelectItem>
+                    <SelectItem value="converted">Converted</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[140px] justify-start text-left font-normal h-9 text-sm px-3">
+                      {leadFilters.start_date ? format(leadFilters.start_date, "MMM dd") : "Start Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={leadFilters.start_date || undefined}
+                      onSelect={(d: Date | undefined) => setLeadFilters({...leadFilters, start_date: d || null})}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[140px] justify-start text-left font-normal h-9 text-sm px-3">
+                      {leadFilters.end_date ? format(leadFilters.end_date, "MMM dd") : "End Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={leadFilters.end_date || undefined}
+                      onSelect={(d: Date | undefined) => setLeadFilters({...leadFilters, end_date: d || null})}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
+            <p className="text-gray-600">Manage all customer leads and enquiries</p>
           </div>
 
           {/* Lead Statistics */}
@@ -1282,72 +1488,6 @@ export function MyTasks() {
             </Card>
           </div>
 
-          {/* Lead Filters */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" /> Filters
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search leads..."
-                    value={leadFilters.search}
-                    onChange={(e) => setLeadFilters({ ...leadFilters, search: e.target.value })}
-                    className="pl-10"
-                  />
-                </div>
-                <Select
-                  value={leadFilters.status}
-                  onValueChange={(v) => setLeadFilters({ ...leadFilters, status: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="assigned">Assigned</SelectItem>
-                    <SelectItem value="contacted">Contacted</SelectItem>
-                    <SelectItem value="qualified">Qualified</SelectItem>
-                    <SelectItem value="converted">Converted</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      {leadFilters.start_date ? format(leadFilters.start_date, "PP") : "Start Date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={leadFilters.start_date || undefined}
-                      onSelect={(d: Date | undefined) => setLeadFilters({...leadFilters, start_date: d || null})}
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      {leadFilters.end_date ? format(leadFilters.end_date, "PP") : "End Date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={leadFilters.end_date || undefined}
-                      onSelect={(d: Date | undefined) => setLeadFilters({...leadFilters, end_date: d || null})}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Leads Table - Desktop */}
           <Card className="hidden md:block">
             <CardHeader>
@@ -1358,21 +1498,20 @@ export function MyTasks() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-xs sm:text-sm">ID</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Sno</TableHead>
                       <TableHead className="text-xs sm:text-sm">Name</TableHead>
                       <TableHead className="text-xs sm:text-sm">Mobile</TableHead>
                       <TableHead className="text-xs sm:text-sm">Email</TableHead>
                       <TableHead className="text-xs sm:text-sm">Service Type</TableHead>
                       <TableHead className="text-xs sm:text-sm">Capacity</TableHead>
                       <TableHead className="text-xs sm:text-sm">Status</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Date</TableHead>
                       <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {leads.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                           No leads found
                         </TableCell>
                       </TableRow>
@@ -1386,9 +1525,6 @@ export function MyTasks() {
                           <TableCell className="text-xs sm:text-sm">{getServiceType(lead)}</TableCell>
                           <TableCell className="text-xs sm:text-sm">{lead.kv || lead.capacity || lead.system_size || "N/A"}</TableCell>
                           <TableCell className="text-xs sm:text-sm">{getStatusBadge(lead.lead_status || lead.status || "new", "lead")}</TableCell>
-                          <TableCell className="text-xs sm:text-sm">
-                            {lead.created_at || lead.createdAt ? new Date(lead.created_at || lead.createdAt).toLocaleDateString() : "N/A"}
-                          </TableCell>
                           <TableCell className="text-xs sm:text-sm">
                             <Button
                               size="sm"
@@ -1446,12 +1582,6 @@ export function MyTasks() {
                         <div>
                           <p className="text-gray-500 mb-0.5">Capacity</p>
                           <p className="text-gray-900 font-medium">{lead.kv || lead.capacity || "N/A"}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 mb-0.5">Date</p>
-                          <p className="text-gray-900 font-medium">
-                            {lead.created_at || lead.createdAt ? new Date(lead.created_at || lead.createdAt).toLocaleDateString() : "N/A"}
-                          </p>
                         </div>
                       </div>
                       <Button
@@ -1524,6 +1654,18 @@ export function MyTasks() {
                       <Label className="text-xs sm:text-sm font-semibold text-blue-700">Location</Label>
                       <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedLead.location || selectedLead.city || "N/A"}</p>
                     </div>
+                    {selectedLead.assigned_to_name && (
+                      <>
+                        <div>
+                          <Label className="text-xs sm:text-sm font-semibold text-blue-700">Assigned To</Label>
+                          <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedLead.assigned_to_name || "N/A"}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs sm:text-sm font-semibold text-blue-700">Assigned To Mobile</Label>
+                          <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedLead.assigned_to_mobile || "N/A"}</p>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Assignment Section */}
@@ -1684,20 +1826,82 @@ export function MyTasks() {
 
         {/* Jobs Tab */}
         <TabsContent value="jobs" className="space-y-6">
-          {/* Header + Add Job Dialog */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
+          {/* Header with Filters */}
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
               <h1 className="text-2xl font-bold text-gray-900">Jobs</h1>
-              <p className="text-gray-600">Manage solar installation and service jobs</p>
+              {/* Job Filters - beside heading */}
+              <div className="flex flex-col sm:flex-row gap-2 lg:gap-3 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none sm:min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search jobs..."
+                    value={jobFilters.search}
+                    onChange={(e) =>
+                      setJobFilters({ ...jobFilters, search: e.target.value })
+                    }
+                    className="pl-10 h-9"
+                  />
+                </div>
+                <Select
+                  value={jobFilters.status}
+                  onValueChange={(v) =>
+                    setJobFilters({ ...jobFilters, status: v })
+                  }
+                >
+                  <SelectTrigger className="flex-1 sm:flex-none sm:min-w-[150px] h-9">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {["Assigned", "In Progress", "On Hold", "Completed", "Cancelled"].map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[140px] justify-start text-left font-normal h-9 text-sm px-3">
+                      {jobFilters.start_date ? format(jobFilters.start_date, "MMM dd") : "Start Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={jobFilters.start_date || undefined}
+                      onSelect={(d: Date | undefined) =>
+                        setJobFilters({ ...jobFilters, start_date: d || null })
+                      }
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[140px] justify-start text-left font-normal h-9 text-sm px-3">
+                      {jobFilters.end_date ? format(jobFilters.end_date, "MMM dd") : "End Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={jobFilters.end_date || undefined}
+                      onSelect={(d: Date | undefined) =>
+                        setJobFilters({ ...jobFilters, end_date: d || null })
+                      }
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
-
-            <Dialog open={addJobDialogOpen} onOpenChange={setAddJobDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" /> Add Job
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-[95vw] sm:w-[85vw] sm:max-w-[85vw] md:w-[75vw] md:max-w-[75vw] lg:w-[70vw] lg:max-w-[70vw] max-h-[90vh] overflow-y-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-gray-600">Manage solar installation and service jobs</p>
+              <Dialog open={addJobDialogOpen} onOpenChange={setAddJobDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" /> Add Job
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[100vw] max-w-[100vw] sm:w-[85vw] sm:max-w-[85vw] md:w-[75vw] md:max-w-[75vw] lg:w-[70vw] lg:max-w-[70vw] max-h-[90vh] overflow-y-auto">
                 <DialogHeader className="pb-6">
                   <DialogTitle className="text-xl mb-3">Create New Job</DialogTitle>
                   <DialogDescription className="text-base">
@@ -2125,6 +2329,7 @@ export function MyTasks() {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           {/* Assign Employee Modal */}
@@ -2195,78 +2400,6 @@ export function MyTasks() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Job Filters */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" /> Filters
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search jobs..."
-                    value={jobFilters.search}
-                    onChange={(e) =>
-                      setJobFilters({ ...jobFilters, search: e.target.value })
-                    }
-                    className="pl-10"
-                  />
-                </div>
-                <Select
-                  value={jobFilters.status}
-                  onValueChange={(v) =>
-                    setJobFilters({ ...jobFilters, status: v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {["Assigned", "In Progress", "On Hold", "Completed", "Cancelled"].map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      {jobFilters.start_date ? format(jobFilters.start_date, "PP") : "Start Date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={jobFilters.start_date || undefined}
-                      onSelect={(d: Date | undefined) =>
-                        setJobFilters({ ...jobFilters, start_date: d || null })
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      {jobFilters.end_date ? format(jobFilters.end_date, "PP") : "End Date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={jobFilters.end_date || undefined}
-                      onSelect={(d: Date | undefined) =>
-                        setJobFilters({ ...jobFilters, end_date: d || null })
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Jobs Table Content */}
           <Card>
@@ -2359,19 +2492,61 @@ export function MyTasks() {
                             </div>
 
                             {/* Actions */}
-                            {job.status === "Created" && (
-                              <div className="pt-3 border-t border-gray-100">
+                            <div className="pt-3 border-t border-gray-100">
+                              <div className="flex gap-2">
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => openAssignModal(job.id)}
-                                  className="w-full text-xs h-8"
+                                  onClick={() => {
+                                    // Find the raw job data for this job
+                                    const rawJobData = jobsRawData.find(j => j.job_info?.id === job.id);
+                                    setSelectedJobForView(rawJobData || job);
+                                    setViewJobDetailsDialogOpen(true);
+                                  }}
+                                  className="flex-1 text-xs h-8"
+                                  title="View"
                                 >
-                                  <UserCheck className="h-3 w-3 mr-2" />
-                                  Assign to Employee
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedJobForEdit(job);
+                                    setEditJobDialogOpen(true);
+                                  }}
+                                  className="flex-1 text-xs h-8"
+                                  title="Edit Status"
+                                >
+                                  <Edit2 className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedJobForAssign(job);
+                                    setAssignJobDialogOpen(true);
+                                  }}
+                                  className="flex-1 text-xs h-8"
+                                  title="Assign"
+                                >
+                                  <Users className="h-3 w-3 mr-1" />
+                                  Assign
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {}}
+                                  className="flex-1 text-xs h-8"
+                                  title="Notes"
+                                >
+                                  <MessageSquare className="h-3 w-3 mr-1" />
+                                  Notes
                                 </Button>
                               </div>
-                            )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -2387,11 +2562,8 @@ export function MyTasks() {
                           <TableHead>Customer</TableHead>
                           <TableHead>Location</TableHead>
                           <TableHead>Service</TableHead>
-                          <TableHead>Package</TableHead>
                           <TableHead>Capacity</TableHead>
                           <TableHead>Cost</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Priority</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
@@ -2399,7 +2571,7 @@ export function MyTasks() {
                       <TableBody>
                         {jobs.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                            <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                               No jobs found
                             </TableCell>
                           </TableRow>
@@ -2421,41 +2593,57 @@ export function MyTasks() {
                                 </p>
                               </TableCell>
                               <TableCell>{job.solar_service}</TableCell>
-                              <TableCell>{job.package_name || "-"}</TableCell>
                               <TableCell>{job.package_capacity || "-"}</TableCell>
                               <TableCell>
                                 ₹{job.estimated_cost?.toLocaleString("en-IN") || "-"}
                               </TableCell>
-                              <TableCell>
-                                {new Date(job.scheduled_date).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    job.job_priority === "High"
-                                      ? "destructive"
-                                      : job.job_priority === "Medium"
-                                      ? "secondary"
-                                      : "outline"
-                                  }
-                                >
-                                  {job.job_priority}
-                                </Badge>
-                              </TableCell>
                               <TableCell>{getStatusBadge(job.status, "job")}</TableCell>
                               <TableCell>
-                                {job.status === "Created" && (
-                                  <div className="flex gap-1">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => openAssignModal(job.id)}
-                                      title="Assign to Employee"
-                                    >
-                                      <UserCheck className="h-4 w-4 text-blue-600" />
-                                    </Button>
-                                  </div>
-                                )}
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      // Find the raw job data for this job
+                                      const rawJobData = jobsRawData.find(j => j.job_info?.id === job.id);
+                                      setSelectedJobForView(rawJobData || job);
+                                      setViewJobDetailsDialogOpen(true);
+                                    }}
+                                    title="View"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setSelectedJobForEdit(job);
+                                      setEditJobDialogOpen(true);
+                                    }}
+                                    title="Edit Status"
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setSelectedJobForAssign(job);
+                                      setAssignJobDialogOpen(true);
+                                    }}
+                                    title="Assign"
+                                  >
+                                    <Users className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {}}
+                                    title="Notes"
+                                  >
+                                    <MessageSquare className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))
@@ -2518,72 +2706,51 @@ export function MyTasks() {
 
         {/* Jobs Done Tab */}
         <TabsContent value="jobs_done" className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">Jobs Done</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {["assigned", "ongoing", "closed"].map((key) => (
-                <Card key={key}>
-                  <CardContent className="p-6">
-                    <p className="text-sm text-gray-600 capitalize">{key === "assigned" ? "Total Jobs" : key}</p>
-                    <p className={`text-2xl font-bold ${key === "assigned" ? "text-blue-600" : key === "ongoing" ? "text-purple-600" : "text-green-600"}`}>
-                      {summary?.jobs[key as keyof typeof summary.jobs] ?? 0}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+          {/* Header with Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <h2 className="text-2xl font-semibold">Jobs Done</h2>
+            {/* Job Filters - beside heading */}
+            <div className="flex flex-col sm:flex-row gap-2 lg:gap-3 w-full sm:w-auto">
+              <div className="relative flex-1 sm:flex-none sm:min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search jobs..."
+                  value={jobFilters.search}
+                  onChange={(e) => setJobFilters({ ...jobFilters, search: e.target.value })}
+                  className="pl-10 h-9"
+                />
+              </div>
+              <Select value={jobFilters.status} onValueChange={(v) => setJobFilters({ ...jobFilters, status: v })}>
+                <SelectTrigger className="flex-1 sm:flex-none sm:min-w-[150px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {["Assigned", "In Progress", "On Hold", "Completed", "Cancelled"].map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[140px] justify-start text-left font-normal h-9 text-sm px-3">
+                    {jobFilters.start_date ? format(jobFilters.start_date, "MMM dd") : "Start Date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={jobFilters.start_date || undefined} onSelect={(d: Date | undefined) => setJobFilters({ ...jobFilters, start_date: d || null })} />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[140px] justify-start text-left font-normal h-9 text-sm px-3">
+                    {jobFilters.end_date ? format(jobFilters.end_date, "MMM dd") : "End Date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={jobFilters.end_date || undefined} onSelect={(d: Date | undefined) => setJobFilters({ ...jobFilters, end_date: d || null })} />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
-
-          {/* Job Filters */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" /> Filters
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search jobs..."
-                    value={jobFilters.search}
-                    onChange={(e) => setJobFilters({ ...jobFilters, search: e.target.value })}
-                    className="pl-10"
-                  />
-                </div>
-                <Select value={jobFilters.status} onValueChange={(v) => setJobFilters({ ...jobFilters, status: v })}>
-                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {["Assigned", "In Progress", "On Hold", "Completed", "Cancelled"].map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      {jobFilters.start_date ? format(jobFilters.start_date, "PP") : "Start Date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={jobFilters.start_date || undefined} onSelect={(d: Date | undefined) => setJobFilters({ ...jobFilters, start_date: d || null })} />
-                  </PopoverContent>
-                </Popover>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      {jobFilters.end_date ? format(jobFilters.end_date, "PP") : "End Date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={jobFilters.end_date || undefined} onSelect={(d: Date | undefined) => setJobFilters({ ...jobFilters, end_date: d || null })} />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Jobs Done Table — only Completed jobs */}
           <Card>
@@ -2604,10 +2771,7 @@ export function MyTasks() {
                         <TableHead>Customer</TableHead>
                         <TableHead>Location</TableHead>
                         <TableHead>Service</TableHead>
-                        <TableHead>Package</TableHead>
                         <TableHead>Cost</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Priority</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -2621,14 +2785,7 @@ export function MyTasks() {
                           </TableCell>
                           <TableCell><p className="text-sm">{job.location.city}, {job.location.pincode}</p></TableCell>
                           <TableCell>{job.solar_service}</TableCell>
-                          <TableCell>{job.package_name}</TableCell>
                           <TableCell>₹{job.estimated_cost.toLocaleString("en-IN")}</TableCell>
-                          <TableCell>{new Date(job.scheduled_date).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <Badge variant={job.job_priority === "High" ? "destructive" : job.job_priority === "Medium" ? "secondary" : "outline"}>
-                              {job.job_priority}
-                            </Badge>
-                          </TableCell>
                           <TableCell>{getStatusBadge(job.status, "job")}</TableCell>
                         </TableRow>
                       ))}
@@ -2781,6 +2938,60 @@ export function MyTasks() {
               </>
             )}
 
+            {/* File Upload for Jobs */}
+            {actionType === "job" && (
+              <div className="border-t pt-4">
+                <Label htmlFor="action-attachments" className="text-gray-700 font-semibold mb-2 block">
+                  📎 Attach Images (Optional)
+                </Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+                  <Input
+                    id="action-attachments"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      setActionAttachments([...actionAttachments, ...files]);
+                      // Clear input so user can select more files
+                      if (e.target) {
+                        e.target.value = '';
+                      }
+                    }}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-xs text-gray-600 mt-2">
+                    Upload multiple images (JPG, PNG, etc.)
+                  </p>
+                </div>
+
+                {/* Show selected files */}
+                {actionAttachments.length > 0 && (
+                  <div className="mt-3 bg-gray-50 p-3 rounded">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">
+                      Selected Files ({actionAttachments.length}):
+                    </p>
+                    <ul className="space-y-1">
+                      {actionAttachments.map((file, index) => (
+                        <li key={index} className="text-sm text-gray-600 flex justify-between items-center">
+                          <span>📄 {file.name}</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActionAttachments(actionAttachments.filter((_, i) => i !== index))
+                            }
+                            className="text-red-600 hover:text-red-800 text-xs font-medium"
+                          >
+                            Remove
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div>
               <Label>Comment</Label>
               <Textarea
@@ -2805,6 +3016,626 @@ export function MyTasks() {
               {actionLoading ? "Updating..." : "Update Status"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Job Status Dialog */}
+      <Dialog open={editJobDialogOpen} onOpenChange={setEditJobDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Update Job Status</DialogTitle>
+          </DialogHeader>
+
+          {selectedJobForEdit && (
+            <div className="space-y-4">
+              {/* Job Info Display */}
+              <div className="bg-gray-50 p-4 rounded">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-gray-600">Job ID</p>
+                    <p className="font-medium">{selectedJobForEdit.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Current Status</p>
+                    <p className="font-medium">{getStatusBadge(selectedJobForEdit.status, "job")}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-gray-600">Customer</p>
+                    <p className="font-medium">
+                      {selectedJobForEdit.customer.first_name} {selectedJobForEdit.customer.last_name}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Fields */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="status">New Status *</Label>
+                  <Select value={jobStatusForm.new_status} onValueChange={(value) => 
+                    setJobStatusForm({...jobStatusForm, new_status: value})
+                  }>
+                    <SelectTrigger id="status">
+                      <SelectValue placeholder="Select new status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Site Visit">Site Visit</SelectItem>
+                      <SelectItem value="Estimation Generated">Estimation Generated</SelectItem>
+                      <SelectItem value="Processed">Processed</SelectItem>
+                      <SelectItem value="Pending on Portal">Pending on Portal</SelectItem>
+                      <SelectItem value="Payment Pending">Payment Pending</SelectItem>
+                      <SelectItem value="Partial Payment Done">Partial Payment Done</SelectItem>
+                      <SelectItem value="Payment Done">Payment Done</SelectItem>
+                      <SelectItem value="Invoice Generated">Invoice Generated</SelectItem>
+                      <SelectItem value="Job Done">Job Done</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="status-reason">Status Reason *</Label>
+                  <Input
+                    id="status-reason"
+                    placeholder="e.g., Site visit completed, Customer approved design, etc."
+                    value={jobStatusForm.status_reason}
+                    onChange={(e) =>
+                      setJobStatusForm({...jobStatusForm, status_reason: e.target.value})
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="comments">Comments</Label>
+                  <Textarea
+                    id="comments"
+                    placeholder="Add any additional comments..."
+                    value={jobStatusForm.comments}
+                    onChange={(e) =>
+                      setJobStatusForm({...jobStatusForm, comments: e.target.value})
+                    }
+                    rows={3}
+                  />
+                </div>
+
+                {/* File Upload - Optional for all statuses */}
+                <div className="border-t pt-4">
+                  <Label htmlFor="attachments" className="text-gray-700 font-semibold mb-2 block">
+                    📎 Attach Multiple Files (Optional)
+                  </Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <Input
+                      id="attachments"
+                      type="file"
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        setJobStatusAttachments([...jobStatusAttachments, ...files]);
+                        // Clear input so user can select more files
+                        if (e.target) {
+                          e.target.value = '';
+                        }
+                      }}
+                      className="cursor-pointer"
+                    />
+                    <p className="text-xs text-gray-600 mt-2">
+                      Select multiple files: images (JPG, PNG), PDFs, or documents. Max 5 files per upload.
+                    </p>
+                  </div>
+
+                  {/* Show selected files */}
+                  {jobStatusAttachments.length > 0 && (
+                    <div className="mt-3 bg-gray-50 p-3 rounded">
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        Selected Files ({jobStatusAttachments.length}):
+                      </p>
+                      <ul className="space-y-1">
+                        {jobStatusAttachments.map((file, index) => (
+                          <li key={index} className="text-xs text-gray-600 flex justify-between items-center">
+                              <span>📄 {file.name}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-red-600 hover:text-red-700"
+                                onClick={() => {
+                                  setJobStatusAttachments(jobStatusAttachments.filter((_, i) => i !== index));
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditJobDialogOpen(false);
+                setJobStatusForm({new_status: "", status_reason: "", comments: ""});
+                setJobStatusAttachments([]);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUpdateJobStatus}
+              disabled={isUpdatingJobStatus || !jobStatusForm.new_status || !jobStatusForm.status_reason}
+            >
+              {isUpdatingJobStatus ? "Updating..." : "Update Status"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Job Details Dialog */}
+      <Dialog open={viewJobDetailsDialogOpen} onOpenChange={setViewJobDetailsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Job Details</DialogTitle>
+          </DialogHeader>
+
+          {selectedJobForView && (
+            <div className="space-y-6">
+              {/* Job Information */}
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Job Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Job ID</p>
+                    <p className="font-medium">{selectedJobForView.job_info?.id || selectedJobForView.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Job Code</p>
+                    <p className="font-medium">{selectedJobForView.job_info?.job_code || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Status</p>
+                    <p className="font-medium">{getStatusBadge(selectedJobForView.job_info?.status || selectedJobForView.status, "job")}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Service Type</p>
+                    <p className="font-medium">{selectedJobForView.job_info?.service_type || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Solar Service</p>
+                    <p className="font-medium">{selectedJobForView.job_info?.solar_service || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Capacity</p>
+                    <p className="font-medium">{selectedJobForView.job_info?.capacity || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Priority</p>
+                    <p className="font-medium">{selectedJobForView.job_info?.job_priority || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Scheduled Date</p>
+                    <p className="font-medium">{selectedJobForView.job_info?.scheduled_date ? new Date(selectedJobForView.job_info.scheduled_date).toLocaleDateString() : "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Estimated Cost</p>
+                    <p className="font-medium">{selectedJobForView.job_info?.estimated_cost ? `₹${selectedJobForView.job_info.estimated_cost.toLocaleString("en-IN")}` : "N/A"}</p>
+                  </div>
+                </div>
+                {selectedJobForView.job_info?.job_description && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-sm text-gray-600 mb-1">Description</p>
+                    <p className="text-sm text-gray-900">{selectedJobForView.job_info.job_description}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Customer Information */}
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Customer Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Customer Name</p>
+                    <p className="font-medium">{selectedJobForView.customer_info?.customer_name || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Customer Code</p>
+                    <p className="font-medium">{selectedJobForView.customer_info?.customer_code || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Mobile</p>
+                    <p className="font-medium">{selectedJobForView.customer_info?.customer_mobile || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-medium">{selectedJobForView.customer_info?.customer_email || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Customer Type</p>
+                    <p className="font-medium">{selectedJobForView.customer_info?.customer_type || "N/A"}</p>
+                  </div>
+                  {selectedJobForView.customer_info?.company_name && (
+                    <div>
+                      <p className="text-sm text-gray-600">Company Name</p>
+                      <p className="font-medium">{selectedJobForView.customer_info.company_name}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Location Information */}
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Location Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Location Type</p>
+                    <p className="font-medium">{selectedJobForView.location_info?.location_type || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Address Line 1</p>
+                    <p className="font-medium">{selectedJobForView.location_info?.address_line_1 || "N/A"}</p>
+                  </div>
+                  {selectedJobForView.location_info?.address_line_2 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Address Line 2</p>
+                      <p className="font-medium">{selectedJobForView.location_info.address_line_2}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-gray-600">City</p>
+                    <p className="font-medium">{selectedJobForView.location_info?.city || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">District</p>
+                    <p className="font-medium">{selectedJobForView.location_info?.district_name || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">State</p>
+                    <p className="font-medium">{selectedJobForView.location_info?.state_name || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Pincode</p>
+                    <p className="font-medium">{selectedJobForView.location_info?.pincode || "N/A"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Summary */}
+              {selectedJobForView.payment_summary && (
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Payment Summary</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Total Advance</p>
+                      <p className="font-medium">₹{selectedJobForView.payment_summary.total_advance?.toLocaleString("en-IN") || "0"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total Milestone</p>
+                      <p className="font-medium">₹{selectedJobForView.payment_summary.total_milestone?.toLocaleString("en-IN") || "0"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total Final</p>
+                      <p className="font-medium">₹{selectedJobForView.payment_summary.total_final?.toLocaleString("en-IN") || "0"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total Paid</p>
+                      <p className="font-medium">₹{selectedJobForView.payment_summary.total_paid?.toLocaleString("en-IN") || "0"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Pending Amount</p>
+                      <p className="font-medium text-orange-600">₹{selectedJobForView.payment_summary.pending_amount?.toLocaleString("en-IN") || "0"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Payment Status</p>
+                      <p className="font-medium">{selectedJobForView.payment_summary.payment_status || "N/A"}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Assignment Information */}
+              {selectedJobForView.assignment_info && (
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Assignment Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <p className="text-sm text-gray-600">Assigned Employees</p>
+                      <p className="font-medium">{selectedJobForView.assignment_info.assigned_employees || "0"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Assignment Status</p>
+                      <p className="font-medium">{selectedJobForView.assignment_info.assignment_status || "N/A"}</p>
+                    </div>
+                  </div>
+                  {selectedJobForView.assignment_info.employees_details && (
+                    <div className="pt-3 border-t">
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Assigned Employee Details:</p>
+                      <div className="bg-gray-50 p-3 rounded text-sm space-y-1">
+                        <p><span className="text-gray-600">Name:</span> <span className="font-medium">{selectedJobForView.assignment_info.employees_details.first_name} {selectedJobForView.assignment_info.employees_details.last_name}</span></p>
+                        <p><span className="text-gray-600">Mobile:</span> <span className="font-medium">{selectedJobForView.assignment_info.employees_details.employee_mobile}</span></p>
+                        <p><span className="text-gray-600">Assignment Status:</span> <span className="font-medium">{selectedJobForView.assignment_info.employees_details.assignment_status}</span></p>
+                        <p><span className="text-gray-600">Assigned By:</span> <span className="font-medium">{selectedJobForView.assignment_info.employees_details.assigned_by_name}</span></p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Status Information */}
+              {selectedJobForView.status_info && (
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Status Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Current Status</p>
+                      <p className="font-medium">{selectedJobForView.status_info.current_status || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total Status Changes</p>
+                      <p className="font-medium">{selectedJobForView.status_info.total_status_changes || "0"}</p>
+                    </div>
+                  </div>
+
+                  {/* Status Attachments with Images */}
+                  {selectedJobForView.status_info.attachments && selectedJobForView.status_info.attachments.length > 0 && (
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="text-sm font-semibold text-gray-700 mb-3">Status Attachments ({selectedJobForView.status_info.attachments.length})</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {selectedJobForView.status_info.attachments.map((attachment: any, idx: number) => (
+                          <div key={idx} className="border rounded-lg overflow-hidden bg-gray-50 hover:shadow-md transition">
+                            {/* Image Display - Clickable */}
+                            {attachment.attachment_type === "image" && attachment.signed_url && (
+                              <div 
+                                className="aspect-video bg-gray-200 overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-80 transition"
+                                onClick={() => {
+                                  setSelectedAttachment(attachment);
+                                  setAttachmentViewerOpen(true);
+                                }}
+                              >
+                                <img
+                                  src={attachment.signed_url}
+                                  alt={attachment.file_name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "https://via.placeholder.com/300x200?text=Image+Unavailable";
+                                  }}
+                                />
+                              </div>
+                            )}
+                            
+                            {/* Document Icon for Non-Images */}
+                            {attachment.attachment_type !== "image" && (
+                              <div className="aspect-video bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+                                <div className="text-center">
+                                  <div className="text-4xl mb-2">📄</div>
+                                  <p className="text-xs text-gray-600">{attachment.attachment_type}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* File Details */}
+                            <div className="p-3">
+                              <p className="text-sm font-medium text-gray-900 truncate" title={attachment.file_name}>
+                                {attachment.file_name}
+                              </p>
+                              <div className="mt-2 space-y-1 text-xs text-gray-600">
+                                {attachment.file_size && (
+                                  <p>📦 {(attachment.file_size / 1024).toFixed(2)} KB</p>
+                                )}
+                                <p>⏱️ {new Date(attachment.uploaded_at).toLocaleDateString()}</p>
+                                <p>👤 {attachment.uploaded_by}</p>
+                              </div>
+                              
+                              {/* Action Buttons */}
+                              <div className="mt-3 flex gap-2">
+                                {/* View Button for Images */}
+                                {attachment.attachment_type === "image" && attachment.signed_url && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedAttachment(attachment);
+                                      setAttachmentViewerOpen(true);
+                                    }}
+                                    className="flex-1 px-2 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 text-xs font-medium rounded transition"
+                                  >
+                                    👁️ View
+                                  </button>
+                                )}
+                                
+                                {/* Download Button */}
+                                {attachment.signed_url && (
+                                  <a
+                                    href={attachment.signed_url}
+                                    download={attachment.file_name}
+                                    className={`${attachment.attachment_type === "image" ? "flex-1" : "w-full"} text-center px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium rounded transition`}
+                                  >
+                                    �️ View
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Creator Information */}
+              {/* {selectedJobForView.creator_info && (
+                // <div className="border rounded-lg p-4">
+                //   <h3 className="text-lg font-semibold text-gray-900 mb-3">Audit Information</h3>
+                //   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                //     <div>
+                //       <p className="text-gray-600">Created By</p>
+                //       <p className="font-medium">{selectedJobForView.creator_info.created_by_name || "N/A"}</p>
+                //     </div>
+                //     <div>
+                //       <p className="text-gray-600">Updated By</p>
+                //       <p className="font-medium">{selectedJobForView.creator_info.updated_by_name || "N/A"}</p>
+                //     </div>
+                //     {selectedJobForView.job_info?.created_at && (
+                //       <div>
+                //         <p className="text-gray-600">Created At</p>
+                //         <p className="font-medium">{new Date(selectedJobForView.job_info.created_at).toLocaleDateString()} {new Date(selectedJobForView.job_info.created_at).toLocaleTimeString()}</p>
+                //       </div>
+                //     )}
+                //     {selectedJobForView.job_info?.updated_at && (
+                //       <div>
+                //         <p className="text-gray-600">Updated At</p>
+                //         <p className="font-medium">{new Date(selectedJobForView.job_info.updated_at).toLocaleDateString()} {new Date(selectedJobForView.job_info.updated_at).toLocaleTimeString()}</p>
+                //       </div>
+                //     )}
+                //   </div>
+                // </div>
+              )} */}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              onClick={() => setViewJobDetailsDialogOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Job to Employee Dialog */}
+      <Dialog open={assignJobDialogOpen} onOpenChange={setAssignJobDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Assign Job to Employee</DialogTitle>
+            <DialogDescription>
+              {selectedJobForAssign && (
+                <span>
+                  Job ID: {selectedJobForAssign.id} - {selectedJobForAssign.solar_service}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Role Selection */}
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm">Select Role</Label>
+              <Select value={selectedJobRole} onValueChange={setSelectedJobRole}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Employee Selection */}
+            {selectedJobRole && (
+              <div className="space-y-2">
+                <Label className="text-xs sm:text-sm">Select Employee</Label>
+                <Select value={selectedJobEmployee} onValueChange={(v) => {
+                  if (v === "create_new") {
+                    setNewEmployeeRole(selectedJobRole);
+                    setCreateEmployeeDialogOpen(true);
+                    setSelectedJobEmployee("");
+                  } else {
+                    setSelectedJobEmployee(v);
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={getEmployeesByRole(selectedJobRole).length > 0 ? "Choose employee..." : "No employees - Click to create"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getEmployeesByRole(selectedJobRole).map((emp: any) => (
+                      <SelectItem key={emp.id} value={String(emp.id)}>
+                        {getEmployeeDisplayName(emp)}
+                      </SelectItem>
+                    ))}
+                    <hr className="my-1" />
+                    <SelectItem value="create_new">
+                      <span className="text-blue-600">Create New {selectedJobRole}</span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {selectedJobRole && selectedJobEmployee && selectedJobEmployee !== "create_new" && (
+              <Button
+                onClick={handleAssignJob}
+                className="w-full"
+                disabled={assigningJob}
+              >
+                {assigningJob ? "Assigning..." : "Assign Job"}
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              onClick={() => {
+                fetchAllEmployees();
+                fetchRoles();
+              }}
+              size="sm"
+              className="w-full"
+            >
+              <RefreshCw className="h-3 w-3 mr-2" />
+              Refresh Employees
+            </Button>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAssignJobDialogOpen(false);
+                setSelectedJobForAssign(null);
+                setSelectedJobRole("");
+                setSelectedJobEmployee("");
+              }}
+              disabled={assigningJob}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Attachment Viewer Dialog */}
+      <Dialog open={attachmentViewerOpen} onOpenChange={setAttachmentViewerOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 bg-black">
+          <DialogHeader className="bg-black px-6 pt-6 pb-0">
+            <DialogTitle className="flex items-center justify-between text-white">
+              <span>📸 Image Viewer</span>
+              <button
+                onClick={() => setAttachmentViewerOpen(false)}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                ✕
+              </button>
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedAttachment && selectedAttachment.attachment_type === "image" && selectedAttachment.signed_url && (
+            <div className="flex justify-center items-center py-4 px-6">
+              <img
+                src={selectedAttachment.signed_url}
+                alt={selectedAttachment.file_name}
+                className="max-w-full max-h-[75vh] object-contain rounded-lg"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "https://via.placeholder.com/800x600?text=Image+Unavailable";
+                }}
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
